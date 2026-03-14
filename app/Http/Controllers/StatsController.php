@@ -8,34 +8,48 @@ use App\Models\LigneVente;
 use App\Models\Fond;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class StatsController extends Controller
 {
     public function index(Request $request)
     {
-        // ======================================================
-        // 1. PÉRIODE CHOISIE
-        // ======================================================
-        $periode = $request->get('periode', '3m'); // 3 derniers mois par défaut
+        $periode = $request->get('periode', '3m');
+        
+        // Cache key basé sur la période et la date (5min de cache)
+        $cacheKey = 'stats_dashboard_' . $periode . '_' . now()->format('Y-m-d_H');
+        
+        $cachedStats = Cache::remember($cacheKey, 300, function () use ($periode, $request) {
+            return $this->calculateStats($periode, $request);
+        });
 
+        return view('stats', $cachedStats);
+    }
+
+    /**
+     * Calcul des stats (sorti pour permettre le cache)
+     */
+    private function calculateStats($periode, $request)
+    {
+        // Période choisie
         switch ($periode) {
             case '30j':
                 $startDate      = now()->subDays(30)->startOfDay();
-                $sqlGroupFormat = '%Y-%m-%d';   // groupement par jour
+                $sqlGroupFormat = '%Y-%m-%d';
                 $grouping       = 'day';
                 $periodeLabel   = '30 derniers jours';
                 break;
 
             case '12m':
                 $startDate      = now()->subMonthsNoOverflow(12)->startOfMonth();
-                $sqlGroupFormat = '%Y-%m';      // groupement par mois
+                $sqlGroupFormat = '%Y-%m';
                 $grouping       = 'month';
                 $periodeLabel   = '12 derniers mois';
                 break;
 
             case 'all':
-                $startDate      = null;         // pas de filtre
-                $sqlGroupFormat = '%Y-%m';      // groupement par mois
+                $startDate      = null;
+                $sqlGroupFormat = '%Y-%m';
                 $grouping       = 'month';
                 $periodeLabel   = 'depuis le début';
                 break;
@@ -43,7 +57,7 @@ class StatsController extends Controller
             case '3m':
             default:
                 $startDate      = now()->subMonthsNoOverflow(3)->startOfDay();
-                $sqlGroupFormat = '%Y-%m-%d';   // groupement par jour
+                $sqlGroupFormat = '%Y-%m-%d';
                 $grouping       = 'day';
                 $periode        = '3m';
                 $periodeLabel   = '3 derniers mois';
@@ -57,7 +71,7 @@ class StatsController extends Controller
         $coutAchatFond   = 3.00;
 
         // ======================================================
-        // 3. STATS CATALOGUE & STOCK (indépendantes de la période)
+        // 3. STATS CATALOGUE & STOCK (indépendantes de la période - avec cache)
         // ======================================================
 
         // --- VINYLES ---
@@ -72,70 +86,52 @@ class StatsController extends Controller
         // Valeur d'achat du stock vinyles
         $valeurStockAchatVinyles = $quantiteVinylesStock * $coutAchatVinyle;
 
-        // Valeur du stock au prix catalogue (colonne "prix")
+        // Valeur du stock au prix catalogue
         $valeurStock = Vinyle::sum(DB::raw('prix * quantite')) ?? 0;
 
-        // CA total historique (toutes ventes)
+        // CA total historique
         $chiffreAffairesTotal = Vente::sum('total') ?? 0;
 
-        // CA potentiel du stock vinyles
+        // CA potentiel du stock
         $caStockPotentielVinyles = $valeurStock;
-
-        // CA total possible (historique + stock)
         $caTotalPossibleVinyles = $chiffreAffairesTotal + $caStockPotentielVinyles;
 
-        // --- FONDS (stock actuel) ---
-
+        // --- FONDS ---
         $stockMiroir = Fond::where('type', 'miroir')->sum('quantite') ?? 0;
         $stockDore   = Fond::where('type', 'dore')->sum('quantite') ?? 0;
 
         $quantiteFondsMiroirStock = $stockMiroir;
         $quantiteFondsDoreStock   = $stockDore;
         $quantiteFondsStockTotal  = $quantiteFondsMiroirStock + $quantiteFondsDoreStock;
-
-        // Coût d'achat des fonds en stock
         $valeurStockFonds = $quantiteFondsStockTotal * $coutAchatFond;
 
         // ======================================================
-        // 4. VINYLES – HISTORIQUE (toutes périodes)
+        // 4. VINYLES – HISTORIQUE
         // ======================================================
 
         // Quantité totale de vinyles vendus
         $quantiteVinylesVendus = LigneVente::sum('quantite') ?? 0;
-
-        // Quantité totale de vinyles achetés = stock + vendus
         $quantiteVinylesAchetes = $quantiteVinylesStock + $quantiteVinylesVendus;
-
-        // Coût d'achat historique des vinyles vendus
         $coutAchatVinylesVendus = $quantiteVinylesVendus * $coutAchatVinyle;
-
-        // Investissement total vinyles (stock + vendus)
         $investissementTotalVinyles = $quantiteVinylesAchetes * $coutAchatVinyle;
 
         // ======================================================
-        // 5. FONDS – HISTORIQUE (toutes périodes, via LIGNE_VENTES)
+        // 5. FONDS – HISTORIQUE
         // ======================================================
 
-        // Fonds vendus (toutes périodes) par type
         $quantiteFondsMiroirVendus = LigneVente::where('fond', 'miroir')->sum('quantite');
         $quantiteFondsDoreVendus   = LigneVente::where('fond', 'dore')->sum('quantite');
-
         $quantiteFondsVendusTotal  = $quantiteFondsMiroirVendus + $quantiteFondsDoreVendus;
 
-        // Quantités achetées = stock restant + vendus
         $quantiteFondsMiroirAchetes = $quantiteFondsMiroirStock + $quantiteFondsMiroirVendus;
         $quantiteFondsDoreAchetes   = $quantiteFondsDoreStock   + $quantiteFondsDoreVendus;
-
         $quantiteFondsAchetesTotal  = $quantiteFondsMiroirAchetes + $quantiteFondsDoreAchetes;
 
-        // Coût d'achat historique des fonds vendus
         $coutAchatFondsVendus = $quantiteFondsVendusTotal * $coutAchatFond;
-
-        // Investissement total fonds (stock + vendus)
         $investissementTotalFonds = $quantiteFondsAchetesTotal * $coutAchatFond;
 
         // ======================================================
-        // 6. MARGES GLOBALES (toutes périodes)
+        // 6. MARGES GLOBALES
         // ======================================================
 
         $coutTotalHistorique    = $coutAchatVinylesVendus + $coutAchatFondsVendus;
@@ -148,14 +144,12 @@ class StatsController extends Controller
             ? $margeBruteTotale / $quantiteVinylesVendus
             : 0;
 
-        // Marge potentielle sur le stock vinyles (on ignore les fonds pour simplifier)
         $margePotentielleStock = $valeurStock - $valeurStockAchatVinyles;
 
         // ======================================================
         // 7. STATS VENTES SUR LA PÉRIODE
         // ======================================================
 
-        // Ventes de la période
         $ventesPeriodeQuery = Vente::query();
         if ($startDate) {
             $ventesPeriodeQuery->where('created_at', '>=', $startDate);
@@ -165,7 +159,7 @@ class StatsController extends Controller
         $totalVentes     = $ventesPeriode->count();
         $chiffreAffaires = $ventesPeriode->sum('total');
 
-        // CA moyen par jour sur la période
+        // CA moyen par jour
         if ($startDate) {
             $dateDebut = $startDate;
         } else {
@@ -180,16 +174,14 @@ class StatsController extends Controller
             $caMoyenParJour = 0;
         }
 
-        // Panier moyen
         $panierMoyen = $totalVentes > 0 ? $chiffreAffaires / $totalVentes : 0;
 
-        // Vinyles vendus sur la période (quantité)
+        // Vinyles vendus sur la période
         $nbVinylesVendus = LigneVente::whereHas('vente', function ($q) use ($startDate) {
             if ($startDate) {
                 $q->where('created_at', '>=', $startDate);
             }
-        })
-            ->sum('quantite') ?? 0;
+        })->sum('quantite') ?? 0;
 
         $coutVinylesVendusPeriode = $nbVinylesVendus * $coutAchatVinyle;
 
@@ -199,27 +191,22 @@ class StatsController extends Controller
                 if ($startDate) {
                     $q->where('created_at', '>=', $startDate);
                 }
-            })
-            ->sum('quantite');
+            })->sum('quantite');
 
         $nbDoresVendusPeriode = LigneVente::where('fond', 'dore')
             ->whereHas('vente', function ($q) use ($startDate) {
                 if ($startDate) {
                     $q->where('created_at', '>=', $startDate);
                 }
-            })
-            ->sum('quantite');
+            })->sum('quantite');
 
         $coutFondsVendusPeriode = ($nbMiroirsVendusPeriode + $nbDoresVendusPeriode) * $coutAchatFond;
-
-        // Marge brute sur la période
         $margeBrute = $chiffreAffaires - ($coutVinylesVendusPeriode + $coutFondsVendusPeriode);
 
         // ======================================================
         // 8. AGRÉGATIONS POUR GRAPHIQUES
         // ======================================================
 
-        // Ventes groupées (jour ou mois)
         $ventesParPeriode = DB::table('ventes')
             ->select(
                 DB::raw("DATE_FORMAT(created_at, '{$sqlGroupFormat}') as periode"),
@@ -232,7 +219,6 @@ class StatsController extends Controller
             ->orderBy('periode')
             ->get();
 
-        // Répartition par mode de paiement
         $paiements = DB::table('ventes')
             ->select(
                 'mode_paiement',
@@ -245,7 +231,6 @@ class StatsController extends Controller
             ->groupBy('mode_paiement')
             ->get();
 
-        // Top modèles vendus sur la période
         $topModelesVendus = LigneVente::select(
             'vinyles.modele',
             DB::raw('SUM(ligne_ventes.quantite) as total_vendus')
@@ -261,7 +246,6 @@ class StatsController extends Controller
             ->limit(30)
             ->get();
 
-        // Stock bas / ruptures
         $stockBas = Vinyle::where('quantite', '>', 0)
             ->where('quantite', '<=', 3)
             ->count();
@@ -269,18 +253,15 @@ class StatsController extends Controller
         $rupturesStock = Vinyle::where('quantite', '<=', 0)->count();
 
         // ======================================================
-        // 9. ENVOI À LA VUE
+        // 9. RETOUR DES STATS
         // ======================================================
 
-        return view('stats', [
-            // Stock & catalogue
+        return [
             'valeurStock'             => $valeurStock,
             'totalVinyles'            => $totalVinyles,
             'totalQuantiteVinyles'    => $totalQuantiteVinyles,
             'stockBas'                => $stockBas,
             'rupturesStock'           => $rupturesStock,
-
-            // Période
             'totalVentes'             => $totalVentes,
             'chiffreAffaires'         => $chiffreAffaires,
             'ventesParPeriode'        => $ventesParPeriode,
@@ -293,8 +274,6 @@ class StatsController extends Controller
             'panierMoyen'             => $panierMoyen,
             'topModelesVendus'        => $topModelesVendus,
             'margeBrute'              => $margeBrute,
-
-            // Vinyles – historique & stock
             'quantiteVinylesStock'       => $quantiteVinylesStock,
             'quantiteVinylesVendus'      => $quantiteVinylesVendus,
             'quantiteVinylesAchetes'     => $quantiteVinylesAchetes,
@@ -303,31 +282,24 @@ class StatsController extends Controller
             'investissementTotalVinyles' => $investissementTotalVinyles,
             'chiffreAffairesTotal'       => $chiffreAffairesTotal,
             'caTotalPossibleVinyles'     => $caTotalPossibleVinyles,
-
-            // Fonds – stock / historique
             'stockMiroir'                => $stockMiroir,
             'stockDore'                  => $stockDore,
             'quantiteFondsMiroirStock'   => $quantiteFondsMiroirStock,
             'quantiteFondsDoreStock'     => $quantiteFondsDoreStock,
             'quantiteFondsStockTotal'    => $quantiteFondsStockTotal,
             'valeurStockFonds'           => $valeurStockFonds,
-
             'quantiteFondsMiroirVendus'  => $quantiteFondsMiroirVendus,
             'quantiteFondsDoreVendus'    => $quantiteFondsDoreVendus,
             'quantiteFondsVendusTotal'   => $quantiteFondsVendusTotal,
-
             'quantiteFondsMiroirAchetes' => $quantiteFondsMiroirAchetes,
             'quantiteFondsDoreAchetes'   => $quantiteFondsDoreAchetes,
             'quantiteFondsAchetesTotal'  => $quantiteFondsAchetesTotal,
-
             'coutAchatFondsVendus'       => $coutAchatFondsVendus,
             'investissementTotalFonds'   => $investissementTotalFonds,
-
-            // Marges
             'margeBruteTotale'           => $margeBruteTotale,
             'tauxMargeBruteTotale'       => $tauxMargeBruteTotale,
             'margeMoyenneParVinyle'      => $margeMoyenneParVinyle,
             'margePotentielleStock'      => $margePotentielleStock,
-        ]);
+        ];
     }
 }

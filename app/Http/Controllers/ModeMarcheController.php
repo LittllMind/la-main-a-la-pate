@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Vente;
 use App\Models\Vinyle;
 use App\Services\StockMovementService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -183,36 +185,76 @@ class ModeMarcheController extends Controller
     }
 
     /**
-     * Liste des ventes du jour (mode marché)
-     * GET /admin/marche/ventes-jour
+     * Liste des ventes du jour
+     * GET /admin/marche/ventes-jour?view=json
      */
-    public function ventesJour()
+    public function ventesJour(Request $request)
     {
-        $ventes = Order::where('source', 'marche')
-            ->whereDate('created_at', today())
+        // Récupérer la date demandée (défaut: aujourd'hui)
+        $dateParam = $request->query('date');
+        $dateSelectionnee = $dateParam ? Carbon::parse($dateParam) : now();
+        $dateString = $dateSelectionnee->toDateString();
+
+        // Récupérer les ventes du modèle Order avec source='marche' pour cette date
+        $ventes = Order::with('items.vinyle')
+            ->where('source', 'marche')
+            ->whereDate('created_at', $dateString)
             ->orderBy('created_at', 'desc')
-            ->with('items.vinyle')
-            ->get()
-            ->map(function ($order) {
+            ->get();
+
+        // Calculer le total du jour
+        $totalJour = $ventes->sum('total');
+
+        // Navigation: dates précédente et suivante avec ventes
+        $datePrecedenteRaw = Order::where('source', 'marche')
+            ->whereDate('created_at', '<', $dateString)
+            ->select(DB::raw('DATE(created_at) as date'))
+            ->distinct()
+            ->orderBy('date', 'desc')
+            ->first()?->date;
+        
+        $dateSuivanteRaw = Order::where('source', 'marche')
+            ->whereDate('created_at', '>', $dateString)
+            ->select(DB::raw('DATE(created_at) as date'))
+            ->distinct()
+            ->orderBy('date', 'asc')
+            ->first()?->date;
+
+        // Convertir en objets Carbon pour la vue
+        $datePrecedente = $datePrecedenteRaw ? Carbon::parse($datePrecedenteRaw) : null;
+        $dateSuivante = $dateSuivanteRaw ? Carbon::parse($dateSuivanteRaw) : null;
+
+        // Si requête JSON (API/tests), retourner JSON
+        if ($request->wantsJson() || $request->query('view') === 'json') {
+            $ventesArray = $ventes->map(function ($vente) {
                 return [
-                    'id' => $order->id,
-                    'numero' => $order->numero_commande,
-                    'heure' => $order->created_at->format('H:i'),
-                    'total' => $order->total,
-                    'mode_paiement' => $order->mode_paiement_marche,
-                    'client' => $order->affichage_client ?? 'Anonyme',
-                    'items_count' => $order->items->count(),
+                    'id' => $vente->id,
+                    'numero_commande' => $vente->numero_commande ?? 'N/A',
+                    'total' => $vente->total,
+                    'mode_paiement' => $vente->mode_paiement_marche ?? 'cash',
+                    'created_at' => $vente->created_at->toISOString(),
+                    'items_count' => $vente->items->count(),
+                    'client' => $vente->affichage_client ?? 'Anonyme',
                 ];
             });
 
-        $totalJour = $ventes->sum('total');
-        $nbVentes = $ventes->count();
+            return response()->json([
+                'ventes' => $ventesArray,
+                'total_jour' => (float) $totalJour,
+                'nb_ventes' => $ventes->count(),
+                'date' => $dateString,
+                'date_precedente' => $datePrecedente,
+                'date_suivante' => $dateSuivante,
+            ]);
+        }
 
-        return response()->json([
-            'ventes' => $ventes,
-            'total_jour' => $totalJour,
-            'nb_ventes' => $nbVentes,
-        ]);
+        return view('marche.ventes-jour', compact(
+            'ventes',
+            'dateSelectionnee',
+            'totalJour',
+            'datePrecedente',
+            'dateSuivante'
+        ));
     }
 
     /**
@@ -257,5 +299,62 @@ class ModeMarcheController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Export des ventes du jour au format CSV
+     * GET /admin/marche/export?format=csv
+     */
+    public function export(Request $request)
+    {
+        $format = $request->input('format', 'csv');
+        
+        if ($format !== 'csv') {
+            return response()->json(['error' => 'Format non supporté. Utilisez ?format=csv'], 400);
+        }
+
+        $ventes = Order::where('source', 'marche')
+            ->whereDate('created_at', today())
+            ->with('items.vinyle')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $filename = 'ventes_marche_' . now()->format('Y-m-d') . '.csv';
+
+        // Générer le CSV
+        $output = fopen('php://temp', 'r+');
+        
+        // BOM UTF-8 pour Excel
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        // Headers CSV
+        fputcsv($output, [
+            'N° Commande',
+            'Heure',
+            'Client',
+            'Articles',
+            'Mode Paiement',
+            'Total (€)'
+        ], ';');
+
+        foreach ($ventes as $vente) {
+            fputcsv($output, [
+                $vente->numero_commande,
+                $vente->created_at->format('H:i'),
+                $vente->affichage_client ?? 'Anonyme',
+                $vente->items->count(),
+                $vente->mode_paiement_marche ?? 'N/A',
+                number_format($vente->total, 2, ',', ' ')
+            ], ';');
+        }
+
+        rewind($output);
+        $csv = stream_get_contents($output);
+        fclose($output);
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 }

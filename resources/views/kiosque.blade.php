@@ -105,8 +105,21 @@
     <!-- Modal de sélection de quantité -->
     <div x-show="selectedVinyle !== null" x-cloak
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-        @click.self="closeQuantityModal()">
-        <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-700 shadow-xl">
+        @click.self="closeQuantityModal()"
+        @keydown.escape.window="closeQuantityModal()"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0">
+        <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-700 shadow-xl"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95">
             <h3 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"
                 x-text="selectedVinyle?.nom"></h3>
 
@@ -197,12 +210,16 @@
                 this.selectedVinyle = vinyle;
                 this.selectedQuantity = 1;
                 this.selectedFond = 'standard';
+                // Bloquer le scroll du body
+                document.body.style.overflow = 'hidden';
             },
 
             closeQuantityModal() {
                 this.selectedVinyle = null;
                 this.selectedQuantity = 1;
                 this.selectedFond = 'standard';
+                // Réactiver le scroll du body
+                document.body.style.overflow = '';
             },
 
             incrementQuantity() {

@@ -25,7 +25,7 @@ class OrderFactory extends Factory
             'code_postal' => fake()->postcode(),
             'ville' => fake()->city(),
             'total' => fake()->randomFloat(2, 20, 200),
-            'statut' => fake()->randomElement(['en_attente', 'en_preparation', 'prete', 'livree', 'annulee']),
+            'statut' => fake()->randomElement(['en_attente', 'payee', 'en_preparation', 'prete', 'livree', 'annulee']),
         ];
     }
 
@@ -40,12 +40,12 @@ class OrderFactory extends Factory
     }
 
     /**
-     * État : Payée (statut en_preparation)
+     * État : Payée (statut payee)
      */
     public function paid(): static
     {
         return $this->state(fn () => [
-            'statut' => 'en_preparation',
+            'statut' => 'payee',
         ]);
     }
 
@@ -70,12 +70,23 @@ class OrderFactory extends Factory
     }
 
     /**
-     * État : Annulée
+     * État : Vente mode marché
      */
-    public function cancelled(): static
+    public function marche(): static
     {
         return $this->state(fn () => [
-            'statut' => 'annulee',
+            'source' => 'marche',
+            'mode_paiement_marche' => fake()->randomElement(['cash', 'cb_terminal', 'cheque', 'virement']),
+        ]);
+    }
+
+    /**
+     * État : Vente kiosque (en ligne)
+     */
+    public function kiosque(): static
+    {
+        return $this->state(fn () => [
+            'source' => 'kiosque',
         ]);
     }
 }

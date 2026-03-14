@@ -36,9 +36,16 @@ class CheckRole
 
         // Vérifier si l'utilisateur a l'un des rôles requis
         if (!in_array($user->role, $allowedRoles)) {
-            // Pour les requêtes AJAX/API, retourner 403
-            if ($request->expectsJson() || $request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-                abort(403, 'Accès refusé. Vous n\'avez pas les permissions nécessaires.');
+            // Pour les requêtes AJAX/API/JSON, retourner 403
+            // Détection élargie pour les tests et API
+            $isJsonRequest = $request->expectsJson() 
+                || $request->ajax() 
+                || $request->header('X-Requested-With') === 'XMLHttpRequest'
+                || $request->isJson()
+                || str_contains($request->header('Accept', ''), 'application/json');
+                
+            if ($isJsonRequest) {
+                return response()->json(['error' => 'Accès refusé. Vous n\'avez pas les permissions nécessaires.'], 403);
             }
             
             return redirect()->route('kiosque.index')->with('error', 'Vous n\'avez pas les permissions nécessaires pour accéder à cette page.');

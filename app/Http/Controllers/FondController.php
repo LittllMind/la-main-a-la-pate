@@ -21,31 +21,44 @@ class FondController extends Controller
      */
     public function index()
     {
-        $fonds = Fond::all()->map(function ($fond) {
-            return [
-                'id' => $fond->id,
-                'type' => $fond->type,
-                'visuel' => $fond->visuel,
-                'quantite' => $fond->quantite,
-                'prix_achat' => $fond->prix_achat,
-                'montant_stock' => $fond->montant_stock,
-                'prix_vente' => $fond->prix_vente,
-                'valeur_stock' => $fond->valeur_stock,
-                'marge' => $fond->marge,
-                'status' => $fond->status,
-                'status_class' => $fond->status_class,
-            ];
-        });
+        // Optimisation: agrégations SQL au lieu de collection PHP
+        $totaux = Fond::selectRaw('
+            SUM(quantite) as quantite_totale,
+            SUM(quantite * prix_achat) as montant_investi,
+            SUM(quantite * prix_vente) as valeur_totale,
+            SUM(quantite * (prix_vente - prix_achat)) as marge_totale
+        ')->first();
 
-        // Totaux
-        $totaux = [
-            'quantite_totale' => $fonds->sum('quantite'),
-            'montant_investi' => $fonds->sum('montant_stock'),
-            'valeur_totale' => $fonds->sum('valeur_stock'),
-            'marge_totale' => $fonds->sum('marge'),
-        ];
+        // Chargement paginé avec calculs SQL
+        $fonds = Fond::select('*')
+            ->selectRaw('quantite * prix_achat as montant_stock')
+            ->selectRaw('quantite * prix_vente as valeur_stock')
+            ->selectRaw('quantite * (prix_vente - prix_achat) as marge')
+            ->selectRaw("CASE 
+                WHEN quantite <= 0 THEN 'rupture'
+                WHEN quantite <= 5 THEN 'stock_bas'
+                ELSE 'ok'
+            END as status")
+            ->paginate(20)
+            ->through(function ($fond) {
+                // Accessors calculés pour la vue
+                $fond->status_class = match($fond->status) {
+                    'rupture' => 'bg-red-100 text-red-800',
+                    'stock_bas' => 'bg-yellow-100 text-yellow-800',
+                    default => 'bg-green-100 text-green-800',
+                };
+                return $fond;
+            });
 
         return view('fonds.index', compact('fonds', 'totaux'));
+    }
+
+    /**
+     * Affichage d'un fond - Admin et Employé (lecture seule)
+     */
+    public function show(Fond $fond)
+    {
+        return redirect()->route('fonds.index');
     }
 
     /**

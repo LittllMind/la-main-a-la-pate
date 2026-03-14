@@ -139,11 +139,39 @@ class VinyleController extends Controller
             ->with('success', 'Vinyle supprimé avec succès');
     }
 
-    public function kiosque()
+    public function kiosque(Request $request)
     {
-        $vinyles = Vinyle::orderBy('artiste')->orderBy('modele')->get();
+        $allowedSorts = ['artiste', 'modele', 'prix', 'quantite', 'created_at'];
+        $sort = $request->get('sort', 'artiste');
+        
+        // Protection injection SQL : whitelist des colonnes
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'artiste';
+        }
+        
+        $search = $request->get('search', '');
+        
+        $vinylesQuery = Vinyle::with(['media']) // Eager loading des médias
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('artiste', 'like', "%{$search}%")
+                        ->orWhere('modele', 'like', "%{$search}%")
+                        ->orWhere('genre', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sort)
+            ->orderBy('modele');
+        
+        // Pagination pour éviter chargement trop grand (24 par page pour grille 4x6)
+        $vinyles = $vinylesQuery->paginate(24)->withQueryString();
 
-        $vinylesData = $vinyles->map(function (Vinyle $vinyle) {
+        // Redirection si page invalide (ex: page=2 mais une seule page de résultats)
+        if ($vinyles->isEmpty() && $vinyles->currentPage() > 1) {
+            return redirect()->route('kiosque.index');
+        }
+
+        // Transformer pour la vue
+        $vinylesData = $vinyles->through(function (Vinyle $vinyle) {
             return [
                 'id'        => $vinyle->id,
                 'artiste'   => $vinyle->artiste,
@@ -155,7 +183,8 @@ class VinyleController extends Controller
         });
 
         return view('kiosque', [
-            'vinylesData' => $vinylesData->values()->all(),
+            'vinylesData' => $vinylesData->items(),
+            'vinyles' => $vinyles, // Pour les liens de pagination
         ]);
     }
 }

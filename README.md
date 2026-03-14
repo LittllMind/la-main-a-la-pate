@@ -1,46 +1,91 @@
 # Vinyl Stock 🎸
 
-> Plateforme de vente de vinyles hydrodécoupés
+> Plateforme de vente et gestion de vinyles hydrodécoupés
 
- [![Tests](https://github.com/aurelien-c/vinyl-stock/actions/workflows/ci.yml/badge.svg)](https://github.com/aurelien-c/vinyl-stock/actions/workflows/ci.yml)
+[![Tests](https://github.com/aurelien-c/vinyl-stock/actions/workflows/ci.yml/badge.svg)](https://github.com/aurelien-c/vinyl-stock/actions/workflows/ci.yml)
 [![Deploy](https://github.com/aurelien-c/vinyl-stock/actions/workflows/deploy.yml/badge.svg)](https://github.com/aurelien-c/vinyl-stock/actions/workflows/deploy.yml)
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
-[![PHP](https://img.shields.io/badge/PHP-8.2+-blue)](https://php.net)
+[![PHP](https://img.shields.io/badge/PHP-8.3+-blue)](https://php.net)
 [![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20)](https://laravel.com)
-[![Stripe](https://img.shields.io/badge/Stripe-Test-635BFF)](https://stripe.com)
+[![Stripe](https://img.shields.io/badge/Stripe-Ready-635BFF)](https://stripe.com)
 
 ## 🎯 À propos
 
-Vinyl Stock est une plateforme e-commerce pour la vente de vinyles hydrodécoupés. Le projet utilise **Laravel 11** pour le backend, **Tailwind CSS** pour le frontend, et **Stripe** pour les paiements en ligne.
+Vinyl Stock est une plateforme e-commerce complète pour la gestion et la vente de vinyles hydrodécoupés. Elle intègre un **mode marché** (caisse/emport pour événements), un **kiosque public** de consultation, et un **dashboard administrateur** avec rapports et statistiques.
 
-**Localisation** : 48150, Le rozier, France
+**Localisation** : 48150, Le Rozier, France
 
 ## 🚀 Fonctionnalités
 
-### Phase 1 ✅ (Terminée)
+### ✅ Terminé
 
-- ✅ **Kiosque de consultation** - Page publique avec grille de vinyles
-- ✅ **Tunnel de vente complet** - Panier, adresses, commande
-- ✅ **Paiement Stripe** - Checkout, webhook, confirmation
-- ✅ **RBAC** - Système de rôles (Admin/Employé/Client)
+- [x] **Kiosque de consultation** — Grille publique avec filtrage
+- [x] **Tunnel de vente** — Panier, adresses, commandes
+- [x] **Paiement Stripe** — Checkout, webhooks, confirmations
+- [x] **RBAC** — Rôles (Admin/Employé/Client) sécurisés
+- [x] **Mode Marché** — Caisse emport avec annulation/restock
+- [x] **Rapports** — Exports PDF/CSV, stats mensuelles
 
-### Phase 2 (En cours)
+### 📋 En cours / À venir
 
-- 📦 Gestion de stock (CRUD produits, quantités, historique)
-- 📊 Dashboard avec statistiques et graphiques
-- 🎁 Fonctionnalités avancées (réservation, fidélité, emails)
-- 🌐 Déploiement en production
+- [ ] Tests T14 — Mode Marché (validation)
+- [ ] Tests T15 — Performance
+- [ ] Déploiement production
 
 ## 🛠️ Stack Technique
 
 | Composant | Technologie |
 |-----------|-------------|
-| Framework | Laravel 11 |
-| Base de données | MySQL |
-| CSS | Tailwind CSS |
-| Paiement | Stripe (Test/Production) |
-| Authentification | Laravel Breeze |
-| RBAC | Middleware personnalisé |
+| Backend | PHP 8.3, Laravel 11 |
+| Frontend | Vue.js 3, Inertia.js, Tailwind CSS, Vite |
+| Base de données | MySQL 8.0 (production), SQLite (tests) |
+| Cache | Redis (optionnel) |
+| Paiement | Stripe |
+| Auth | Laravel Breeze + RBAC custom |
+| Médias | Spatie Media Library |
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [📐 Architecture](docs/ARCHITECTURE.md) | Structure technique, flux de données, sécurité RBAC |
+| [🚀 Déploiement](docs/DEPLOYMENT.md) | Guide complet déploiement Nginx + SSL |
+| [📡 API](docs/API.md) | Endpoints JSON, paramètres, codes d'erreur |
+| [✅ Post-Déploiement](docs/POST-DEPLOYMENT.md) | Checklist validation après mise en prod |
+| [🔧 Troubleshooting](docs/TROUBLESHOOTING.md) | Solutions erreurs courantes |
+| [💳 Stripe](docs/STRIPE_INSTALL.md) | Configuration paiements |
+| [🗺️ Adresses](docs/ADRESSES.md) | Système d'adresses clients |
+
+## 🧪 Tests
+
+### Exécution rapide
+
+```bash
+# Tous les tests
+php artisan test
+
+# Par catégorie
+php artisan test tests/Feature/Security/
+php artisan test tests/Feature/ModeMarche/
+php artisan test tests/Feature/Performance/
+
+# Avec couverture
+php artisan test --coverage
+```
+
+### Phases de sécurité (T13)
+
+```bash
+php artisan test tests/Feature/Security/SecurityTest.php
+# ~20 tests — Validation RBAC, IDOR, headers sécurité
+```
+
+### Mode Marché (T14)
+
+```bash
+php artisan test tests/Feature/ModeMarche/ModeMarcheTest.php
+# ~15 tests — Historique, annulation, export CSV
+```
 
 ## 📋 Comptes de test
 
@@ -50,163 +95,122 @@ Vinyl Stock est une plateforme e-commerce pour la vente de vinyles hydrodécoup�
 | Employé | employe@example.com | password |
 | Client | client@example.com | password |
 
-> **Note** : Pour des tests en production, changer les mots de passe et utiliser des clés API Stripe réelles.
+> **⚠️ Production** : Changer les mots de passe !
 
-## 🚀 Installation
+## 🚀 Installation locale
 
 ### Prérequis
 
-- PHP 8.2+
-- Composer
-- Node.js 18+
-- MySQL 8.0+
+- PHP 8.3+
+- Composer 2.x
+- Node.js 20+
+- MySQL 8.0+ (ou SQLite pour tests)
 
 ### Installation
 
 ```bash
-# 1. Cloner le projet
+# 1. Cloner
 git clone <repository-url> vinyl-stock
 cd vinyl-stock
 
-# 2. Installer les dépendances PHP
+# 2. PHP
 composer install
 
-# 3. Copier le fichier de configuration
+# 3. Node
+npm ci
+
+# 4. Configuration
 cp .env.example .env
+php artisan key:generate
 
-# 4. Configurer les variables d'environnement
-# - APP_NAME="Vinyl Stock"
-# - APP_URL="http://localhost:8000"
-# - DB_DATABASE="vinyl_stock"
-# - DB_USERNAME="root"
-# - DB_PASSWORD="votre_mot_de_passe"
-# - STRIPE_KEY="sk_test_..."
-# - STRIPE_SECRET="sk_test_..."
-# - STRIPE_WEBHOOK_SECRET="whsec_..."
+# 5. Éditer .env
+# DB_DATABASE=vinyl_stock
+# DB_USERNAME=root
+# DB_PASSWORD=secret
+# STRIPE_KEY=sk_test_...
 
-# 5. Installer les dépendances Node
-npm install
-
-# 6. Compiler les assets
-npm run build
-
-# 7. Installer les migrations et seeds
+# 6. Base de données
 php artisan migrate --seed
 
-# 8. Lancer le serveur
+# 7. Assets
+npm run build
+
+# 8. Lancer
 php artisan serve
 ```
 
-## 📖 Documentation
-
-- [Documentation Stripe](docs/STRIPE_INSTALL.md)
-- [Guide de test Stripe](docs/STRIPE_TEST.md)
-- [Système d'adresses](docs/ADRESSES.md)
-- [Guide RBAC](SECURITE_ROLES.md)
-- [Comptes de test](COMPTES_TEST.md)
-
-## 🧪 Tests
-
-### Tests Automatisés (CI/CD)
+### Health Check
 
 ```bash
-# Lancer tous les tests
-php artisan test
-
-# Tests avec couverture
-php artisan test --coverage
-
-# Tests spécifiques
-php artisan test --filter=FondController
+./scripts/health-check.sh --verbose
 ```
-
-### Tests manuels Stripe
-
-```bash
-# Lancer le serveur
-php artisan serve
-
-# Ouvrir http://localhost:8000/kiosque
-# Ajouter des produits au panier
-# Passer une commande avec Stripe (mode test)
-```
-
-### Tests RBAC
-
-Se connecter avec les comptes de test pour vérifier les permissions.
 
 ## 📦 Structure du projet
 
 ```
 vinyl-stock/
 ├── app/
-│   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── CartController.php
-│   │   │   ├── PaymentController.php
-│   │   │   └── AddressController.php
-│   │   └── Middleware/
-│   │       └── RoleMiddleware.php
+│   ├── Http/Controllers/    # API + Web
+│   │   ├── ModeMarcheController.php    # Caisse/emport
+│   │   └── KiosqueController.php       # Public
 │   ├── Models/
-│   │   ├── User.php
-│   │   ├── Product.php
-│   │   ├── Cart.php
-│   │   ├── Order.php
-│   │   ├── Payment.php
-│   │   └── Address.php
-│   └── Services/
-│       └── CartService.php
-├── resources/
-│   ├── views/
-│   │   ├── kiosque.blade.php
-│   │   ├── cart.blade.php
-│   │   ├── checkout.blade.php
-│   │   └── success.blade.php
-│   └── css/
-│       └── app.css
-├── routes/
-│   └── web.php
+│   ├── Services/            # Logique métier
+│   └── Policies/            # Autorisations RBAC
 ├── database/
-│   ├── migrations/
-│   └── seeds/
-├── docs/
-│   ├── STRIPE_INSTALL.md
-│   ├── STRIPE_TEST.md
-│   └── ADRESSES.md
-└── scripts/
-    └── stripe-webhook.sh
+├── resources/js/            # Vue + Inertia
+├── routes/web.php           # Routes
+├── tests/Feature/           # Tests intégration
+└── docs/                    # Documentation
 ```
 
-## 🎨 Identité visuelle
+## 🖥️ Utilisation
 
-- **Couleurs** : Violet → Rose
-- **Mode** : Dark mode par défaut
-- **Style** : Moderne, épuré, responsive
+### Kiosque (Client)
+```
+http://localhost:8000/kiosque
+```
+Parcourir le catalogue, ajouter au panier, commander.
+
+### Admin
+```
+http://localhost:8000/admin
+```
+Gestion vinyles, utilisateurs, rapports, stats.
+
+### Mode Marché (Employé)
+```
+http://localhost:8000/admin/marche
+```
+Caisse pour événements (salons, marchés).
 
 ## 📊 Métriques
 
-- **Temps de chargement** : < 2s
-- **Taux de conversion** : > 3% (objectif)
-- **Uptime** : 99.9% (objectif production)
+| Objectif | Valeur |
+|----------|--------|
+| Chargement pages | < 2s |
+| Conversion | > 3% |
+| Uptime | 99.9% |
+| Tests passants | 100% |
 
 ## 🤝 Contribuer
 
-1. Fork le projet
-2. Créer une branche (`git checkout -b feature/AmazingFeature`)
-3. Commit les changements (`git commit -m 'Add some AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
+1. Fork
+2. Branche: `git checkout -b feature/Nom`
+3. Test: `php artisan test` (100% vert)
+4. Commit: `git commit -m "feat: description"`
+5. PR avec description
 
 ## 📄 Licence
 
-MIT License - Voir [LICENSE](LICENSE) pour plus de détails
+MIT License — voir [LICENSE](LICENSE)
 
 ## 📞 Contact
 
 - **Projet** : Vinyl Stock
-- **Localisation** : 48150, Le rozier
-- **Développeur** : Aurélien
+- **Localisation** : 48150, Le Rozier
 
 ---
 
-**Made with ❤️ using Laravel**
+**[⬆️ Documentation](#documentation)** | **[🚀 Déployer](docs/DEPLOYMENT.md)** | **[🔧 Dépanner](docs/TROUBLESHOOTING.md)**
+
+*Dernière mise à jour: mars 2026*

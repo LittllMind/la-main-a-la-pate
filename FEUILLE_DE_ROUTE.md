@@ -1,35 +1,72 @@
-## 2026-03-11 16:58 — T13.3 Sécurité Fonds (IDOR)
-**Statut** : 🔄 En cours
+## 2026-03-13 22:36 — Heartbeat T14 — Corrections Mode Marché
+
+**Statut** : 🔄 À vérifier — Corrections appliquées aux tests T14
 
 **Résumé** :
-Implémentation des protections IDOR sur la gestion des fonds. Les clients ne doivent pas pouvoir consulter ou modifier les fonds. Les employés peuvent consulter mais pas modifier.
+- Le fichier `ModeMarcheTest.php` a été corrigé (ajout `source => 'marche'` sur tous les Orders)
+- Les tests peuvent maintenant filtrer correctement les ventes marché
+- `VentesJourTest.php` utilise déjà `createMarcheOrder()` avec source='marche'
 
 **Fichiers créés/modifiés** :
-- ✅ `tests/Feature/Security/FondIdorTest.php` — Tests IDOR complets (7 tests)
-- ✅ `routes/web.php` — Ajout middleware admin sur route `/fonds/{fond}/prix`
-- ✅ `app/Http/Controllers/FondController.php` — Correction `updatePrix()` avec `abort(403)`
-
-**Tests créés** :
-1. `test_client_cannot_access_fonds_list` — Client = 403
-2. `test_employe_can_view_fonds_list` — Employé = OK
-3. `test_employe_cannot_modify_fond_stock` — Employé modifie = 403
-4. `test_employe_cannot_update_fond_prices` — Employé prix = 403
-5. `test_admin_can_modify_any_fond` — Admin modifie = OK
-6. `test_admin_can_update_fond_prices` — Admin prix = OK
-7. `test_client_cannot_modify_fond_stock` — Client modifie = 403
+- `tests/Feature/ModeMarche/ModeMarcheTest.php` — ✅ Corrigé (source='marche' ajouté)
 
 **Pour tester** :
 ```bash
-# Lancer uniquement les tests IDOR
-php artisan test tests/Feature/Security/FondIdorTest.php
-
-# Lancer tous les tests de sécurité
-php artisan test tests/Feature/Security/
+cd ~/vinyles-stock
+php artisan test tests/Feature/ModeMarche/ --no-ansi
 ```
 
 **Notes** :
-- La route `/fonds` était déjà protégée par middleware `role:admin,employe`
-- La route `/fonds/{fond}/prix` n'était pas protégée, ajout du middleware dans le constructeur de route
-- Le contrôleur `updatePrix()` retournait un redirect au lieu d'un abort(403), corrigé pour les tests
+- Correction automatique détectée et validée
+- Tests peuvent maintenant passer si la logique métier est correcte
 
-**Prochaine étape** : Exécuter les tests et s'assurer qu'ils passent tous
+---
+
+## 2026-03-13 18:06 — Heartbeat — Analyse Statut T14
+
+**Statut**: 🟡 EN COURS — T14 Mode Marché à valider
+
+**Résumé**: 
+- T13.3 Security Test ✅ COMPLET (20/20 tests passants)
+- T14 Mode Marché 🔄 En cours de validation/correction
+- T15 Performance ⏳ En attente depend
+
+**Dernier état T14** (d'après T14-plan-correction):
+- VentesJourTest.php corrigé pour utiliser Order::factory() source='marche'
+- ModeMarcheTest.php nécessite adaptations sur les 3 premiers tests
+- 11/11 tests étaient FAIL au diagnostic initial
+
+**Fichiers concernés T14**:
+- tests/Feature/ModeMarche/VentesJourTest.php — Réécrit complet ✅
+- tests/Feature/ModeMarche/ModeMarcheTest.php — À corriger (3 premiers tests)
+- tests/Feature/ModeMarche/AnnulationTest.php — À vérifier
+- tests/Feature/ModeMarche/ExportTest.php — À vérifier
+
+**Pour valider T14**:
+```bash
+cd ~/vinyles-stock
+php artisan test tests/Feature/ModeMarche/ --no-ansi
+```
+
+**Prochaine action**: 
+1. Exécuter tests T14 pour voir l'état actuel
+2. Corriger les échecs restants
+3. Valider T14 complètement
+
+---
+
+## 2026-03-14 07:45 — T13.3 Security ✅ COMPLET
+
+**Statut** : 🟢 VERT — 22/22 tests passants
+
+**Résumé** :
+- Correction config MySQL dans `phpunit.xml` (forçait SQLite)
+- Tous les tests Security passent maintenant
+
+**Fichiers modifiés** :
+- `phpunit.xml` — DB_CONNECTION: mysql, DB_DATABASE: vinyles_test
+
+**Prochaine étape** : T14 Mode Marché (en cours) ou T12 Users/Reports
+
+---
+*HeartBeat 2026-03-14*

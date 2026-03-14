@@ -64,7 +64,16 @@ Route::middleware(['auth', 'role:admin,employe'])->prefix('admin')->name('admin.
 });
 
 // ============================================
-// ROUTES ADMIN UNIQUEMENT (pas employe)
+// ROUTES FONDS - LECTURE (Admin et Employé)
+// ============================================
+Route::middleware(['auth', 'role:admin,employe'])->group(function () {
+    // Liste et affichage des fonds
+    Route::get('/fonds', [FondController::class, 'index'])->name('fonds.index');
+    Route::get('/fonds/{fond}', [FondController::class, 'show'])->name('fonds.show');
+});
+
+// ============================================
+// ROUTES FONDS - MODIFICATION (Admin uniquement)
 // ============================================
 Route::middleware(['auth', 'role:admin'])->group(function () {
     // Modification du stock fonds (Admin uniquement)
@@ -84,8 +93,8 @@ Route::middleware(['auth', 'role:admin,employe'])->group(function () {
     // Statistiques
     Route::get('/stats', [StatsController::class, 'index'])->name('stats');
 
-    // Gestion des fonds (Admin et Employé : lecture seule)
-    Route::get('/fonds', [FondController::class, 'index'])->name('fonds.index');
+    // Note: Les routes fonds sont déjà définies plus haut (lignes ~78-81)
+    // Pas de duplication ici
 
     // Historique des mouvements de stock
     Route::get('/mouvements', [StockMovementController::class, 'index'])->name('mouvements.index');
@@ -94,14 +103,27 @@ Route::middleware(['auth', 'role:admin,employe'])->group(function () {
     // Gestion des ventes (admin)
     Route::resource('ventes', VenteController::class);
 
-    // Mode Marché (ventes sur place)
-    Route::get('/marche', [ModeMarcheController::class, 'index'])->name('marche.index');
-    Route::post('/marche/store', [ModeMarcheController::class, 'store'])->name('marche.store');
-    Route::get('/marche/ventes-jour', [ModeMarcheController::class, 'ventesJour'])->name('marche.ventes-jour');
-    Route::get('/marche/check-stock/{vinyle}', [ModeMarcheController::class, 'checkStock'])->name('marche.check-stock');
-    Route::post('/marche/{order}/cancel', [ModeMarcheController::class, 'cancel'])->name('marche.cancel');
+    // Note: Les routes Mode Marché sont définies en dehors de ce groupe
+    // pour avoir les noms 'marche.xxx' sans préfixe 'admin.'
+});
 
-    // Alertes de stock
+// ============================================
+// ROUTES MODE MARCHÉ (Admin et Employé)
+// ============================================
+// Définies en dehors du groupe admin pour garder les noms 'marche.xxx'
+Route::middleware(['auth', 'role:admin,employe'])->prefix('admin/marche')->name('marche.')->group(function () {
+    Route::get('/', [ModeMarcheController::class, 'index'])->name('index');
+    Route::post('/store', [ModeMarcheController::class, 'store'])->name('store');
+    Route::get('/ventes-jour', [ModeMarcheController::class, 'ventesJour'])->name('ventes-jour');
+    Route::get('/check-stock/{vinyle}', [ModeMarcheController::class, 'checkStock'])->name('check-stock');
+    Route::post('/{order}/cancel', [ModeMarcheController::class, 'cancel'])->name('cancel');
+    Route::get('/export', [ModeMarcheController::class, 'export'])->name('export');
+});
+
+// ============================================
+// ROUTES ALERTES STOCK (Admin et Employé)
+// ============================================
+Route::middleware(['auth', 'role:admin,employe'])->group(function () {
     Route::get('/stock-alerts', [StockAlertController::class, 'index'])->name('stock-alerts.index');
     Route::get('/stock-alerts/history', [StockAlertController::class, 'history'])->name('stock-alerts.history');
     Route::get('/stock-alerts/export', [StockAlertController::class, 'export'])->name('stock-alerts.export');
