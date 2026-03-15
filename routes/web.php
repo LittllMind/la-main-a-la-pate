@@ -28,8 +28,14 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 // ============================================
-// ROUTES ADMIN USERS (Admin uniquement)
+// ROUTES ADMIN ORDERS (Admin et Employé)
 // ============================================
+Route::middleware(['auth', 'role:admin,employe'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/orders', [\App\Http\Controllers\Admin\OrderAdminController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [\App\Http\Controllers\Admin\OrderAdminController::class, 'show'])->name('orders.show');
+    Route::patch('/orders/{order}/status', [\App\Http\Controllers\Admin\OrderAdminController::class, 'updateStatus'])->name('orders.status');
+    Route::post('/orders/{order}/cancel', [\App\Http\Controllers\Admin\OrderAdminController::class, 'cancel'])->name('orders.cancel');
+});
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
 });

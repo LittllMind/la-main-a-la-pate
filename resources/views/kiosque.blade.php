@@ -12,6 +12,17 @@
 @section('title', 'Catalogue - Vinyle Hydrodécoupé')
 
 @section('content')
+{{-- DEBUG: Vérification données --}}
+@if(empty($vinylesData))
+    <div class="bg-red-900/50 border border-red-500 p-6 rounded-xl mb-6">
+        <h2 class="text-xl font-bold text-red-400 mb-2">⚠️ Aucun vinyle à afficher</h2>
+        <p class="text-gray-300">La variable \$vinylesData est vide.</p>
+        <p class="text-sm text-gray-400 mt-2">Vérifiez qu'il y a des vinyles en base de données.</p>
+    </div>
+@else
+    <!-- {{ count($vinylesData) }} vinyles chargés -->
+@endif
+
 <div x-data="kiosqueComponent(@js($vinylesData))" class="space-y-6">
     <!-- Header avec titre et panier -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

@@ -19,6 +19,12 @@
                 <a href="{{ route('ventes.index') }}" class="{{ request()->routeIs('ventes.*') ? 'active' : '' }}">
                     Ventes
                 </a>
+                <a href="{{ route('marche.index') }}" class="{{ request()->routeIs('marche.*') ? 'active' : '' }}">
+                    Mode Marché
+                </a>
+                <a href="{{ route('admin.orders.index') }}" class="{{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
+                    Commandes
+                </a>
                 <a href="{{ route('stats') }}" class="{{ request()->routeIs('stats') ? 'active' : '' }}">
                     Statistiques
                 </a>

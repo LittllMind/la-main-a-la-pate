@@ -1,29 +1,19 @@
 #!/bin/bash
-# Script pour exécuter les tests de sécurité T13.3
+# Script de test T13.3 - Security Tests
 
-cd ~/vinyles-stock || exit 1
+cd /home/aur-lien/.picoclaw/workspace/vinyles-stock
 
-echo "========================================="
-echo "T13.3 — Security Tests Execution"
-echo "========================================="
+echo "=== T13.3 - Exécution des tests de sécurité ==="
+echo "Date: $(date)"
 echo ""
 
-# Exécuter les tests avec sortie détaillée
-php artisan test tests/Feature/Security/SecurityTest.php --no-ansi 2>&1 | tee /tmp/security-test-output.txt
+# Exécuter les tests avec output détaillé
+php artisan test tests/Feature/Security/SecurityTest.php --colors=never 2>&1
 
-EXIT_CODE=${PIPESTATUS[0]}
+exit_code=$?
 
 echo ""
-echo "========================================="
-echo "EXIT CODE: $EXIT_CODE"
-echo "========================================="
+echo "=== Fin des tests ==="
+echo "Exit code: $exit_code"
 
-if [ $EXIT_CODE -eq 0 ]; then
-    echo "✅ TOUS LES TESTS PASSENT"
-else
-    echo "❌ DES TESTS ONT ÉCHOUÉ"
-    echo ""
-    echo "Fichier de sortie: /tmp/security-test-output.txt"
-fi
-
-exit $EXIT_CODE
+exit $exit_code

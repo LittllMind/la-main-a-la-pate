@@ -23,4 +23,12 @@ class Vente extends Model
     {
         return $this->hasMany(LigneVente::class);
     }
+
+    /**
+     * Relation : Une vente peut avoir une commande liée
+     */
+    public function order()
+    {
+        return $this->hasOne(Order::class);
+    }
 }

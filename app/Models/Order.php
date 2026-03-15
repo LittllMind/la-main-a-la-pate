@@ -14,6 +14,7 @@ class Order extends Model
 
     protected $fillable = [
         'numero_commande',
+        'vente_id',
         'user_id',
         'nom',
         'prenom',
@@ -78,6 +79,14 @@ class Order extends Model
         $number = $lastOrder ? ((int) substr($lastOrder->numero_commande, -4)) + 1 : 1;
 
         return sprintf('CMD-%s-%04d', $year, $number);
+    }
+
+    /**
+     * Relation : Une commande peut être liée à une vente kiosque
+     */
+    public function vente(): BelongsTo
+    {
+        return $this->belongsTo(Vente::class);
     }
 
     /**

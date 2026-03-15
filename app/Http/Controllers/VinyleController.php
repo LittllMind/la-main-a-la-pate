@@ -170,8 +170,8 @@ class VinyleController extends Controller
             return redirect()->route('kiosque.index');
         }
 
-        // Transformer pour la vue
-        $vinylesData = $vinyles->through(function (Vinyle $vinyle) {
+        // Transformer pour la vue (map pour avoir des tableaux, pas des stdClass)
+        $vinylesData = $vinyles->getCollection()->map(function (Vinyle $vinyle) {
             return [
                 'id'        => $vinyle->id,
                 'artiste'   => $vinyle->artiste,
@@ -180,10 +180,10 @@ class VinyleController extends Controller
                 'quantite'  => $vinyle->quantite,
                 'image'     => $vinyle->getFirstMediaUrl('photo', 'medium'),
             ];
-        });
+        })->all();
 
         return view('kiosque', [
-            'vinylesData' => $vinylesData->items(),
+            'vinylesData' => $vinylesData,
             'vinyles' => $vinyles, // Pour les liens de pagination
         ]);
     }

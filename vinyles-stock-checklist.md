@@ -7,7 +7,56 @@
 
 ## 🎯 TÂCHES EN COURS
 
-*Aucune tâche active - le projet attend tes instructions*
+### T12 — Gestion Users + Rapports 🔄
+**Statut** : Infrastructure complète, tests prêts à exécuter
+**Priorité** : Haute (suite logique T11/T13)
+
+**Sous-tâches** :
+- [ ] T12.1 : UserCrudTest (12 tests) + RolePermissionsTest (12 tests)
+- [ ] T12.2 : GlobalStatsTest (12 tests)
+- [ ] T12.3 : MonthlyReportTest (8 tests) — Risque PDF
+- [ ] T12.4 : StockReportTest (7 tests)
+- [ ] T12.5 : ArtistReportTest (8 tests)
+
+**Action requise** : Exécution manuelle des tests par Aurélien
+```bash
+cd ~/vinyles-stock
+php artisan test tests/Feature/User/ tests/Feature/Stats/ tests/Feature/Reports/ --no-ansi
+```
+
+---
+
+### T15 — Performance 🔄
+**Statut** : Tests créés, optimisations appliquées, en attente validation
+**Priorité** : Haute (débloqué par T14)
+
+**Sous-tâches** :
+- [ ] T15.1 : KiosquePerformanceTest (3 tests)
+- [ ] T15.2 : StatsPerformanceTest (4 tests)
+- [ ] T15.3 : VinyleQueriesOptimizationTest (3 tests)
+
+**Optimisations déjà en place** :
+- Eager loading `with(['media'])` sur Kiosque et Admin
+- Pagination 24/25 éléments
+- Cache 5min sur les stats
+- Agrégations SQL (pas de boucles)
+
+**Action requise** : Exécution manuelle des tests par Aurélien
+```bash
+cd ~/vinyles-stock
+php artisan test tests/Feature/Performance/ --no-ansi
+```
+
+---
+
+### T14 — Mode Marché ✅
+**Statut** : **COMPLET** — 10/10 tests verts
+**Priorité** : Terminé
+
+**Validation** : Tous les tests ModeMarche passent
+- Historique Ventes Jour : 5 tests ✅
+- Annulation Vente : 4 tests ✅
+- Export Journée : 1 test ✅
 
 
 

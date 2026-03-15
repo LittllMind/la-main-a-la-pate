@@ -2,7 +2,7 @@
 # Health Check Script — vinyles-stock
 # Vérifie l'état du système avant/après déploiement
 
-set -e
+# set -e  # Désactivé pour éviter arrêt brutal sur erreur non critique
 
 VERBOSE=false
 FIX=false
@@ -95,7 +95,7 @@ fi
 if php artisan migrate:status 2>/dev/null | grep -q "No migrations"; then
   fail "Aucune migration trouvée ou connexion échouée"
 else
-  MIGRATIONS_PENDING=$(php artisan migrate:status --pending 2>/dev/null | grep -c "Pending" || echo 0)
+  MIGRATIONS_PENDING=$(php artisan migrate:status --pending 2>/dev/null | grep -c "Pending" 2>/dev/null | head -1 || echo 0)
   if [[ "$MIGRATIONS_PENDING" -gt 0 ]]; then
     warn "$MIGRATIONS_PENDING migrations en attente"
     if [[ "$FIX" == true ]]; then

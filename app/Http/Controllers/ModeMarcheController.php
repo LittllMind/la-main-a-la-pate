@@ -21,14 +21,13 @@ class ModeMarcheController extends Controller
     public function index()
     {
         $vinyles = Vinyle::where('quantite', '>', 0)
-            ->with('artistes')
-            ->orderBy('nom')
+            ->orderBy('modele')
             ->get()
             ->map(function ($vinyle) {
                 return [
                     'id' => $vinyle->id,
-                    'nom' => $vinyle->nom,
-                    'artiste_principale' => $vinyle->artiste_principale?->nom ?? 'Artiste inconnu',
+                    'nom' => $vinyle->modele,
+                    'artiste_principale' => $vinyle->artiste ?? 'Artiste inconnu',
                     'prix' => $vinyle->prix,
                     'quantite' => $vinyle->quantite,
                     'image_url' => $vinyle->image_urls[0] ?? null,
@@ -267,8 +266,16 @@ class ModeMarcheController extends Controller
             return response()->json(['error' => 'Seules les ventes marché peuvent être annulées ici'], 403);
         }
 
-        if ($order->statut === 'annulee') {
+        if ($order->statut === 'annulée') {
             return response()->json(['error' => 'Cette vente est déjà annulée'], 400);
+        }
+
+        // Vérifier la limite de temps (24h)
+        if ($order->created_at->diffInHours(now()) > 24) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Impossible d\'annuler une vente de plus de 24h'
+            ], 422);
         }
 
         try {
