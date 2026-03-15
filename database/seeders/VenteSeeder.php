@@ -206,9 +206,66 @@ class VenteSeeder extends Seeder
 
                 foreach ($venteData['lignes'] as $ligneData) {
 
-                    $vinyle = Vinyle::where('nom', $ligneData['nom'])
-                        ->where('modele', $ligneData['modele'] ?? '')
-                        ->firstOrFail();
+                    // Mapping des noms courts vers les noms d'artistes complets
+                    $artisteMapping = [
+                        'Mylène Farmer' => 'Mylène Farmer',
+                        'Bowie' => 'David Bowie',
+                        'Elvis' => 'Elvis',
+                        'Bob Marley' => 'Bob Marley',
+                        'Guns N\' Roses' => 'Guns N\' Roses',
+                        'Renaud' => 'Renaud',
+                        'Nirvana' => 'Nirvana',
+                        'Red Hot Chili Peppers' => 'Red Hot Chili Peppers',
+                        'Daft Punk' => 'Daft Punk',
+                        'Iron Maiden' => 'Iron Maiden',
+                        'Billie Eilish' => 'Billie Eilish',
+                        'Blues Brothers' => 'Blues Brothers',
+                        'Rammstein' => 'Rammstein',
+                        'Gorillaz' => 'Gorillaz',
+                        'AC/DC' => 'AC/DC',
+                        'Michael Jackson' => 'Michael Jackson',
+                        'Pink Floyd' => 'Pink Floyd',
+                        'Eminem' => 'Eminem',
+                        'Beatles' => 'The Beatles',
+                        'BTS' => 'BTS',
+                        'The Weeknd' => 'The Weeknd',
+                        'Queen' => 'Queen',
+                        'Prince' => 'Prince',
+                        '2Pac' => '2Pac',
+                        'Harley' => 'Harley',
+                        'Bad Bunny' => 'Bad Bunny',
+                        'Snoop Dogg' => 'Snoop Dogg',
+                        'Johnny Hallyday' => 'Johnny Hallyday',
+                        'Indochine' => 'Indochine',
+                        'Jul' => 'Jul',
+                        'Arctic Monkeys' => 'Arctic Monkeys',
+                        'Rolling Stones' => 'The Rolling Stones',
+                        'NTM' => 'NTM',
+                        'IAM' => 'IAM',
+                        'Wu Tang' => 'Wu-Tang Clan',
+                        'Linkin Park' => 'Linkin Park',
+                        'Shaka Ponk' => 'Shaka Ponk',
+                        'Kiss' => 'Kiss',
+                        'Orelsan' => 'Orelsan',
+                    ];
+
+                    $artisteNom = $artisteMapping[$ligneData['nom']] ?? $ligneData['nom'];
+                    
+                    // Détermine le modèle selon le fond
+                    $modele = match($ligneData['fond']) {
+                        'miroir' => 'Miroir Gold',
+                        'dore' => 'Doré',
+                        default => 'Standard',
+                    };
+                    
+                    $vinyle = Vinyle::where('artiste', 'LIKE', '%' . $artisteNom . '%')
+                        ->where('modele', $modele)
+                        ->first();
+                    
+                    if (!$vinyle) {
+                        $this->command->warn("Vinyle non trouvé: {$artisteNom} / {$modele}");
+                        continue;
+                    }
 
                     $fond     = $ligneData['fond'];              // 'standard', 'miroir', 'dore'
                     $quantite = $ligneData['quantite'] ?? 1;

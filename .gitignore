@@ -17,4 +17,4 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-push_deploy_prod.sh
+push_deploy_prod.sh.env.testing

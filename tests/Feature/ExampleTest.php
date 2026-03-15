@@ -11,12 +11,7 @@ class ExampleTest extends TestCase
      */
     public function test_the_application_returns_a_successful_response(): void
     {
-        // Option 1 : Tester la redirection (si auth requis)
+        // La page d'accueil est publique (retourne 200)
         $response = $this->get('/');
-        $response->assertStatus(302); // Redirige vers /login
-        
-        // Option 2 : Tester une page publique (si elle existe)
-        // $response = $this->get('/kiosque');
-        // $response->assertStatus(200);
-    }
+        $response->assertStatus(200);    }
 }

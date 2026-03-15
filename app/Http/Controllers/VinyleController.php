@@ -16,30 +16,33 @@ class VinyleController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search', '');
-        $filter = $request->get('filter', null); // stock_bas / rupture / null
+        $filter = $request->get('filter', null);
 
         $vinyles = Vinyle::query()
+            ->with(['media']) // eager load photos
             ->when($search, function ($query, $search) {
-                return $query->where(function ($q) use ($search) {
-                    $q->where('nom', 'like', "%{$search}%")
-                        ->orWhere('modele', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('artiste', 'like', "%{$search}%")
+                        ->orWhere('reference', 'like', "%{$search}%")
+                        ->orWhere('modele', 'like', "%{$search}%")
+                        ->orWhere('genre', 'like', "%{$search}%");
                 });
             })
             ->when($filter === 'stock_bas', function ($query) {
-                // mêmes règles que dans StatsController
                 $query->where('quantite', '>', 0)
-                    ->where('quantite', '<=', 3);
+                    ->whereColumn('quantite', '<=', 'seuil_alerte');
             })
             ->when($filter === 'rupture', function ($query) {
                 $query->where('quantite', '<=', 0);
             })
-            ->orderBy('nom')
-            ->paginate(10)
-            ->appends($request->only('search', 'filter')); // pour garder les filtres en pagination
+            ->orderBy('artiste')
+            ->orderBy('modele')
+            ->withCount(['ventes'])
+            ->paginate(25)
+            ->appends($request->only('search', 'filter'));
 
         return view('vinyles.index', compact('vinyles', 'search', 'filter'));
     }
-
 
     public function create()
     {
@@ -49,22 +52,29 @@ class VinyleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nom' => 'required|string|max:255',
+            'reference' => 'required|string|max:50|unique:vinyles',
+            'artiste' => 'required|string|max:255',
             'modele' => 'required|string|max:255',
+            'genre' => 'nullable|string|max:100',
+            'style' => 'nullable|string|max:100',
             'prix' => 'required|numeric|min:0',
             'quantite' => 'required|integer|min:0',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-
+            'seuil_alerte' => 'required|integer|min:1',
+            'photos' => 'nullable|array|max:3',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         // STORE
         $vinyle = Vinyle::create($validated);
 
-        if ($request->hasFile('photo')) {
-            $vinyle->addMediaFromRequest('photo')
-                ->toMediaCollection('photo');
+        // Upload des photos (3 max)
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $index => $photo) {
+                $vinyle->addMedia($photo)
+                    ->withCustomProperties(['order' => $index])
+                    ->toMediaCollection('photo');
+            }
         }
-
 
         return redirect()->route('vinyles.index')
             ->with('success', 'Vinyle ajouté avec succès');
@@ -78,25 +88,43 @@ class VinyleController extends Controller
     public function update(Request $request, Vinyle $vinyle)
     {
         $validated = $request->validate([
-            'nom' => 'required|string|max:255',
+            'reference' => 'required|string|max:50|unique:vinyles,reference,' . $vinyle->id,
+            'artiste' => 'required|string|max:255',
             'modele' => 'required|string|max:255',
+            'genre' => 'nullable|string|max:100',
+            'style' => 'nullable|string|max:100',
             'prix' => 'required|numeric|min:0',
             'quantite' => 'required|integer|min:0',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'seuil_alerte' => 'required|integer|min:1',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'delete_photos' => 'nullable|array',
         ]);
 
         $vinyle->update($validated);
 
-        // Upload nouvelle photo (remplace l'ancienne)
-        if ($request->hasFile('photo')) {
-            $vinyle->clearMediaCollection('photo');
-            $vinyle->addMediaFromRequest('photo')
-                ->toMediaCollection('photo');
+        // Supprimer les photos cochées
+        if ($request->has('delete_photos')) {
+            $photos = $vinyle->getMedia('photo');
+            if ($photos) {
+                foreach ($request->input('delete_photos') as $mediaId) {
+                    if ($media = $photos->find($mediaId)) {
+                        $media->delete();
+                    }
+                }
+            }
         }
 
-        // Suppression de la photo cochée
-        if ($request->has('delete_photo')) {
-            $vinyle->clearMediaCollection('photo');
+        // Upload nouvelles photos (respect max 3 total)
+        $currentCount = $vinyle->getMedia('photo')->count();
+        $maxNew = 3 - $currentCount;
+
+        if ($request->hasFile('photos') && $maxNew > 0) {
+            foreach (array_slice($request->file('photos'), 0, $maxNew) as $index => $photo) {
+                $vinyle->addMedia($photo)
+                    ->withCustomProperties(['order' => $currentCount + $index])
+                    ->toMediaCollection('photo');
+            }
         }
 
         return redirect()->route('vinyles.index')
@@ -111,23 +139,52 @@ class VinyleController extends Controller
             ->with('success', 'Vinyle supprimé avec succès');
     }
 
-    public function kiosque()
+    public function kiosque(Request $request)
     {
-        $vinyles = Vinyle::orderBy('nom')->get();
+        $allowedSorts = ['artiste', 'modele', 'prix', 'quantite', 'created_at'];
+        $sort = $request->get('sort', 'artiste');
+        
+        // Protection injection SQL : whitelist des colonnes
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'artiste';
+        }
+        
+        $search = $request->get('search', '');
+        
+        $vinylesQuery = Vinyle::with(['media']) // Eager loading des médias
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('artiste', 'like', "%{$search}%")
+                        ->orWhere('modele', 'like', "%{$search}%")
+                        ->orWhere('genre', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy($sort)
+            ->orderBy('modele');
+        
+        // Pagination pour éviter chargement trop grand (24 par page pour grille 4x6)
+        $vinyles = $vinylesQuery->paginate(24)->withQueryString();
 
-        $vinylesData = $vinyles->map(function (Vinyle $vinyle) {
+        // Redirection si page invalide (ex: page=2 mais une seule page de résultats)
+        if ($vinyles->isEmpty() && $vinyles->currentPage() > 1) {
+            return redirect()->route('kiosque.index');
+        }
+
+        // Transformer pour la vue (map pour avoir des tableaux, pas des stdClass)
+        $vinylesData = $vinyles->getCollection()->map(function (Vinyle $vinyle) {
             return [
                 'id'        => $vinyle->id,
-                'nom'       => $vinyle->nom,
+                'artiste'   => $vinyle->artiste,
                 'modele'    => $vinyle->modele,
                 'prix'      => $vinyle->prix,
                 'quantite'  => $vinyle->quantite,
                 'image'     => $vinyle->getFirstMediaUrl('photo', 'medium'),
             ];
-        });
+        })->all();
 
         return view('kiosque', [
-            'vinylesData' => $vinylesData->values()->all(),
+            'vinylesData' => $vinylesData,
+            'vinyles' => $vinyles, // Pour les liens de pagination
         ]);
     }
 }

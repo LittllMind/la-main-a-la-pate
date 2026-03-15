@@ -2,42 +2,54 @@
 
 namespace Database\Factories;
 
-use App\Models\Vinyle;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory\<<App\Models\Vinyle>
+ */
 class VinyleFactory extends Factory
 {
-    protected $model = Vinyle::class;
+    private static int $counter = 0;
 
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
+        self::$counter++;
+        
         return [
-            'nom' => fake()->words(3, true), // "Lorem Ipsum Dolor"
-            'modele' => fake()->randomElement(['Standard', 'Miroir', 'Doré']),
-            'prix' => fake()->randomFloat(2, 15, 50), // Entre 15.00 et 50.00
-            'quantite' => fake()->numberBetween(0, 20),
-            'seuil_alerte' => 3,
+            'reference' => 'VIN-' . str_pad(self::$counter, 4, '0', STR_PAD_LEFT),
+            'artiste' => fake()->name(),
+            'modele' => fake()->word() . ' Edition',
+            'genre' => fake()->randomElement(['Rock', 'Jazz', 'Classique', 'Pop', 'Electro']),
+            'style' => fake()->randomElement(['33 Tours', '45 Tours']),
+            'prix' => fake()->randomFloat(2, 10, 100),
+            'quantite' => fake()->numberBetween(0, 50),
+            'seuil_alerte' => 5,
         ];
     }
 
     /**
-     * État : Stock critique
+     * Vinyle with low stock
      */
-    public function critique(): static
+    public function lowStock(): static
     {
         return $this->state(fn (array $attributes) => [
-            'quantite' => 0,
+            'quantite' => fake()->numberBetween(1, 3),
+            'seuil_alerte' => 5,
         ]);
     }
 
     /**
-     * État : Stock bas
+     * Out of stock vinyle
      */
-    public function stockBas(): static
+    public function outOfStock(): static
     {
         return $this->state(fn (array $attributes) => [
-            'quantite' => 2,
-            'seuil_alerte' => 3,
+            'quantite' => 0,
         ]);
     }
 }

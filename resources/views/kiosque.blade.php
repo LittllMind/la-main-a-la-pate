@@ -12,6 +12,17 @@
 @section('title', 'Catalogue - Vinyle Hydrodécoupé')
 
 @section('content')
+{{-- DEBUG: Vérification données --}}
+@if(empty($vinylesData))
+    <div class="bg-red-900/50 border border-red-500 p-6 rounded-xl mb-6">
+        <h2 class="text-xl font-bold text-red-400 mb-2">⚠️ Aucun vinyle à afficher</h2>
+        <p class="text-gray-300">La variable \$vinylesData est vide.</p>
+        <p class="text-sm text-gray-400 mt-2">Vérifiez qu'il y a des vinyles en base de données.</p>
+    </div>
+@else
+    <!-- {{ count($vinylesData) }} vinyles chargés -->
+@endif
+
 <div x-data="kiosqueComponent(@js($vinylesData))" class="space-y-6">
     <!-- Header avec titre et panier -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -50,7 +61,7 @@
             <div class="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 group">
                 <!-- Image -->
                 <div class="w-full h-56 bg-gray-900 relative overflow-hidden">
-                    <img :src="vinyle.image || '/images/no-image.png'" :alt="vinyle.nom"
+                    <img :src="vinyle.image || '/images/no-image.png'" :alt="vinyle.artiste"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     <div x-show="(vinyle.quantite ?? 0) <= 0" x-cloak
                         class="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -61,13 +72,14 @@
                 <!-- Contenu -->
                 <div class="p-4 space-y-3">
                     <div>
-                        <h3 class="font-bold text-lg text-gray-100 truncate" x-text="vinyle.nom"></h3>
+                        <h3 class="font-bold text-lg text-gray-100 truncate" x-text="vinyle.artiste"></h3>
                         <p class="text-sm text-gray-400" x-text="vinyle.modele"></p>
                     </div>
 
                     <div class="flex items-center justify-between">
-                        <div class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"
-                            x-text="formatPrice(vinyle.prix)"></div>
+                        <div class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                            <span>À partir de </span><span x-text="formatPrice(vinyle.prix)"></span>
+                        </div>
                         <div class="text-sm text-gray-500" x-text="`Stock: ${vinyle.quantite ?? 0}`"></div>
                     </div>
 
@@ -104,8 +116,21 @@
     <!-- Modal de sélection de quantité -->
     <div x-show="selectedVinyle !== null" x-cloak
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-        @click.self="closeQuantityModal()">
-        <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-700 shadow-xl">
+        @click.self="closeQuantityModal()"
+        @keydown.escape.window="closeQuantityModal()"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0">
+        <div class="bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-gray-700 shadow-xl"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95">
             <h3 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"
                 x-text="selectedVinyle?.nom"></h3>
 
@@ -183,9 +208,9 @@
             get filteredVinyles() {
                 const s = (this.search || '').toLowerCase().trim();
                 return this.vinyles.filter(v => {
-                    const nom = (v.nom || '').toLowerCase();
+                    const artiste = (v.artiste || '').toLowerCase();
                     const modele = (v.modele || '').toLowerCase();
-                    const matchesSearch = !s || nom.includes(s) || modele.includes(s);
+                    const matchesSearch = !s || artiste.includes(s) || modele.includes(s);
                     const inStock = this.showAll || (v.quantite ?? 0) > 0;
                     return matchesSearch && inStock;
                 });
@@ -196,12 +221,16 @@
                 this.selectedVinyle = vinyle;
                 this.selectedQuantity = 1;
                 this.selectedFond = 'standard';
+                // Bloquer le scroll du body
+                document.body.style.overflow = 'hidden';
             },
 
             closeQuantityModal() {
                 this.selectedVinyle = null;
                 this.selectedQuantity = 1;
                 this.selectedFond = 'standard';
+                // Réactiver le scroll du body
+                document.body.style.overflow = '';
             },
 
             incrementQuantity() {

@@ -103,6 +103,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Vérifie si l'utilisateur est employé.
+     *
+     * @return bool
+     */
+    public function isEmploye(): bool
+    {
+        return $this->role === 'employe';
+    }
+
+    /**
      * Vérifie si l'utilisateur est employé ou admin.
      *
      * @return bool

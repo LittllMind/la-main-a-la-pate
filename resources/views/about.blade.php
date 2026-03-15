@@ -12,43 +12,13 @@
         <div class="space-y-12">
             <section class="bg-gray-800 rounded-2xl p-8 border border-gray-700">
                 <h2 class="text-3xl font-bold mb-6 flex items-center">
-                    <span class="text-3xl mr-3">💿</span>
-                    Qu'est-ce que l'hydrodécoupe ?
+                    <span class="text-3xl mr-3">✨</span>
+                    Notre savoir-faire
                 </h2>
                 <p class="text-gray-300 text-lg leading-relaxed">
-                    L'hydrodécoupe est une technique de découpe de précision utilisant un jet d'eau à haute pression.
-                    Appliquée aux vinyles, elle permet de créer des formes et motifs impossibles à réaliser avec des méthodes traditionnelles,
-                    transformant chaque disque en une véritable œuvre d'art unique.
+                    Nous sélectionnons chaque vinyle pour son potentiel artistique et son histoire musicale.
+                    Chaque pièce est unique et transformée avec soin.
                 </p>
-            </section>
-
-            <section class="bg-gray-800 rounded-2xl p-8 border border-gray-700">
-                <h2 class="text-3xl font-bold mb-6 flex items-center">
-                    <span class="text-3xl mr-3">🎨</span>
-                    Une collection artisanale
-                </h2>
-                <p class="text-gray-300 text-lg leading-relaxed mb-4">
-                    Chaque vinyle de notre collection est sélectionné avec soin pour son potentiel artistique et son histoire musicale.
-                    Nous travaillons avec des vinyles de tous genres - rock, jazz, classique, pop - pour créer des pièces qui racontent une histoire.
-                </p>
-                <ul class="space-y-3 text-gray-300">
-                    <li class="flex items-center">
-                        <span class="text-purple-400 mr-3">✓</span>
-                        Découpe à l'eau ultra-précise
-                    </li>
-                    <li class="flex items-center">
-                        <span class="text-purple-400 mr-3">✓</span>
-                        Finition à la main
-                    </li>
-                    <li class="flex items-center">
-                        <span class="text-purple-400 mr-3">✓</span>
-                        Pièces uniques et originales
-                    </li>
-                    <li class="flex items-center">
-                        <span class="text-purple-400 mr-3">✓</span>
-                        Respect du support vinyle
-                    </li>
-                </ul>
             </section>
 
             <section class="bg-gray-800 rounded-2xl p-8 border border-gray-700">
@@ -58,7 +28,7 @@
                 </h2>
                 <p class="text-gray-300 text-lg leading-relaxed">
                     Le vinyle n'est pas seulement un support musical, c'est un objet chargé d'émotion et de nostalgie.
-                    En le transformant par hydrodécoupe, nous donnons une seconde vie à ces disques,
+                    Nous donnons une seconde vie à ces disques,
                     créant des objets de décoration uniques qui préservent l'âme de la musique qu'ils contenaient.
                 </p>
             </section>
@@ -73,7 +43,7 @@
                         <span class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1">1</span>
                         <div>
                             <h3 class="font-semibold mb-1">Explorez le catalogue</h3>
-                            <p>Parcourez notre collection de vinyles hydrodécoupés disponibles.</p>
+                            <p>Parcourez notre collection de vinyles uniques disponibles.</p>
                         </div>
                     </div>
                     <div class="flex items-start">

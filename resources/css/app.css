@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* x-cloak: cache les éléments Alpine avant initialisation */
+[x-cloak] {
+    display: none !important;
+}
+
 /* Reset et Base */
 * {
     margin: 0;

@@ -77,11 +77,19 @@
                                 
                                 <!-- Infos vinyle -->
                                 <div class="flex-1">
-                                    <h3 class="text-lg font-semibold text-white">{{ $item->vinyle->titre ?? 'Vinyle inconnu' }}</h3>
+                                    <h3 class="text-lg font-semibold text-white">{{ $item->vinyle->nom ?? 'Vinyle inconnu' }}</h3>
                                     <p class="text-sm text-gray-400">Quantité : {{ $item->quantite }}</p>
-                                    @if($item->fond)
-                                        <p class="text-xs text-pink-400 mt-1">Fond : {{ $item->fond->nom }}</p>
-                                    @endif
+                                    <p class="text-xs mt-1">
+                                        @if($item->fond_id && $item->fond)
+                                            <span class="text-pink-400">
+                                                ✨ Avec fond {{ $item->fond->nom }} (+{{ number_format($item->fond->prix_achat, 2) }} €)
+                                            </span>
+                                        @else
+                                            <span class="text-gray-500">
+                                                📀 Vinyle simple
+                                            </span>
+                                        @endif
+                                    </p>
                                 </div>
                                 
                                 <!-- Prix -->
@@ -159,8 +167,9 @@
                     </div>
 
                     <!-- Bouton de paiement -->
-                    <form action="{{ route('orders.confirm') }}" method="POST">
+                    <form action="{{ route('payment.checkout') }}" method="POST">
                         @csrf
+                        <input type="hidden" name="order_id" value="{{ $order->id ?? '' }}">
                         <button type="submit"
                             class="w-full px-6 py-4 bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg mb-4 flex items-center justify-center space-x-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

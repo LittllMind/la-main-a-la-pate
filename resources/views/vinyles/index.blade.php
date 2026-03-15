@@ -1,98 +1,166 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>Catalogue des vinyles</h2>
+@extends('layouts.app')
 
-            @if (request('filter') === 'stock_bas')
-                <span class="badge badge-warning">⚠️ Stock bas uniquement</span>
-            @elseif(request('filter') === 'rupture')
-                <span class="badge badge-danger">🚨 Ruptures de stock</span>
-            @endif
+@section('title', '🎵 Catalogue des Vinyles')
+
+@section('content')
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            🎵 Catalogue des Vinyles
+        </h2>
+        @can('create', App\Models\Vinyle::class)
+            <a href="{{ route('vinyles.create') }}" class="btn btn-primary">
+                + Nouveau vinyle
+            </a>
+        @endcan
+    </div>
+
+    <div class="page-content" x-data="{ showModal: false, selectedVinyle: '', selectedId: null, confirmDelete(id, nom) { this.selectedId = id; this.selectedVinyle = nom; this.showModal = true; }, deleteVinyle() { if (this.selectedId) { fetch('/vinyles/' + this.selectedId, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' } }).then(() => window.location.reload()); } } }">
+        
+        <!-- Filtres et recherche -->
+        <div class="mb-4 flex flex-wrap gap-4 items-end">
+            <form method="GET" action="{{ route('vinyles.index') }}" class="flex gap-2 flex-1">
+                <div class="flex-1 max-w-md">
+                    <input type="text" name="search" value="{{ $search }}" 
+                           placeholder="Rechercher par titre, artiste ou référence..."
+                           class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+                </div>
+                <button type="submit" class="btn btn-primary">Rechercher</button>
+                @if ($search)
+                    <a href="{{ route('vinyles.index') }}" class="btn btn-secondary">
+                        Réinitialiser
+                    </a>
+                @endif
+            </form>
+            
+            <!-- Filtres rapides -->
+            <div class="flex gap-2">
+                <a href="{{ route('vinyles.index', ['filter' => 'stock_bas'] + request()->except('filter', 'page')) }}" 
+                   class="btn {{ $filter === 'stock_bas' ? 'btn-warning' : 'btn-secondary' }} text-sm">
+                    ⚠️ Stock bas
+                </a>
+                <a href="{{ route('vinyles.index', ['filter' => 'rupture'] + request()->except('filter', 'page')) }}" 
+                   class="btn {{ $filter === 'rupture' ? 'btn-danger' : 'btn-secondary' }} text-sm">
+                    🚨 Rupture
+                </a>
+                @if($filter)
+                    <a href="{{ route('vinyles.index', request()->except('filter', 'page')) }}" class="btn btn-secondary text-sm">
+                        ❌ Filtre
+                    </a>
+                @endif
+            </div>
         </div>
 
-         <a href="{{ route('vinyles.create') }}" class="btn btn-primary">
-            + Nouveau vinyle
-        </a>
-    </x-slot>
+        <!-- Badge filtre actif -->
+        @if($filter)
+            <div class="mb-4">
+                <span class="badge {{ $filter === 'stock_bas' ? 'badge-warning' : 'badge-danger' }}">
+                    {{ $filter === 'stock_bas' ? '⚠️ Stock bas uniquement' : '🚨 Ruptures de stock' }}
+                </span>
+            </div>
+        @endif
 
-    <div class="page-content" x-data="{ showModal: false, selectedVinyle: '', selectedId: null, confirmDelete(id, nom) { this.selectedId = id; this.selectedVinyle = nom; this.showModal = true; }, deleteVinyle() { if (this.selectedId) { window.location.href = '/vinyles/' + this.selectedId; } } }">
-        <form method="GET" action="{{ route('vinyles.index') }}" class="search-box">
-            <input type="text" name="search" value="{{ $search }}" placeholder="Rechercher par nom ou modèle..."
-                class="search-input">
-
-            @if ($search)
-                <a href="{{ route('vinyles.index') }}" class="btn btn-secondary" style="margin-left: 8px;">
-                    Réinitialiser
-                </a>
-            @endif
-        </form>
-
-        <div class="table-responsive">
-            <table class="vinyle-table">
+        <!-- Tableau -->
+        <div class="overflow-x-auto bg-gray-800 rounded-lg shadow-lg border border-gray-700">
+            <table class="w-full text-left">
                 <thead>
-                    <tr>
-                        <th>Photo</th>
-                        <th>Nom</th>
-                        <th>Modèle</th>
-                        <th>Prix</th>
-                        <th>Quantité</th>
-                        <th>Actions</th>
+                    <tr class="bg-gray-700/50 text-purple-300">
+                        <th class="px-4 py-3 font-semibold">Référence</th>
+                        <th class="px-4 py-3 font-semibold">Titre</th>
+                        <th class="px-4 py-3 font-semibold">Artiste</th>
+                        <th class="px-4 py-3 font-semibold">Genre/Style</th>
+                        <th class="px-4 py-3 font-semibold text-right">Prix</th>
+                        <th class="px-4 py-3 font-semibold text-center">Stock</th>
+                        <th class="px-4 py-3 font-semibold text-center">Statut</th>
+                        <th class="px-4 py-3 font-semibold text-center">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-gray-700">
                     @forelse($vinyles as $vinyle)
-                        <tr class="{{ $vinyle->isLowStock() ? 'low-stock' : '' }}">
-                            <td>
-                                @if ($vinyle->hasMedia('photo'))
-                                    <img src="{{ $vinyle->getFirstMediaUrl('photo', 'thumb') }}"
-                                        alt="{{ $vinyle->nom }}" class="thumb-img">
-                                @else
-                                    <div class="no-image">Pas d'image</div>
-                                @endif
-
+                        <tr class="hover:bg-gray-700/30 transition {{ $vinyle->isOutOfStock() ? 'opacity-60' : '' }}">
+                            <td class="px-4 py-3 text-gray-400 font-mono text-sm">
+                                {{ $vinyle->reference ?? 'N/A' }}
                             </td>
-                            <td>{{ $vinyle->nom }}</td>
-                            <td>{{ $vinyle->modele }}</td>
-                            <td>{{ number_format($vinyle->prix, 2) }} €</td>
-                            <td>
-                                <span class="badge {{ $vinyle->isLowStock() ? 'badge-danger' : 'badge-success' }}">
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    @if ($vinyle->hasMedia('photo'))
+                                        <img src="{{ $vinyle->getFirstMediaUrl('photo', 'thumb') }}"
+                                             alt="{{ $vinyle->modele }}" 
+                                             class="w-10 h-10 rounded object-cover">
+                                    @else
+                                        <div class="w-10 h-10 rounded bg-gray-600 flex items-center justify-center text-gray-400 text-xs">
+                                            🎵
+                                        </div>
+                                    @endif
+                                    <span class="font-medium text-white">{{ $vinyle->modele }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-gray-300">
+                                {{ $vinyle->artiste ?? '—' }}
+                            </td>
+                            <td class="px-4 py-3">
+                                @if($vinyle->genre || $vinyle->style)
+                                    <span class="text-gray-300 text-sm">
+                                        {{ $vinyle->genre }}{{ $vinyle->genre && $vinyle->style ? ' / ' : '' }}{{ $vinyle->style }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-500">—</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-right font-semibold text-green-300">
+                                {{ number_format($vinyle->prix, 2, ',', ' ') }} €
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <span class="text-lg font-bold {{ $vinyle->isOutOfStock() ? 'text-red-400' : 'text-white' }}">
                                     {{ $vinyle->quantite }}
                                 </span>
                             </td>
-                            <td class="actions">
-                                <a href="{{ route('vinyles.edit', $vinyle) }}" class="btn btn-sm btn-secondary">
-                                    Éditer
-                                </a>
-                                <button @click="confirmDelete({{ $vinyle->id }}, '{{ addslashes($vinyle->nom) }}')"
-                                    class="btn btn-sm btn-danger">
-                                    Supprimer
-                                </button>
+                            <td class="px-4 py-3 text-center">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {{ $vinyle->stock_status_class }}">
+                                    {{ $vinyle->stock_status }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="flex gap-2 justify-center">
+                                    <a href="{{ route('vinyles.edit', $vinyle) }}" class="btn btn-sm btn-secondary">
+                                        Éditer
+                                    </a>
+                                    @can('delete', $vinyle)
+                                        <button @click="confirmDelete({{ $vinyle->id }}, '{{ addslashes($vinyle->nom) }}')"
+                                                class="btn btn-sm btn-danger">
+                                            Supprimer
+                                        </button>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center">Aucun vinyle trouvé</td>
+                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                                Aucun vinyle trouvé
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
 
-        <div class="pagination-wrapper">
+        <!-- Pagination -->
+        <div class="mt-4">
             {{ $vinyles->links() }}
         </div>
 
         <!-- Modal de confirmation -->
-        <div x-show="showModal" x-cloak class="modal" @click.away="showModal = false">
-            <div class="modal-content" @click.stop>
-                <h3>Confirmer la suppression</h3>
-                <p>Êtes-vous sûr de vouloir supprimer le vinyle <strong x-text="selectedVinyle"></strong> ?</p>
-                <div class="modal-actions">
-                    <button @click="showModal = false" class="btn btn-secondary">Annuler</button>
-                    <button @click="deleteVinyle()" class="btn btn-danger">Supprimer</button>
+        <div x-show="showModal" x-cloak class="fixed inset-0 bg-black/70 flex items-center justify-center z-50" @click.away="showModal = false">
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-600 max-w-md w-full mx-4" @click.stop>
+                <h3 class="text-xl font-bold mb-4 text-white">Confirmer la suppression</h3>
+                <p class="text-gray-300 mb-6">
+                    Êtes-vous sûr de vouloir supprimer le vinyle <strong x-text="selectedVinyle" class="text-purple-400"></strong> ?
+                </p>
+                <div class="flex gap-3">
+                    <button @click="showModal = false" class="flex-1 btn btn-secondary">Annuler</button>
+                    <button @click="deleteVinyle()" class="flex-1 btn btn-danger">Supprimer</button>
                 </div>
             </div>
         </div>
     </div>
-
-</x-app-layout>
+@endsection

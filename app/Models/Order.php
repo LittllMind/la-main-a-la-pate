@@ -14,6 +14,7 @@ class Order extends Model
 
     protected $fillable = [
         'numero_commande',
+        'vente_id',
         'user_id',
         'nom',
         'prenom',
@@ -49,6 +50,11 @@ class Order extends Model
         'billing_code_postal',
         'billing_ville',
         'billing_pays',
+        // Mode marché
+        'source',
+        'mode_paiement_marche',
+        'notes_vendeur',
+        'affichage_client',
     ];
 
     protected $casts = [
@@ -73,6 +79,14 @@ class Order extends Model
         $number = $lastOrder ? ((int) substr($lastOrder->numero_commande, -4)) + 1 : 1;
 
         return sprintf('CMD-%s-%04d', $year, $number);
+    }
+
+    /**
+     * Relation : Une commande peut être liée à une vente kiosque
+     */
+    public function vente(): BelongsTo
+    {
+        return $this->belongsTo(Vente::class);
     }
 
     /**

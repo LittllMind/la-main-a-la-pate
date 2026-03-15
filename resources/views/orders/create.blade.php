@@ -4,11 +4,11 @@
 
 @section('content')
 <div x-data="{ 
-    facturationDifferent: false,
-    useSameAddress: true,
+    facturationDifferent: {{ ($tempBilling && $tempBilling != $tempShipping) || old('use_same_address') === '0' ? 'true' : 'false' }},
+    useSameAddress: {{ old('use_same_address') === '0' ? 'false' : 'true' }},
     selectedAddressId: '',
-    saveNewAddress: false,
-    addressLabel: 'Maison',
+    saveNewAddress: {{ old('save_address') ? 'true' : 'false' }},
+    addressLabel: '{{ old('address_label', 'Maison') }}',
     
     loadAddress(addressId) {
         if (!addressId) return;
@@ -115,7 +115,7 @@
                                     <input type="text" id="nom" name="nom" required
                                         class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
                                         placeholder="Votre nom"
-                                        value="{{ auth()->user()->name ?? '' }}">
+                                        value="{{ old('nom', $tempShipping['nom'] ?? auth()->user()->name ?? '') }}">
                                 </div>
 
                                 <div>
@@ -123,7 +123,7 @@
                                     <input type="email" id="email" name="email" required
                                         class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
                                         placeholder="votre@email.com"
-                                        value="{{ auth()->user()->email ?? '' }}">
+                                        value="{{ old('email', $tempShipping['email'] ?? auth()->user()->email ?? '') }}">
                                 </div>
                             </div>
 
@@ -131,7 +131,8 @@
                                 <label for="telephone" class="block text-sm font-medium text-gray-300 mb-1">Téléphone *</label>
                                 <input type="tel" id="telephone" name="telephone" required
                                     class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                    placeholder="06 12 34 56 78">
+                                    placeholder="06 12 34 56 78"
+                                    value="{{ old('telephone', $tempShipping['telephone'] ?? '') }}">
                             </div>
                         </div>
 
@@ -143,7 +144,8 @@
                                 <label for="livraison_adresse" class="block text-sm font-medium text-gray-300 mb-1">Adresse *</label>
                                 <input type="text" id="livraison_adresse" name="adresse" required
                                     class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                    placeholder="123 Rue de la Musique">
+                                    placeholder="123 Rue de la Musique"
+                                    value="{{ old('adresse', $tempShipping['adresse'] ?? '') }}">
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -151,14 +153,16 @@
                                     <label for="livraison_code_postal" class="block text-sm font-medium text-gray-300 mb-1">Code postal *</label>
                                     <input type="text" id="livraison_code_postal" name="code_postal" required pattern="[0-9]{5}"
                                         class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                        placeholder="75001">
+                                        placeholder="75001"
+                                        value="{{ old('code_postal', $tempShipping['code_postal'] ?? '') }}">
                                 </div>
 
                                 <div>
                                     <label for="livraison_ville" class="block text-sm font-medium text-gray-300 mb-1">Ville *</label>
                                     <input type="text" id="livraison_ville" name="ville" required
                                         class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                                        placeholder="Paris">
+                                        placeholder="Paris"
+                                        value="{{ old('ville', $tempShipping['ville'] ?? '') }}">
                                 </div>
                             </div>
 
@@ -166,12 +170,13 @@
                                 <label for="livraison_pays" class="block text-sm font-medium text-gray-300 mb-1">Pays *</label>
                                 <select id="livraison_pays" name="pays" required
                                     class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all">
-                                    <option value="FR">France</option>
-                                    <option value="BE">Belgique</option>
-                                    <option value="CH">Suisse</option>
-                                    <option value="LU">Luxembourg</option>
-                                    <option value="DE">Allemagne</option>
-                                    <option value="OTHER">Autre</option>
+                                    @php $pays = old('pays', $tempShipping['pays'] ?? 'FR') @endphp
+                                    <option value="FR" {{ $pays == 'FR' ? 'selected' : '' }}>France</option>
+                                    <option value="BE" {{ $pays == 'BE' ? 'selected' : '' }}>Belgique</option>
+                                    <option value="CH" {{ $pays == 'CH' ? 'selected' : '' }}>Suisse</option>
+                                    <option value="LU" {{ $pays == 'LU' ? 'selected' : '' }}>Luxembourg</option>
+                                    <option value="DE" {{ $pays == 'DE' ? 'selected' : '' }}>Allemagne</option>
+                                    <option value="OTHER" {{ $pays == 'OTHER' ? 'selected' : '' }}>Autre</option>
                                 </select>
                             </div>
                         </div>
@@ -184,39 +189,43 @@
                                 <label for="instructions" class="block text-sm font-medium text-gray-300 mb-1">Instructions (optionnel)</label>
                                 <textarea id="instructions" name="instructions" rows="3"
                                     class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all resize-none"
-                                    placeholder="Code d'accès, digicode, étage, etc."></textarea>
+                                    placeholder="Code d'accès, digicode, étage, etc.">{{ old('instructions', $tempShipping['instructions'] ?? '') }}</textarea>
                             </div>
                         </div>
 
                         <!-- Option : Adresse de facturation différente -->
                         <div class="pt-4 border-t border-gray-700">
                             <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="hidden" name="use_same_address" value="1">
                                 <input type="checkbox" 
-                                       id="use_same_address" 
+                                       id="facturation_differente" 
                                        name="use_same_address" 
                                        value="0"
-                                       x-model="useSameAddress"
+                                       x-model="facturationDifferent"
+                                       :checked="facturationDifferent"
                                        class="w-5 h-5 rounded border-gray-600 bg-gray-900 text-violet-500 focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition">
                                 <span class="text-gray-300 font-medium">📄 Adresse de facturation différente</span>
                             </label>
                         </div>
 
                         <!-- Adresse de facturation (conditionnelle) -->
-                        <div x-show="!useSameAddress" x-cloak class="space-y-4 pt-4 border-t border-gray-700">
+                        <div x-show="facturationDifferent" x-cloak class="space-y-4 pt-4 border-t border-gray-700">
                             <h3 class="text-lg font-semibold text-pink-400">💳 Adresse de facturation</h3>
 
                             <div>
                                 <label for="facturation_nom" class="block text-sm font-medium text-gray-300 mb-1">Nom</label>
                                 <input type="text" id="facturation_nom" name="facturation_nom"
                                     class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
-                                    placeholder="Nom sur la facture">
+                                    placeholder="Nom sur la facture"
+                                    value="{{ old('facturation_nom', $tempBilling['nom'] ?? '') }}">
                             </div>
 
                             <div>
                                 <label for="facturation_adresse" class="block text-sm font-medium text-gray-300 mb-1">Adresse</label>
                                 <input type="text" id="facturation_adresse" name="facturation_adresse"
                                     class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
-                                    placeholder="Adresse de facturation">
+                                    placeholder="Adresse de facturation"
+                                    value="{{ old('facturation_adresse', $tempBilling['adresse'] ?? '') }}">
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -224,14 +233,16 @@
                                     <label for="facturation_code_postal" class="block text-sm font-medium text-gray-300 mb-1">Code postal</label>
                                     <input type="text" id="facturation_code_postal" name="facturation_code_postal" pattern="[0-9]{5}"
                                         class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
-                                        placeholder="75001">
+                                        placeholder="75001"
+                                        value="{{ old('facturation_code_postal', $tempBilling['code_postal'] ?? '') }}">
                                 </div>
 
                                 <div>
                                     <label for="facturation_ville" class="block text-sm font-medium text-gray-300 mb-1">Ville</label>
                                     <input type="text" id="facturation_ville" name="facturation_ville"
                                         class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
-                                        placeholder="Paris">
+                                        placeholder="Paris"
+                                        value="{{ old('facturation_ville', $tempBilling['ville'] ?? '') }}">
                                 </div>
                             </div>
 
@@ -239,12 +250,13 @@
                                 <label for="facturation_pays" class="block text-sm font-medium text-gray-300 mb-1">Pays</label>
                                 <select id="facturation_pays" name="facturation_pays"
                                     class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all">
-                                    <option value="FR">France</option>
-                                    <option value="BE">Belgique</option>
-                                    <option value="CH">Suisse</option>
-                                    <option value="LU">Luxembourg</option>
-                                    <option value="DE">Allemagne</option>
-                                    <option value="OTHER">Autre</option>
+                                    @php $factPays = old('facturation_pays', $tempBilling['pays'] ?? 'FR') @endphp
+                                    <option value="FR" {{ $factPays == 'FR' ? 'selected' : '' }}>France</option>
+                                    <option value="BE" {{ $factPays == 'BE' ? 'selected' : '' }}>Belgique</option>
+                                    <option value="CH" {{ $factPays == 'CH' ? 'selected' : '' }}>Suisse</option>
+                                    <option value="LU" {{ $factPays == 'LU' ? 'selected' : '' }}>Luxembourg</option>
+                                    <option value="DE" {{ $factPays == 'DE' ? 'selected' : '' }}>Allemagne</option>
+                                    <option value="OTHER" {{ $factPays == 'OTHER' ? 'selected' : '' }}>Autre</option>
                                 </select>
                             </div>
                         </div>

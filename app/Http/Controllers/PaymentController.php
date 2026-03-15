@@ -188,6 +188,8 @@ class PaymentController extends Controller
 
             $payment->order->update([
                 'status' => 'paid',
+                'statut' => 'completed',
+                'validee_at' => now(),
             ]);
 
             // ✅ Vider le panier après paiement confirmé via webhook
