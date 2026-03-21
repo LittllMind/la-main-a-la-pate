@@ -1,3 +1,7 @@
+/* Import Bootstrap 5 */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -880,7 +884,7 @@ body {
 .vente-item-row {
     display: flex;
     flex-wrap: wrap;
-    /* permet de passer à la ligne si l’écran est petit */
+    /* permet de passer à la ligne si l'écran est petit */
     align-items: flex-end;
     gap: 0.75rem;
 }
@@ -1006,7 +1010,7 @@ label {
     box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.24);
 }
 
-/* Variante compacte pour les lignes d’articles */
+/* Variante compacte pour les lignes d'articles */
 .form-input-compact {
     min-height: 32px;
     padding: 0.25rem 0.45rem;
@@ -1165,7 +1169,7 @@ label {
         background-color: #ffffff;
     }
 
-    /* On cache l’en-tête style tableau en mobile */
+    /* On cache l'en-tête style tableau en mobile */
     .vente-items-header {
         display: none;
     }
