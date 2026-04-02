@@ -55,14 +55,14 @@ class VenteController extends Controller
         $nbVinylesTotal = $lignes->sum('quantite');
         $nbMiroirs = $lignes->where('fond', 'miroir')->sum('quantite');
 
-        // Stats par artiste (nom + modèle)
+        // Stats par artiste (artiste + modèle)
         $parArtiste = $lignes
             ->groupBy(function ($ligne) {
                 $vinyle = $ligne->vinyle;
                 if (!$vinyle) {
                     return 'Inconnu';
                 }
-                return $vinyle->nom . ($vinyle->modele ? ' - ' . $vinyle->modele : '');
+                return $vinyle->artiste . ($vinyle->modele ? ' - ' . $vinyle->modele : '');
             })
             ->map(function ($lignesArtiste) {
                 return [

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Vinyle;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -51,5 +52,19 @@ class VinyleFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'quantite' => 0,
         ]);
+    }
+
+    /**
+     * Vinyle with sales (lignes de vente)
+     */
+    public function withSales(int $count = 3): static
+    {
+        return $this->afterCreating(function (Vinyle $vinyle) use ($count) {
+            $vente = \App\Models\Vente::factory()->create();
+            \App\Models\LigneVente::factory()->count($count)->create([
+                'vinyle_id' => $vinyle->id,
+                'vente_id' => $vente->id,
+            ]);
+        });
     }
 }

@@ -15,6 +15,7 @@ class Fond extends Model
         'quantite',
         'prix_achat',
         'prix_vente',
+        'actif',
     ];
 
     protected $casts = [
@@ -70,5 +71,28 @@ class Fond extends Model
             'Alerte' => 'text-orange-600 bg-orange-100',
             default => 'text-green-600 bg-green-100',
         };
+    }
+
+    /**
+     * Relation: Un fond a plusieurs lignes de vente (via le type de fond)
+     */
+    public function lignesVentes()
+    {
+        return $this->hasMany(LigneVente::class, 'fond', 'type');
+    }
+
+    /**
+     * Relation: Les vinyles vendus avec ce fond (via les lignes de vente)
+     */
+    public function vinylesVendus()
+    {
+        return $this->hasManyThrough(
+            Vinyle::class,
+            LigneVente::class,
+            'fond',          // Clé étrangère sur LigneVente
+            'id',            // Clé sur Vinyle
+            'type',          // Clé locale sur Fond
+            'vinyle_id'      // Clé sur LigneVente
+        );
     }
 }
