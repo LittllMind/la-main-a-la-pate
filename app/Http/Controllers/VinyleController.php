@@ -168,6 +168,6 @@ class VinyleController extends Controller
         $genres = Vinyle::distinct()->pluck('genre')->filter()->values();
         $styles = Vinyle::distinct()->pluck('style')->filter()->values();
         
-        return view('kiosque.index', compact('vinyles', 'genres', 'styles'));
+        return view('kiosque.kiosque', compact('vinyles', 'genres', 'styles'));
     }
 }
