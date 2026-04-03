@@ -120,6 +120,35 @@ class VinyleSeeder extends Seeder
             ['reference' => 'STD-038', 'artiste' => 'Pink Floyd', 'modele' => 'The Dark Side of the Moon', 'genre' => 'Rock', 'style' => 'Progressif', 'prix' => 27, 'quantite' => 15],
             ['reference' => 'STD-039', 'artiste' => 'Pink Floyd', 'modele' => 'The Wall', 'genre' => 'Rock', 'style' => 'Progressif', 'prix' => 27, 'quantite' => 12],
             ['reference' => 'STD-040', 'artiste' => 'Pink Floyd', 'modele' => 'Wish You Were Here', 'genre' => 'Rock', 'style' => 'Progressif', 'prix' => 27, 'quantite' => 10],
+            
+            // Ajouts manquants pour VenteSeeder
+            ['reference' => 'STD-041', 'artiste' => 'David Bowie', 'modele' => 'Standard', 'genre' => 'Rock', 'style' => 'Glam Rock', 'prix' => 27, 'quantite' => 20],
+            ['reference' => 'STD-042', 'artiste' => 'Gorillaz', 'modele' => 'Standard', 'genre' => 'Électro', 'style' => 'Trip-Hop', 'prix' => 27, 'quantite' => 20],
+            ['reference' => 'STD-043', 'artiste' => 'Daft Punk', 'modele' => 'Standard', 'genre' => 'Électro', 'style' => 'French Touch', 'prix' => 27, 'quantite' => 30],
+            ['reference' => 'STD-044', 'artiste' => 'Eminem', 'modele' => 'Standard', 'genre' => 'Rap', 'style' => 'Hip-Hop US', 'prix' => 27, 'quantite' => 15],
+            ['reference' => 'STD-045', 'artiste' => 'Orelsan', 'modele' => 'Miroir Gold', 'genre' => 'Rap', 'style' => 'Rap Français', 'prix' => 27, 'quantite' => 10],
+            ['reference' => 'STD-046', 'artiste' => 'Pink Floyd', 'modele' => 'Dark Side', 'genre' => 'Rock', 'style' => 'Progressif', 'prix' => 27, 'quantite' => 12],
+            ['reference' => 'STD-047', 'artiste' => '2Pac', 'modele' => 'Doré', 'genre' => 'Rap', 'style' => 'West Coast Rap', 'prix' => 27, 'quantite' => 8],
+            ['reference' => 'STD-048', 'artiste' => 'Harley', 'modele' => 'Guidon', 'genre' => 'Rock', 'style' => 'Biker Rock', 'prix' => 27, 'quantite' => 10],
+            
+            // Ajouts supplémentaires pour couvrir VenteSeeder
+            ['reference' => 'STD-049', 'artiste' => 'Nirvana', 'modele' => 'Standard', 'genre' => 'Grunge', 'style' => 'Alternative', 'prix' => 27, 'quantite' => 15],
+            ['reference' => 'STD-050', 'artiste' => 'AC/DC', 'modele' => 'Standard', 'genre' => 'Rock', 'style' => 'Hard Rock', 'prix' => 27, 'quantite' => 25],
+            ['reference' => 'STD-051', 'artiste' => 'Pink Floyd', 'modele' => 'Standard', 'genre' => 'Rock', 'style' => 'Progressif', 'prix' => 27, 'quantite' => 18],
+            
+            // VenteSeeder - The Beatles (modèle Miroir Gold manque)
+            ['reference' => 'MIR-029', 'artiste' => 'The Beatles', 'modele' => 'Miroir Gold', 'genre' => 'Rock', 'style' => 'British Invasion', 'prix' => 27, 'quantite' => 15],
+            ['reference' => 'STD-052', 'artiste' => 'The Beatles', 'modele' => 'Standard', 'genre' => 'Rock', 'style' => 'British Invasion', 'prix' => 27, 'quantite' => 15],
+            
+            // VenteSeeder - The Weeknd, Michael Jackson, Harley, Bad Bunny (Miroir Gold)
+            ['reference' => 'MIR-030', 'artiste' => 'The Weeknd', 'modele' => 'Miroir Gold', 'genre' => 'R&B', 'style' => 'Pop', 'prix' => 27, 'quantite' => 10],
+            ['reference' => 'MIR-031', 'artiste' => 'Michael Jackson', 'modele' => 'Miroir Gold', 'genre' => 'Pop', 'style' => 'R&B/Soul', 'prix' => 27, 'quantite' => 12],
+            ['reference' => 'MIR-032', 'artiste' => 'Harley', 'modele' => 'Guidon', 'genre' => 'Rock', 'style' => 'Biker Rock', 'prix' => 27, 'quantite' => 10],
+            ['reference' => 'MIR-033', 'artiste' => 'Bad Bunny', 'modele' => 'Miroir Gold', 'genre' => 'Reggaeton', 'style' => 'Latin Trap', 'prix' => 27, 'quantite' => 8],
+            
+            // VenteSeeder - Guns N' Roses (Standard), Jul (Miroir Gold)
+            ['reference' => 'STD-053', 'artiste' => 'Guns N\' Roses', 'modele' => 'Standard', 'genre' => 'Rock', 'style' => 'Hard Rock', 'prix' => 27, 'quantite' => 10],
+            ['reference' => 'MIR-034', 'artiste' => 'Jul', 'modele' => 'Miroir Gold', 'genre' => 'Rap', 'style' => 'Rap Français', 'prix' => 27, 'quantite' => 10],
         ];
 
         foreach ($vinyles as $data) {

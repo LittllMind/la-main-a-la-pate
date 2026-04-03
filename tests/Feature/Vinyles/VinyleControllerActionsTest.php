@@ -199,6 +199,8 @@ class VinyleControllerActionsTest extends TestCase
                 'prix' => 35.00,
                 'quantite' => 10,
                 'seuil_alerte' => $vinyle->seuil_alerte,
+                'genre' => $vinyle->genre ?? 'Rock',
+                'style' => $vinyle->style ?? 'Classic',
             ]);
 
         $response->assertRedirect(route('vinyles.index'))
@@ -227,6 +229,8 @@ class VinyleControllerActionsTest extends TestCase
                 'prix' => $vinyle->prix,
                 'quantite' => $vinyle->quantite,
                 'seuil_alerte' => $vinyle->seuil_alerte,
+                'genre' => $vinyle->genre ?? 'Rock',
+                'style' => $vinyle->style ?? 'Classic',
             ]);
 
         $response->assertRedirect(route('vinyles.index'));

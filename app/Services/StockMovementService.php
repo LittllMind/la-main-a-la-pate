@@ -144,7 +144,7 @@ class StockMovementService
                 $vinyle->id,
                 $diff,
                 $vinyle->reference ?? 'VIN-'.str_pad($vinyle->id, 4, '0', STR_PAD_LEFT),
-                'Mise à jour stock : ' . $vinyle->titre . ' (' . $oldStock . ' → ' . $newStock . ')'
+                'Mise à jour stock : ' . $vinyle->nom_complet . ' (' . $oldStock . ' → ' . $newStock . ')'
             );
         } else {
             self::sortie(
@@ -152,7 +152,7 @@ class StockMovementService
                 $vinyle->id,
                 abs($diff),
                 $vinyle->reference ?? 'VIN-'.str_pad($vinyle->id, 4, '0', STR_PAD_LEFT),
-                'Mise à jour stock : ' . $vinyle->titre . ' (' . $oldStock . ' → ' . $newStock . ')'
+                'Mise à jour stock : ' . $vinyle->nom_complet . ' (' . $oldStock . ' → ' . $newStock . ')'
             );
         }
     }

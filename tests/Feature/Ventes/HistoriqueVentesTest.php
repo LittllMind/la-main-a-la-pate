@@ -50,12 +50,13 @@ class HistoriqueVentesTest extends TestCase
         
         // Act: Se connecter en tant qu'employé et accéder aux ventes
         $response = $this->actingAs($this->employe)
-            ->get(route('ventes.index'));
+            ->get(route('ventes.index', ['date' => Carbon::today()->toDateString()]));
         
         // Assert: La page s'affiche avec la vente d'aujourd'hui
         $response->assertStatus(200);
         $response->assertViewIs('ventes.index');
-        $response->assertSee('150.00');
+        // Le montant s'affiche avec format français (virgule comme séparateur décimal)
+        $response->assertSee('150');
     }
 
     /**
@@ -156,14 +157,14 @@ class HistoriqueVentesTest extends TestCase
     {
         // Arrange: Créer une vente avec plusieurs lignes
         $vinyle1 = Vinyle::factory()->create([
-            'nom' => 'Abbey Road',
-            'modele' => 'LP',
+            'artiste' => 'The Beatles',
+            'modele' => 'Abbey Road',
             'prix' => 50.00,
         ]);
         
         $vinyle2 = Vinyle::factory()->create([
-            'nom' => 'Dark Side',
-            'modele' => 'LP',
+            'artiste' => 'Pink Floyd',
+            'modele' => 'Dark Side',
             'prix' => 30.00,
         ]);
         
