@@ -2,189 +2,172 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreVinyleRequest;
+use App\Http\Requests\UpdateVinyleRequest;
 use App\Models\Vinyle;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class VinyleController extends Controller
 {
-    public function __construct()
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(): View
     {
-        $this->middleware('auth')->except('kiosque');
+        $vinyles = Vinyle::with('media')
+            ->latest()
+            ->paginate(10);
+
+        return view('vinyles.index', compact('vinyles'));
     }
 
-    public function index(Request $request)
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create(): View
     {
-        $search = $request->get('search', '');
-        $filter = $request->get('filter', null);
-
-        $vinyles = Vinyle::query()
-            ->with(['media']) // eager load photos
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('artiste', 'like', "%{$search}%")
-                        ->orWhere('reference', 'like', "%{$search}%")
-                        ->orWhere('modele', 'like', "%{$search}%")
-                        ->orWhere('genre', 'like', "%{$search}%");
-                });
-            })
-            ->when($filter === 'stock_bas', function ($query) {
-                $query->where('quantite', '>', 0)
-                    ->whereColumn('quantite', '<=', 'seuil_alerte');
-            })
-            ->when($filter === 'rupture', function ($query) {
-                $query->where('quantite', '<=', 0);
-            })
-            ->orderBy('artiste')
-            ->orderBy('modele')
-            ->withCount(['ventes'])
-            ->paginate(25)
-            ->appends($request->only('search', 'filter'));
-
-        return view('vinyles.index', compact('vinyles', 'search', 'filter'));
+        return view('vinyles.create');
     }
 
-    public function create()
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreVinyleRequest $request): RedirectResponse
     {
-        return view('vinyles.form', ['vinyle' => new Vinyle()]);
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'reference' => 'required|string|max:50|unique:vinyles',
-            'artiste' => 'required|string|max:255',
-            'modele' => 'required|string|max:255',
-            'genre' => 'nullable|string|max:100',
-            'style' => 'nullable|string|max:100',
-            'prix' => 'required|numeric|min:0',
-            'quantite' => 'required|integer|min:0',
-            'seuil_alerte' => 'required|integer|min:1',
-            'photos' => 'nullable|array|max:3',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
-        ]);
-
-        // STORE
+        $validated = $request->validated();
+        
+        // Créer le vinyle
         $vinyle = Vinyle::create($validated);
-
-        // Upload des photos (3 max)
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $index => $photo) {
-                $vinyle->addMedia($photo)
-                    ->withCustomProperties(['order' => $index])
+        
+        // Gérer les images si présentes
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $vinyle->addMedia($image)
                     ->toMediaCollection('photo');
             }
         }
 
-        return redirect()->route('vinyles.index')
-            ->with('success', 'Vinyle ajouté avec succès');
+        return redirect()
+            ->route('vinyles.index')
+            ->with('success', 'Vinyle créé avec succès.');
     }
 
-    public function edit(Vinyle $vinyle)
+    /**
+     * Display the specified resource.
+     */
+    public function show(Vinyle $vinyle): View
     {
-        return view('vinyles.form', compact('vinyle'));
+        $vinyle->load(['media', 'ventes', 'orderItems']);
+        
+        return view('vinyles.show', compact('vinyle'));
     }
 
-    public function update(Request $request, Vinyle $vinyle)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Vinyle $vinyle): View
     {
-        $validated = $request->validate([
-            'reference' => 'required|string|max:50|unique:vinyles,reference,' . $vinyle->id,
-            'artiste' => 'required|string|max:255',
-            'modele' => 'required|string|max:255',
-            'genre' => 'nullable|string|max:100',
-            'style' => 'nullable|string|max:100',
-            'prix' => 'required|numeric|min:0',
-            'quantite' => 'required|integer|min:0',
-            'seuil_alerte' => 'required|integer|min:1',
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
-            'delete_photos' => 'nullable|array',
-        ]);
+        $vinyle->load('media');
+        
+        return view('vinyles.edit', compact('vinyle'));
+    }
 
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateVinyleRequest $request, Vinyle $vinyle): RedirectResponse
+    {
+        $validated = $request->validated();
+        
+        // Mettre à jour le vinyle
         $vinyle->update($validated);
-
-        // Supprimer les photos cochées
-        if ($request->has('delete_photos')) {
-            $photos = $vinyle->getMedia('photo');
-            if ($photos) {
-                foreach ($request->input('delete_photos') as $mediaId) {
-                    if ($media = $photos->find($mediaId)) {
-                        $media->delete();
-                    }
+        
+        // Gérer les nouvelles images
+        if ($request->hasFile('images')) {
+            // Limite de 3 images totales
+            $currentCount = $vinyle->getMedia('photo')->count();
+            $maxNewImages = max(0, 3 - $currentCount);
+            
+            $images = array_slice($request->file('images'), 0, $maxNewImages);
+            
+            foreach ($images as $image) {
+                $vinyle->addMedia($image)
+                    ->toMediaCollection('photo');
+            }
+        }
+        
+        // Supprimer des images si demandé
+        if ($request->has('delete_images')) {
+            foreach ($request->input('delete_images') as $mediaId) {
+                $media = $vinyle->getMedia('photo')->firstWhere('id', $mediaId);
+                if ($media) {
+                    $media->delete();
                 }
             }
         }
 
-        // Upload nouvelles photos (respect max 3 total)
-        $currentCount = $vinyle->getMedia('photo')->count();
-        $maxNew = 3 - $currentCount;
-
-        if ($request->hasFile('photos') && $maxNew > 0) {
-            foreach (array_slice($request->file('photos'), 0, $maxNew) as $index => $photo) {
-                $vinyle->addMedia($photo)
-                    ->withCustomProperties(['order' => $currentCount + $index])
-                    ->toMediaCollection('photo');
-            }
-        }
-
-        return redirect()->route('vinyles.index')
-            ->with('success', 'Vinyle modifié avec succès');
+        return redirect()
+            ->route('vinyles.index')
+            ->with('success', 'Vinyle mis à jour avec succès.');
     }
 
-    public function destroy(Vinyle $vinyle)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Vinyle $vinyle): RedirectResponse
     {
+        // Vérifier si le vinyle a des ventes ou commandes associées
+        if ($vinyle->ventes()->exists() || $vinyle->orderItems()->exists()) {
+            return redirect()
+                ->route('vinyles.index')
+                ->with('error', 'Impossible de supprimer ce vinyle car il est associé à des ventes ou commandes.');
+        }
+        
         $vinyle->delete();
 
-        return redirect()->route('vinyles.index')
-            ->with('success', 'Vinyle supprimé avec succès');
+        return redirect()
+            ->route('vinyles.index')
+            ->with('success', 'Vinyle supprimé avec succès.');
     }
-
-    public function kiosque(Request $request)
+    
+    /**
+     * Affiche le kiosque public (catalogue)
+     */
+    public function kiosque(Request $request): View
     {
-        $allowedSorts = ['artiste', 'modele', 'prix', 'quantite', 'created_at'];
-        $sort = $request->get('sort', 'artiste');
+        $query = Vinyle::with('media')
+            ->where('quantite', '>', 0);
         
-        // Protection injection SQL : whitelist des colonnes
-        if (!in_array($sort, $allowedSorts, true)) {
-            $sort = 'artiste';
+        // Filtres
+        if ($request->filled('artiste')) {
+            $query->where('artiste', 'like', '%' . $request->artiste . '%');
         }
         
-        $search = $request->get('search', '');
-        
-        $vinylesQuery = Vinyle::with(['media']) // Eager loading des médias
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('artiste', 'like', "%{$search}%")
-                        ->orWhere('modele', 'like', "%{$search}%")
-                        ->orWhere('genre', 'like', "%{$search}%");
-                });
-            })
-            ->orderBy($sort)
-            ->orderBy('modele');
-        
-        // Pagination pour éviter chargement trop grand (24 par page pour grille 4x6)
-        $vinyles = $vinylesQuery->paginate(24)->withQueryString();
-
-        // Redirection si page invalide (ex: page=2 mais une seule page de résultats)
-        if ($vinyles->isEmpty() && $vinyles->currentPage() > 1) {
-            return redirect()->route('kiosque.index');
+        if ($request->filled('genre')) {
+            $query->where('genre', $request->genre);
         }
-
-        // Transformer pour la vue (map pour avoir des tableaux, pas des stdClass)
-        $vinylesData = $vinyles->getCollection()->map(function (Vinyle $vinyle) {
-            return [
-                'id'        => $vinyle->id,
-                'artiste'   => $vinyle->artiste,
-                'modele'    => $vinyle->modele,
-                'prix'      => $vinyle->prix,
-                'quantite'  => $vinyle->quantite,
-                'image'     => $vinyle->getFirstMediaUrl('photo', 'medium'),
-            ];
-        })->all();
-
-        return view('kiosque', [
-            'vinylesData' => $vinylesData,
-            'vinyles' => $vinyles, // Pour les liens de pagination
-        ]);
+        
+        if ($request->filled('style')) {
+            $query->where('style', $request->style);
+        }
+        
+        // Tri
+        $sort = $request->input('sort', 'latest');
+        match ($sort) {
+            'price_asc' => $query->orderBy('prix', 'asc'),
+            'price_desc' => $query->orderBy('prix', 'desc'),
+            'alpha' => $query->orderBy('artiste', 'asc'),
+            default => $query->latest(),
+        };
+        
+        $vinyles = $query->paginate(12)->withQueryString();
+        
+        // Liste des genres et styles pour les filtres
+        $genres = Vinyle::distinct()->pluck('genre')->filter()->values();
+        $styles = Vinyle::distinct()->pluck('style')->filter()->values();
+        
+        return view('kiosque.index', compact('vinyles', 'genres', 'styles'));
     }
 }
