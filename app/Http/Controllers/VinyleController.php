@@ -170,4 +170,74 @@ class VinyleController extends Controller
         
         return view('kiosque.kiosque', compact('vinyles', 'genres', 'styles'));
     }
+
+    /**
+     * Recherche avancée des vinyles (admin/employé)
+     */
+    public function search(Request $request): View
+    {
+        $query = Vinyle::with('media');
+
+        // Recherche texte (artiste, album, référence)
+        if ($request->filled('q')) {
+            $searchTerm = $request->input('q');
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('artiste', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('modele', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('reference', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
+        // Filtre par genre
+        if ($request->filled('genre')) {
+            $query->where('genre', $request->input('genre'));
+        }
+
+        // Filtre par style
+        if ($request->filled('style')) {
+            $query->where('style', $request->input('style'));
+        }
+
+        // Filtre par prix min
+        if ($request->filled('prix_min')) {
+            $query->where('prix', '>=', $request->input('prix_min'));
+        }
+
+        // Filtre par prix max
+        if ($request->filled('prix_max')) {
+            $query->where('prix', '<=', $request->input('prix_max'));
+        }
+
+        // Filtre par année (basé sur created_at)
+        if ($request->filled('annee')) {
+            $query->whereYear('created_at', $request->input('annee'));
+        }
+
+        // Tri
+        $sort = $request->input('sort', 'date_ajout_desc');
+        match ($sort) {
+            'prix_asc' => $query->orderBy('prix', 'asc'),
+            'prix_desc' => $query->orderBy('prix', 'desc'),
+            'artiste' => $query->orderBy('artiste', 'asc'),
+            'date_ajout_desc' => $query->orderBy('created_at', 'desc'),
+            'date_ajout_asc' => $query->orderBy('created_at', 'asc'),
+            default => $query->latest(),
+        };
+
+        $vinyles = $query->paginate(12)->withQueryString();
+
+        // Liste des genres et styles pour les filtres
+        $genres = Vinyle::distinct()->pluck('genre')->filter()->values();
+        $styles = Vinyle::distinct()->pluck('style')->filter()->values();
+
+        // Liste des années disponibles
+        $annees = Vinyle::selectRaw('YEAR(created_at) as year')
+            ->distinct()
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->filter()
+            ->values();
+
+        return view('vinyles.search', compact('vinyles', 'genres', 'styles', 'annees'));
+    }
 }

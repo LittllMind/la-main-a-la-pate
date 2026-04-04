@@ -243,15 +243,15 @@
     <nav class="bg-gray-800/90 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-50">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
-                <a href="/vinyles" class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                <a href="{{ route('vinyles.index') }}" class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                     📊 Dashboard Admin
                 </a>
                 <div class="flex items-center gap-4">
-                    <a href="/kiosque" class="text-sm hover:text-purple-400 transition">Voir le Kiosque</a>
-                    <a href="/addresses" class="text-sm hover:text-purple-400 transition">Adresses</a>
+                    <a href="{{ route('kiosque.index') }}" class="text-sm hover:text-purple-400 transition">Voir le Kiosque</a>
+                    <a href="{{ route('addresses.index') }}" class="text-sm hover:text-purple-400 transition">Adresses</a>
                     @auth
                         <span class="text-sm text-gray-400">{{ auth()->user()->email }}</span>
-                        <form action="/logout" method="POST" class="inline">
+                        <form action="{{ route('logout') }}" method="POST" class="inline">
                             @csrf
                             <button type="submit" class="text-sm text-red-400 hover:text-red-300 transition">Déconnexion</button>
                         </form>

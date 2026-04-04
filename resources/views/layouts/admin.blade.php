@@ -14,10 +14,10 @@
     <nav class="bg-gray-800 text-white">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
-                <a href="/dashboard" class="text-xl font-bold">🎧 Admin Vinyles</a>
+                <a href="{{ route('admin.dashboard') }}" class="text-xl font-bold">🎧 Admin Vinyles</a>
                 <div class="flex items-center gap-4">
-                    <a href="/kiosque" class="hover:text-gray-300">Kiosque</a>
-                    <a href="/" class="hover:text-gray-300">Site</a>
+                    <a href="{{ route('kiosque.index') }}" class="hover:text-gray-300">Kiosque</a>
+                    <a href="{{ route('landing') }}" class="hover:text-gray-300">Site</a>
                 </div>
             </div>
         </div>

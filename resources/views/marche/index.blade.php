@@ -32,7 +32,7 @@
         <button @click="loadVentesJour()" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl border border-gray-700 transition whitespace-nowrap">
             📊 Ventes du jour
         </button>
-        <a href="/dashboard" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl border border-gray-700 transition whitespace-nowrap">
+        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl border border-gray-700 transition whitespace-nowrap">
             🔧 Dashboard
         </a>
     </div>

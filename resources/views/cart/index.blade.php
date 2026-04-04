@@ -9,7 +9,7 @@
         <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
             🛒 Mon Panier
         </h1>
-        <a href="/kiosque" class="text-purple-300 hover:text-pink-300 transition">
+        <a href="{{ route('kiosque.index') }}" class="text-purple-300 hover:text-pink-300 transition">
             ← Continuer mes achats
         </a>
     </div>

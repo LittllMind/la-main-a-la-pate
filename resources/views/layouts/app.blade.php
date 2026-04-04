@@ -6,6 +6,7 @@
     <title>@yield('title', 'Fundisc')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
     @stack('head')
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col" x-data="{ mobileMenuOpen: false, adminMenuOpen: false }">
@@ -108,7 +109,7 @@
                                         <!-- Administration -->
                                         <div class="border-t border-gray-700 my-1"></div>
                                         <span class="block px-4 py-1 text-xs text-gray-500 uppercase tracking-wider">Administration</span>
-                                        <a href="{{ route('users.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 {{ request()->routeIs('users.*') ? 'bg-gray-700 text-pink-400' : '' }}">
+                                        <a href="{{ route('admin.users.index') }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 {{ request()->routeIs('admin.users.*') ? 'bg-gray-700 text-pink-400' : '' }}">
                                             👥 Utilisateurs
                                         </a>
                                     @endif
@@ -214,7 +215,7 @@
                                 
                                 @if(Auth::user()->isAdmin())
                                     <span class="block text-xs text-gray-500 uppercase tracking-wider py-1 pl-4">Administration</span>
-                                    <a href="{{ route('users.index') }}" @click="mobileMenuOpen = false" class="block {{ request()->routeIs('users.*') ? 'text-pink-400 font-semibold' : 'text-gray-300 hover:text-purple-400' }} py-2 pl-4">
+                                    <a href="{{ route('admin.users.index') }}" @click="mobileMenuOpen = false" class="block {{ request()->routeIs('admin.users.*') ? 'text-pink-400 font-semibold' : 'text-gray-300 hover:text-purple-400' }} py-2 pl-4">
                                         👥 Utilisateurs
                                     </a>
                                 @endif

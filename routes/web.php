@@ -93,6 +93,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 // ROUTES ADMIN (Accès restreint: admin ET employe)
 // ============================================
 Route::middleware(['auth', 'role:admin,employe'])->group(function () {
+    // Recherche avancée des vinyles - AVANT le resource pour éviter conflit avec {vinyle}
+    Route::get('/vinyles/recherche', [VinyleController::class, 'search'])->name('vinyles.search');
+    
     // Gestion complète des vinyles (CRUD)
     Route::resource('vinyles', VinyleController::class);
 
