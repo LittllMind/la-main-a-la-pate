@@ -1,4 +1,10 @@
 {{-- resources/views/cart/index.blade.php --}}
+@php
+    /** @var \App\Services\CartService $cartService */
+    $cartService = app(\App\Services\CartService::class);
+    $cart = $cartService->getCart();
+@endphp
+
 @extends('layouts.app')
 
 @section('title', 'Mon Panier - Vinyle Hydrodécoupé')
@@ -36,7 +42,7 @@
                     <p class="font-semibold mb-2">⚠️ Problèmes de stock :</p>
                     <ul class="list-disc list-inside">
                         @foreach ($stockErrors as $error)
-                            <li>{{ $error['message'] }}</li>
+                            <li>{{ is_array($error) ? ($error['message'] ?? $error) : $error }}</li>
                         @endforeach
                     </ul>
                 </div>
@@ -73,12 +79,12 @@
 
                                 <div class="space-y-4">
                                     @foreach ($cart->items as $item)
-                                        <div class="flex justify-between py-3 border-b border-gray-700">
-                                            <div>
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-gray-700 gap-4">
+                                            {{-- Info article --}}
+                                            <div class="flex-1">
                                                 <div class="font-bold text-gray-100 text-lg">
-                                                    {{ $item->vinyle->nom }}
+                                                    {{ $item->vinyle->nom ?? 'Vinyle' }}
                                                 </div>
-
                                                 <div class="text-sm text-purple-300 mt-1">
                                                     Fond :
                                                     @if ($item->fond)
@@ -87,17 +93,54 @@
                                                         Standard
                                                     @endif
                                                 </div>
-
                                                 <div class="text-sm text-gray-400 mt-1">
-                                                    Quantité : <span class="text-gray-200 font-semibold">{{ $item->quantite }}</span>
+                                                    {{ number_format($item->prix_unitaire, 2, ',', ' ') }} € / unité
                                                 </div>
                                             </div>
 
-                                            <div class="text-right">
-                                                <div class="text-gray-400 text-sm">{{ number_format($item->prix_unitaire, 2, ',', ' ') }} € / u</div>
-                                                <div class="font-bold text-pink-400 text-lg">
-                                                    {{ number_format($item->prix_unitaire * $item->quantite, 2, ',', ' ') }} €
+                                            {{-- Contrôles quantité --}}
+                                            <div class="flex items-center gap-4">
+                                                {{-- Formulaire mise à jour quantité --}}
+                                                <form method="POST" action="{{ route('cart.update', $item->id) }}" class="flex items-center gap-2">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <label for="qty-{{ $item->id }}" class="sr-only">Quantité</label>
+                                                    <div class="flex items-center">
+                                                        <button type="button"
+                                                            onclick="decrementQty('qty-{{ $item->id }}')"
+                                                            class="w-8 h-8 rounded-l-lg bg-gray-700 hover:bg-gray-600 text-white transition flex items-center justify-center">
+                                                            -
+                                                        </button>
+                                                        <input type="number" id="qty-{{ $item->id }}" name="quantite"
+                                                            value="{{ $item->quantite }}" min="1"
+                                                            class="w-16 h-8 bg-gray-700 border-y border-gray-600 text-center text-white focus:outline-none focus:border-purple-500"
+                                                            onchange="this.form.submit()">
+                                                        <button type="button"
+                                                            onclick="incrementQty('qty-{{ $item->id }}')"
+                                                            class="w-8 h-8 rounded-r-lg bg-gray-700 hover:bg-gray-600 text-white transition flex items-center justify-center">
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </form>
+
+                                                {{-- Prix total ligne --}}
+                                                <div class="text-right min-w-[100px]">
+                                                    <div class="font-bold text-pink-400 text-lg">
+                                                        {{ number_format($item->prix_unitaire * $item->quantite, 2, ',', ' ') }} €
+                                                    </div>
                                                 </div>
+
+                                                {{-- Bouton suppression --}}
+                                                <form method="POST" action="{{ route('cart.remove', $item->id) }}"
+                                                    onsubmit="return confirm('Supprimer cet article ?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="w-8 h-8 rounded-full bg-red-900/30 border border-red-500/50 text-red-400 hover:bg-red-900/50 hover:text-red-300 transition flex items-center justify-center"
+                                                        title="Supprimer">
+                                                        ×
+                                                    </button>
+                                                </form>
                                             </div>
                                         </div>
                                     @endforeach
@@ -117,7 +160,7 @@
                         </div>
                     </div>
 
-                    {{-- Colonne latérale : Récapitulatif --}}
+                    {{-- Colonne latérale : Récapitulatif avec TVA --}}
                     <div class="lg:col-span-1">
                         <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 overflow-hidden rounded-xl sticky top-4">
                             <div class="p-6">
@@ -131,15 +174,19 @@
                                         <span class="font-medium text-gray-200">{{ $cart->totalItems }}</span>
                                     </div>
                                     <div class="flex justify-between text-sm">
-                                        <span class="text-gray-400">Sous-total</span>
+                                        <span class="text-gray-400">Sous-total HT</span>
                                         <span class="font-medium text-gray-200">{{ number_format($cart->total, 2, ',', ' ') }} €</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span class="text-gray-400">TVA (20%)</span>
+                                        <span class="font-medium text-gray-200">{{ number_format($cart->tva_amount, 2, ',', ' ') }} €</span>
                                     </div>
                                 </div>
 
                                 <div class="border-t border-gray-700 pt-4 mb-6">
                                     <div class="flex justify-between text-xl font-bold">
-                                        <span class="text-gray-200">Total</span>
-                                        <span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">{{ number_format($cart->total, 2, ',', ' ') }} €</span>
+                                        <span class="text-gray-200">Total TTC</span>
+                                        <span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">{{ number_format($cart->total_ttc, 2, ',', ' ') }} €</span>
                                     </div>
                                 </div>
 
@@ -169,3 +216,22 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function incrementQty(inputId) {
+        const input = document.getElementById(inputId);
+        input.value = parseInt(input.value) + 1;
+        input.form.submit();
+    }
+
+    function decrementQty(inputId) {
+        const input = document.getElementById(inputId);
+        const newValue = parseInt(input.value) - 1;
+        if (newValue >= 1) {
+            input.value = newValue;
+            input.form.submit();
+        }
+    }
+</script>
+@endpush

@@ -39,13 +39,34 @@ class Cart extends Model
     }
 
     /**
-     * Calcul du total du panier (Accessor)
+     * Taux de TVA (20% pour la France)
+     */
+    protected const TVA_RATE = 0.20;
+
+    /**
+     * Calcul du total HT du panier (Accessor)
      */
     public function getTotalAttribute(): float
     {
         return $this->items->sum(function ($item) {
             return $item->prix_unitaire * $item->quantite;
         });
+    }
+
+    /**
+     * Calcul du montant TVA (Accessor)
+     */
+    public function getTvaAmountAttribute(): float
+    {
+        return $this->total * self::TVA_RATE;
+    }
+
+    /**
+     * Calcul du total TTC (Accessor)
+     */
+    public function getTotalTtcAttribute(): float
+    {
+        return $this->total + $this->tva_amount;
     }
 
     /**

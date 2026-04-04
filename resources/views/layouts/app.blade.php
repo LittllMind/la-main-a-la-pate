@@ -40,9 +40,15 @@
                 </div>
                 
                 <!-- Desktop Auth -->
+                @php
+                    $cartCountBadge = app(\App\Services\CartService::class)->count();
+                @endphp
                 <div class="hidden md:flex items-center space-x-4">
-                    <a href="{{ route('cart.index') }}" class="text-purple-400 hover:text-pink-400 transition relative">
+                    <a href="{{ route('cart.index') }}" class="text-purple-400 hover:text-pink-400 transition relative flex items-center gap-1">
                         🛒 Panier
+                        @if($cartCountBadge > 0)
+                            <span class="bg-pink-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $cartCountBadge }}</span>
+                        @endif
                     </a>
                     
                     @guest
@@ -159,8 +165,11 @@
                 </a>
                 
                 <div class="border-t border-purple-500/30 pt-4 mt-4">
-                    <a href="{{ route('cart.index') }}" @click="mobileMenuOpen = false" class="block text-purple-400 font-medium py-2">
+                    <a href="{{ route('cart.index') }}" @click="mobileMenuOpen = false" class="block text-purple-400 font-medium py-2 flex items-center justify-center gap-2">
                         🛒 Mon Panier
+                        @if($cartCountBadge > 0)
+                            <span class="bg-pink-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $cartCountBadge }}</span>
+                        @endif
                     </a>
                 </div>
                 

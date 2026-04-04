@@ -12,6 +12,7 @@ Site e-commerce de vente de vinyles en ligne - Production ready
 - [x] T115: Relations Eloquent
 - [x] T116: CRUD Vinyle
 - [x] Navbar UX refonte (déployée)
+- [x] T121: Panier fonctionnel ✅ (13 tests passent)
 
 ## 🔄 EN COURS
 - [ ] T117: Intégration section fundisc (section `/vinyles/`)
@@ -24,11 +25,6 @@ Site e-commerce de vente de vinyles en ligne - Production ready
 - Recherche par artiste, album, genre, style
 - Filtres prix, année, état
 - Tests: `test_search_filters_work()`
-
-### T121: Panier fonctionnel
-- Ajout/suppression vinyles
-- Calcul total avec TVA
-- Tests: `test_cart_calculations()`
 
 ### T122: Paiement Stripe
 - Intégration Stripe Checkout
@@ -43,10 +39,11 @@ Site e-commerce de vente de vinyles en ligne - Production ready
 ## 🚀 Roadmap Production
 1. ✅ Core CRUD
 2. 🔄 Intégration fundisc
-3. ⏳ Checkout complet
-4. ⏳ Paiement Stripe
-5. ⏳ Tests e2e
-6. ⏳ Go-live
+3. ✅ Panier fonctionnel
+4. ⏳ Checkout complet
+5. ⏳ Paiement Stripe
+6. ⏳ Tests e2e
+7. ⏳ Go-live
 
 ---
 Dernière mise à jour: 2026-04-04
