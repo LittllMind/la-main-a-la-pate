@@ -21,7 +21,10 @@ jobs:
         php-version: '8.2'
 
     - name: Install Dependencies
-      run: composer install --no-dev --optimize-autoloader
+      run: |
+        # Mise à jour du lock en cas d'incompatibilité
+        composer update --no-dev --optimize-autoloader --no-interaction --with-dependencies || \
+        composer install --no-dev --optimize-autoloader --no-interaction
 
     - name: Build Assets
       run: |
@@ -61,7 +64,7 @@ jobs:
           php artisan event:cache"
 
     - name: Notify Success
-      if: success()
+      if: success() && secrets.SLACK_WEBHOOK != ''
       uses: 8398a7/action-slack@v3
       with:
         status: ${{ job.status }}
@@ -71,7 +74,7 @@ jobs:
       continue-on-error: true
 
     - name: Notify Failure
-      if: failure()
+      if: failure() && secrets.SLACK_WEBHOOK != ''
       uses: 8398a7/action-slack@v3
       with:
         status: ${{ job.status }}

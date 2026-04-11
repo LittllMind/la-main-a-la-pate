@@ -1,0 +1,56 @@
+name: Seed Production Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      seeders:
+        description: 'Seeders à exécuter (all, VinyleSeeder, DatabaseSeeder)'
+        required: true
+        default: 'VinyleSeeder'
+        type: choice
+        options:
+          - VinyleSeeder
+          - DatabaseSeeder
+          - FondSeeder
+          - BougieSeeder
+          - UserSeeder
+          - all
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+    
+    - name: Install Dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+    
+    - name: Seed Database via SSH
+      env:
+        DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        SEEDER: ${{ github.event.inputs.seeders }}
+      run: |
+        echo "$DEPLOY_KEY" > deploy_key.pem
+        chmod 600 deploy_key.pem
+        
+        # Exécuter le seeder sur le serveur distant
+        if [ "$SEEDER" = "all" ]; then
+          echo "🌱 Seeding all..."
+          ssh -i deploy_key.pem -o StrictHostKeyChecking=no \
+            "$DEPLOY_USER@$DEPLOY_HOST" "cd $DEPLOY_PATH && php artisan db:seed --force"
+        else
+          echo "🌱 Seeding $SEEDER..."
+          ssh -i deploy_key.pem -o StrictHostKeyChecking=no \
+            "$DEPLOY_USER@$DEPLOY_HOST" "cd $DEPLOY_PATH && php artisan db:seed --class=$SEEDER --force"
+        fi
+        
+        echo "✅ Seeding terminé !"
