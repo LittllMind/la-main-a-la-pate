@@ -35,6 +35,8 @@ class PaymentController extends Controller
         }
 
         try {
+            $baseUrl = $request->getSchemeAndHttpHost();
+            
             $session = Session::create([
                 'payment_method_types' => ['card'],
                 'line_items' => [
@@ -51,8 +53,8 @@ class PaymentController extends Controller
                     ],
                 ],
                 'mode' => 'payment',
-                'success_url' => config('app.url') . '/payment/success?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => config('app.url') . '/payment/cancel',
+                'success_url' => $baseUrl . '/payment/success?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => $baseUrl . '/payment/cancel',
                 'metadata' => [
                     'order_id' => $order->id,
                     'user_id' => auth()->id(),

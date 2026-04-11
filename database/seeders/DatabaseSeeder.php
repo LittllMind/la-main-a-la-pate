@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             FondSeeder::class,
             BougieSeeder::class,
+            VinyleSeeder::class,
             MouvementStockSeeder::class,
             VenteSeeder::class,
         ]);
