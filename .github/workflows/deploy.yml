@@ -58,6 +58,7 @@ jobs:
           php artisan optimize:clear && \
           php artisan optimize && \
           php artisan migrate --force && \
+          php artisan db:seed-if-empty --force && \
           php artisan config:cache && \
           php artisan route:cache && \
           php artisan view:cache && \

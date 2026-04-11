@@ -1,0 +1,46 @@
+name: Reset & Seed Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Tapez RESET-PROD pour confirmer la destruction des données'
+        required: true
+        type: string
+
+jobs:
+  reset-and-seed:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirmation == 'RESET-PROD'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+    
+    - name: Install Dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+    
+    - name: Reset Database & Seed
+      env:
+        DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      run: |
+        echo "$DEPLOY_KEY" > deploy_key.pem
+        chmod 600 deploy_key.pem
+        
+        echo "🚨 RESET COMPLET de la base de données..."
+        echo "⚠️  Toutes les données seront supprimées et recréées"
+        
+        ssh -i deploy_key.pem -o StrictHostKeyChecking=no \
+          "$DEPLOY_USER@$DEPLOY_HOST" "cd $DEPLOY_PATH && \
+          php artisan down --retry=60 && \
+          php artisan migrate:fresh --seed --force && \
+          php artisan up"
+        
+        echo "✅ Reset & Seed terminés !"
