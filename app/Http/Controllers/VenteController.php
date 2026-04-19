@@ -36,9 +36,11 @@ class VenteController extends Controller
         $currentDate = Carbon::parse($currentDateString);
 
         // Ventes du jour created_at descendant
+        // LIMIT de sécurité pour éviter surcharge mémoire (1000 ventes/jour max)
         $ventes = Vente::with('lignes.vinyle')
             ->whereDate('date', $currentDateString)
             ->orderBy('created_at', 'desc')
+            ->limit(1000)
             ->get();
 
         // Stats globales
@@ -104,8 +106,11 @@ class VenteController extends Controller
 
     public function create()
     {
+        // LIMIT de sécurité pour le sélecteur de vinyles en vente
         $vinyles = Vinyle::where('quantite', '>', 0)
             ->orderBy('nom')
+            ->select(['id', 'reference', 'nom', 'prix', 'quantite']) // Colonnes spécifiques
+            ->limit(500) // Sécurité mémoire
             ->get();
 
         return view('ventes.create', compact('vinyles'));
