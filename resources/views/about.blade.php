@@ -1,74 +1,72 @@
-@extends('layouts.app')
+@extends('layouts.public')
+
+@section('title', 'À propos — La Main à la Pâte')
 
 @section('content')
-<div class="min-h-screen bg-gray-900 py-20">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-5xl font-bold text-center mb-12">
-            <span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Le Concept
-            </span>
+<div class="max-w-3xl mx-auto px-6 py-16">
+    <header class="text-center mb-16">
+        <h1 class="text-4xl font-bold mb-4">
+            <span class="gradient-text">La Main à la Pâte</span>
         </h1>
+        <p class="text-gray-400 text-lg">
+            Une veille technique sur l'IA agentique, partagée sans filtre.
+        </p>
+    </header>
 
-        <div class="space-y-12">
-            <section class="bg-gray-800 rounded-2xl p-8 border border-gray-700">
-                <h2 class="text-3xl font-bold mb-6 flex items-center">
-                    <span class="text-3xl mr-3">✨</span>
-                    Notre savoir-faire
-                </h2>
-                <p class="text-gray-300 text-lg leading-relaxed">
-                    Nous sélectionnons chaque vinyle pour son potentiel artistique et son histoire musicale.
-                    Chaque pièce est unique et transformée avec soin.
-                </p>
-            </section>
+    <div class="space-y-12">
+        <section class="bg-gray-900/50 rounded-2xl p-8 border border-gray-800">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <span class="mr-3">🎯</span> Le projet
+            </h2>
+            <p class="text-gray-400 leading-relaxed">
+                La Main à la Pâte est un espace de veille technique dédié à l'intelligence artificielle agentique.
+                Je partage ici mes expérimentations avec des agents autonomes, des architectures de mémoire persistante,
+                et les outils qui émergent dans cet écosystème.
+            </p>
+        </section>
 
-            <section class="bg-gray-800 rounded-2xl p-8 border border-gray-700">
-                <h2 class="text-3xl font-bold mb-6 flex items-center">
-                    <span class="text-3xl mr-3">🎵</span>
-                    Pourquoi le vinyle ?
-                </h2>
-                <p class="text-gray-300 text-lg leading-relaxed">
-                    Le vinyle n'est pas seulement un support musical, c'est un objet chargé d'émotion et de nostalgie.
-                    Nous donnons une seconde vie à ces disques,
-                    créant des objets de décoration uniques qui préservent l'âme de la musique qu'ils contenaient.
-                </p>
-            </section>
+        <section class="bg-gray-900/50 rounded-2xl p-8 border border-gray-800">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <span class="mr-3">🤖</span> IA agentique ?
+            </h2>
+            <p class="text-gray-400 leading-relaxed mb-4">
+                L'IA agentique, c'est quand une intelligence artificielle ne se contente plus de répondre à des questions —
+                elle agit. Elle planifie, exécute des tâches, apprend de ses interactions, et évolue au fil du temps.
+            </p>
+            <p class="text-gray-400 leading-relaxed">
+                C'est un domaine en explosion, entre les frameworks open source, les modèles de plus en plus capables,
+                et les architectures distribuées qui permettent de déployer des agents sur plusieurs canaux.
+            </p>
+        </section>
 
-            <section class="bg-gray-800 rounded-2xl p-8 border border-gray-700">
-                <h2 class="text-3xl font-bold mb-6 flex items-center">
-                    <span class="text-3xl mr-3">🛒</span>
-                    Comment acheter ?
-                </h2>
-                <div class="space-y-4 text-gray-300">
-                    <div class="flex items-start">
-                        <span class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1">1</span>
-                        <div>
-                            <h3 class="font-semibold mb-1">Explorez le catalogue</h3>
-                            <p>Parcourez notre collection de vinyles uniques disponibles.</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start">
-                        <span class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1">2</span>
-                        <div>
-                            <h3 class="font-semibold mb-1">Créez votre compte</h3>
-                            <p>Inscrivez-vous gratuitement pour pouvoir commander.</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start">
-                        <span class="bg-purple-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 mt-1">3</span>
-                        <div>
-                            <h3 class="font-semibold mb-1">Commandez en ligne</h3>
-                            <p>Ajoutez vos pièces favorites au panier et passez commande.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
+        <section class="bg-gray-900/50 rounded-2xl p-8 border border-gray-800">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <span class="mr-3">🌿</span> Pour qui ?
+            </h2>
+            <p class="text-gray-400 leading-relaxed">
+                Principalement pour les amis tech du village et les curieux qui veulent comprendre ce qui se passe
+                dans l'IA sans passer par le jargon marketing. Pas de bullshit, pas de promesses irréalistes —
+                juste du code, des tests et des retours d'expérience.
+            </p>
+        </section>
 
-        <div class="text-center mt-12">
-            <a href="{{ route('kiosque.index') }}" class="inline-block bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-8 py-4 rounded-xl text-lg font-semibold transition transform hover:scale-105">
-                Découvrir la Collection
-            </a>
-        </div>
+        <section class="bg-gray-900/50 rounded-2xl p-8 border border-gray-800">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <span class="mr-3">🛠️</span> Stack explorée
+            </h2>
+            <ul class="text-gray-400 space-y-2">
+                <li class="flex items-start"><span class="text-purple-400 mr-2">▸</span> Hermes Agent — assistant avec mémoire persistante</li>
+                <li class="flex items-start"><span class="text-purple-400 mr-2">▸</span> OpenClaw — gateway multi-plateformes</li>
+                <li class="flex items-start"><span class="text-purple-400 mr-2">▸</span> Laravel + agents autonomes</li>
+                <li class="flex items-start"><span class="text-purple-400 mr-2">▸</span> Modèles locaux (Ollama) et cloud</li>
+            </ul>
+        </section>
+    </div>
+
+    <div class="text-center mt-12">
+        <a href="{{ route('blog.index') }}" class="inline-block bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-xl font-medium transition">
+            Lire les articles →
+        </a>
     </div>
 </div>
 @endsection

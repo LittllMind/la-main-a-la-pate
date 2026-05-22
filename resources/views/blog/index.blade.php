@@ -1,4 +1,4 @@
-@extends('layouts.blog')
+@extends('layouts.public')
 
 @section('title', 'Veille IA Agentique — La Main à la Pâte')
 
