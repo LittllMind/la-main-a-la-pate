@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.blog')
 
 @section('title', $post->title . ' — La Main à la Pâte')
 
