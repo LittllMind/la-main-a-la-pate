@@ -1,0 +1,85 @@
+@extends('layouts.admin')
+
+@section('title', 'Modifier : ' . $post->title)
+
+@section('content')
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-white mb-2">Modifier l'article</h1>
+    <p class="text-gray-400 mb-8">{{ $post->title }}</p>
+
+    <form action="{{ route('admin.posts.update', $post) }}" method="POST" class="space-y-6">
+        @csrf
+        @method('PUT')
+
+        <div>
+            <label for="title" class="block text-sm font-medium text-gray-400 mb-2">Titre *</label>
+            <input type="text" name="title" id="title" value="{{ old('title', $post->title) }}" required
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none">
+            @error('title')
+                <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label for="slug" class="block text-sm font-medium text-gray-400 mb-2">Slug</label>
+            <input type="text" name="slug" id="slug" value="{{ old('slug', $post->slug) }}"
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                placeholder="mon-super-article">
+            @error('slug')
+                <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label for="excerpt" class="block text-sm font-medium text-gray-400 mb-2">Résumé</label>
+            <textarea name="excerpt" id="excerpt" rows="3"
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none resize-y">{{ old('excerpt', $post->excerpt) }}</textarea>
+            @error('excerpt')
+                <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div>
+            <label for="content" class="block text-sm font-medium text-gray-400 mb-2">Contenu *</label>
+            <textarea name="content" id="content" rows="20" required
+                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none resize-y font-mono text-sm">{{ old('content', $post->content) }}</textarea>
+            @error('content')
+                <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-400 mb-2">Statut</label>
+                <select name="status" id="status"
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none">
+                    <option value="draft" {{ old('status', $post->status) === 'draft' ? 'selected' : '' }}>📝 Brouillon</option>
+                    <option value="published" {{ old('status', $post->status) === 'published' ? 'selected' : '' }}>🟢 Publié</option>
+                </select>
+                @error('status')
+                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="published_at" class="block text-sm font-medium text-gray-400 mb-2">Date de publication</label>
+                <input type="datetime-local" name="published_at" id="published_at"
+                    value="{{ old('published_at', $post->published_at ? $post->published_at->format('Y-m-d\\TH:i') : '') }}"
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none">
+                @error('published_at')
+                    <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 pt-4">
+            <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium transition">
+                Mettre à jour
+            </button>
+            <a href="{{ route('admin.posts.index') }}" class="text-gray-400 hover:text-white transition">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+@endsection

@@ -15,6 +15,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ModeMarcheController;
+use App\Http\Controllers\BlogController;
 
 // ============================================
 // ROUTES PUBLIQUES (Accès sans authentification)
@@ -22,6 +23,12 @@ use App\Http\Controllers\ModeMarcheController;
 Route::get('/', [HomeController::class, 'landing'])->name('landing');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
+
+// ============================================
+// ROUTES BLOG (Publiques)
+// ============================================
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -67,6 +74,13 @@ Route::middleware(['auth', 'role:admin,employe'])->prefix('admin')->name('admin.
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/stats', [\App\Http\Controllers\Admin\DashboardController::class, 'statsApi'])->name('stats.json');
     Route::get('/stats/charts', [\App\Http\Controllers\Admin\DashboardController::class, 'chartsApi'])->name('stats.charts');
+});
+
+// ============================================
+// ROUTES ADMIN BLOG (Admin uniquement)
+// ============================================
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('posts', \App\Http\Controllers\Admin\PostAdminController::class);
 });
 
 // ============================================
