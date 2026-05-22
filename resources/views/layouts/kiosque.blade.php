@@ -7,6 +7,9 @@
     <title>@yield('title', 'Fundisc')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
+    
+    {{-- Schema.org Structured Data --}}
+    @include('components.schema-org')
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col" x-data="{ mobileMenuOpen: false }">
 

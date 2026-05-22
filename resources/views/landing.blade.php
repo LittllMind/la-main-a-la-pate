@@ -9,6 +9,9 @@
     <style>[x-cloak] { display: none !important; }</style>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite(['resources/css/app.css'])
+    
+    {{-- Schema.org --}}
+    @include('components.schema-org')
 </head>
 <body class="bg-gray-900 text-white min-h-screen" x-data="{ mobileMenuOpen: false }">
 

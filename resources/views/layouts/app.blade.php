@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="{{ asset('build/assets/app.css') }}">
     <script src="{{ asset('build/assets/app.js') }}"></script>
     @stack('head')
+    
+    {{-- Schema.org Structured Data --}}
+    @include('components.schema-org')
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col" x-data="{ mobileMenuOpen: false }">
 

@@ -13,6 +13,9 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        {{-- Schema.org WebSite --}}
+        @include('components.schema-org', ['type' => 'website'])
     </head>
     <body class="font-sans text-gray-100 antialiased bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">

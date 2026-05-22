@@ -193,11 +193,16 @@
 </div>
 @endsection
 
+@push('head')
+    {{-- Schema.org ItemList + Products pour le catalogue --}}
+    @include('components.schema-org', ['type' => 'catalog', 'items' => $vinylesData ?? []])
+@endpush
+
 @push('scripts')
 <script>
-    function kiosqueComponent(vinylesFromPhp) {
+    function kiosqueComponent(vinylesData) {
         return {
-            vinyles: vinylesFromPhp,
+            vinyles: vinylesData,
             search: '',
             showAll: false,
 
