@@ -18,14 +18,26 @@
         @method('patch')
 
         <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autofocus autocomplete="name" />
+            <x-input-label for="name" :value="__('Nom')" />
+            <x-text-input id="name" name="name" type="text" class="mt-1 block w-full border-slate-300" :value="old('name', $user->name)" required autofocus autocomplete="name" />
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
 
         <div>
+            <x-input-label for="pseudonyme" :value="__('Pseudonyme')" />
+            <x-text-input id="pseudonyme" name="pseudonyme" type="text" class="mt-1 block w-full border-slate-300" :value="old('pseudonyme', $user->pseudonyme)" required autocomplete="username" />
+            <x-input-error class="mt-2" :messages="$errors->get('pseudonyme')" />
+        </div>
+
+        <div>
+            <x-input-label for="commune" :value="__('Commune')" />
+            <x-text-input id="commune" name="commune" type="text" class="mt-1 block w-full border-slate-300" :value="old('commune', $user->commune)" autocomplete="address-level2" />
+            <x-input-error class="mt-2" :messages="$errors->get('commune')" />
+        </div>
+
+        <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
+            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full border-slate-300" :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())

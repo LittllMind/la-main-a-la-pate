@@ -32,20 +32,27 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'pseudonyme' => ['required', 'string', 'max:255', 'unique:'.User::class],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'rgpd_consent' => ['required', 'accepted'],
+            'commune' => ['nullable', 'string', 'max:255'],
         ]);
 
         $user = User::create([
             'name' => $request->name,
+            'pseudonyme' => $request->pseudonyme,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'commune' => $request->commune,
+            'rgpd_consent_at' => now(),
+            'role' => 'member',
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
+        return redirect()->route('verification.notice');
     }
 }

@@ -14,9 +14,14 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('pseudonyme')->unique()->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('commune')->nullable();
+            $table->string('avatar')->nullable();
+            $table->timestamp('rgpd_consent_at')->nullable();
+            $table->string('role')->default('member'); // admin, member
             $table->rememberToken();
             $table->timestamps();
         });
