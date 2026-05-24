@@ -3,7 +3,7 @@
 @section('title', 'Actualites du Rozier')
 
 @section('content')
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-slate-900 mb-2">Actualites du Rozier</h1>
     <p class="text-slate-500 mb-8">Les dernieres publications de la commune.</p>
 
