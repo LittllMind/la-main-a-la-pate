@@ -11,8 +11,7 @@ use Illuminate\Support\Facades\Route;
 | ROUTES PUBLIQUES (sans inscription)
 |---------------------------------------------------------------------------
 */
-Route::get('/', [ContactController::class, 'seraphotheque'])->name('home');
-// Route::get('/', [PostPublicController::class, 'index'])->name('home');
+Route::get('/', [PostPublicController::class, 'index'])->name('home');
 Route::get('/actu/{slug}', [PostPublicController::class, 'show'])->name('posts.show');
 
 Route::get('/seraphotheque', [ContactController::class, 'seraphotheque'])->name('seraphotheque');
