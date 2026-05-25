@@ -12,6 +12,11 @@ class ContactController extends Controller
         return view('pages.about');
     }
 
+    public function seraphotheque()
+    {
+        return view('pages.seraphotheque');
+    }
+
     public function contactForm()
     {
         return view('pages.contact');

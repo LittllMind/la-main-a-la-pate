@@ -22,15 +22,18 @@
                     La Main a la Pate
                 </a>
                 <div class="hidden sm:flex items-center gap-6 text-sm">
-                    <a href="/" class="text-slate-600 hover:text-slate-900 transition">Actualites</a>
-                    <a href="{{ route('community.index') }}" class="text-slate-600 hover:text-slate-900 transition">Communaute</a>
+                    <a href="/" class="text-slate-600 hover:text-slate-900 transition">Accueil</a>
+                    <a href="/seraphotheque" class="text-slate-600 hover:text-slate-900 transition">Seraphotheque</a>
                     @auth
+                        <a href="{{ route('community.index') }}" class="text-slate-600 hover:text-slate-900 transition">Communaute</a>
                         <a href="/dashboard" class="text-slate-600 hover:text-slate-900 transition">Tableau de bord</a>
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
                             <button type="submit" class="text-slate-500 hover:text-red-600 text-sm transition">Deconnexion</button>
                         </form>
                     @else
+                        <a href="/a-propos" class="text-slate-600 hover:text-slate-900 transition">A propos</a>
+                        <a href="/contact" class="text-slate-600 hover:text-slate-900 transition">Contact</a>
                         <a href="/login" class="text-slate-600 hover:text-slate-900 transition">Connexion</a>
                         <a href="/register" class="bg-slate-900 text-white px-3 py-1.5 rounded-md text-sm hover:bg-slate-700 transition">S'inscrire</a>
                     @endauth
@@ -42,15 +45,18 @@
                 </button>
             </div>
             <div id="mobile-menu" class="hidden sm:hidden pb-4 space-y-2 text-sm">
-                <a href="/" class="block text-slate-600 hover:text-slate-900 py-1">Actualites</a>
-                <a href="{{ route('community.index') }}" class="block text-slate-600 hover:text-slate-900 py-1">Communaute</a>
+                <a href="/" class="block text-slate-600 hover:text-slate-900 py-1">Accueil</a>
+                <a href="/seraphotheque" class="block text-slate-600 hover:text-slate-900 py-1">Seraphotheque</a>
                 @auth
+                    <a href="{{ route('community.index') }}" class="block text-slate-600 hover:text-slate-900 py-1">Communaute</a>
                     <a href="/dashboard" class="block text-slate-600 hover:text-slate-900 py-1">Tableau de bord</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="text-slate-500 hover:text-red-600 py-1">Deconnexion</button>
                     </form>
                 @else
+                    <a href="/a-propos" class="block text-slate-600 hover:text-slate-900 py-1">A propos</a>
+                    <a href="/contact" class="block text-slate-600 hover:text-slate-900 py-1">Contact</a>
                     <a href="/login" class="block text-slate-600 hover:text-slate-900 py-1">Connexion</a>
                     <a href="/register" class="block text-slate-900 font-medium py-1">S'inscrire</a>
                 @endauth
@@ -80,8 +86,8 @@
                 <div>
                     <h4 class="text-white font-semibold mb-2">Liens</h4>
                     <ul class="space-y-1 text-xs">
-                        <li><a href="/" class="hover:text-white transition">Actualites</a></li>
-                        <li><a href="{{ route('community.index') }}" class="hover:text-white transition">Communaute</a></li>
+                        <li><a href="/" class="hover:text-white transition">Accueil</a></li>
+                        <li><a href="/seraphotheque" class="hover:text-white transition">Seraphotheque</a></li>
                         <li><a href="/a-propos" class="hover:text-white transition">A propos</a></li>
                         <li><a href="/contact" class="hover:text-white transition">Contact</a></li>
                     </ul>
