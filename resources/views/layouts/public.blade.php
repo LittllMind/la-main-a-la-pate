@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'La Main a la Pate')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Inter', system-ui, sans-serif; }
@@ -81,7 +81,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
                 <div>
                     <h4 class="text-white font-semibold mb-2">La Main a la Pate</h4>
-                    <p class="text-slate-400 text-xs leading-relaxed">Site communautaire du Rozier. Actualites, forums et echanges entre voisins.</p>
+                    <p class="text-slate-400 text-xs leading-relaxed">Site communautaire. Actualites, forums et echanges entre voisins.</p>
                 </div>
                 <div>
                     <h4 class="text-white font-semibold mb-2">Liens</h4>

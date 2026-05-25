@@ -1,105 +1,284 @@
 @extends('layouts.public')
 
-@section('title', 'La Seraphotheque')
+@section('title', 'La Séraphothèque — Le Rozier')
 
 @section('content')
 <div class="max-w-5xl mx-auto px-4 py-8">
-    <div class="text-center mb-12">
-        <h1 class="text-3xl font-bold text-slate-900 mb-3">La Seraphotheque</h1>
-        <p class="text-slate-600 max-w-2xl mx-auto">
-            Espace d'exposition des activites, projets et initiatives locales du Rozier.
-            Decouvrez ce qui fait la vie de notre commune.
+
+    {{-- HERO --}}
+    <div class="text-center mb-14">
+        <span class="inline-block text-6xl mb-4">🏠</span>
+        <h1 class="text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">La Séraphothèque</h1>
+        <p class="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Friperie, brocante et recyclerie au cœur du Rozier.<br>
+            Un commerce de proximité, un espace de rencontre, une initiative locale.
+        </p>
+        <div class="mt-4 text-sm text-slate-500">
+            2 rue Louis Armand — 48150 Le Rozier — Ouvert à l'année
+        </div>
+    </div>
+
+    {{-- 4 PILIERS AVEC PHOTOS --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-14">
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition">
+            <div class="h-44 overflow-hidden">
+                <img src="/images/seraphotheque/recyclerie.jpg" alt="Recyclerie textile et objets" class="w-full h-full object-cover hover:scale-105 transition">
+            </div>
+            <div class="p-4 text-center">
+                <div class="text-2xl mb-1">♻️</div>
+                <h3 class="font-semibold text-slate-900 text-sm mb-1">Recyclerie</h3>
+                <p class="text-slate-500 text-xs leading-relaxed">Textiles et objets récupérés, triés et valorisés localement.</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition">
+            <div class="h-44 overflow-hidden">
+                <img src="/images/seraphotheque/friperie-01.jpg" alt="Friperie et brocante" class="w-full h-full object-cover hover:scale-105 transition">
+            </div>
+            <div class="p-4 text-center">
+                <div class="text-2xl mb-1">👕</div>
+                <h3 class="font-semibold text-slate-900 text-sm mb-1">Friperie & Brocante</h3>
+                <p class="text-slate-500 text-xs leading-relaxed">Vêtements et objets accessibles à tous les budgets.</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition">
+            <div class="h-44 overflow-hidden">
+                <img src="/images/seraphotheque/jouets.jpg" alt="Espace enfants avec jouets" class="w-full h-full object-cover hover:scale-105 transition">
+            </div>
+            <div class="p-4 text-center">
+                <div class="text-2xl mb-1">🧸</div>
+                <h3 class="font-semibold text-slate-900 text-sm mb-1">Espace Enfants</h3>
+                <p class="text-slate-500 text-xs leading-relaxed">Coin jeu et lecture apprécié des familles du village.</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition">
+            <div class="h-44 overflow-hidden">
+                <img src="/images/seraphotheque/devanture.jpg" alt="Devanture de la boutique" class="w-full h-full object-cover hover:scale-105 transition">
+            </div>
+            <div class="p-4 text-center">
+                <div class="text-2xl mb-1">🤝</div>
+                <h3 class="font-semibold text-slate-900 text-sm mb-1">Commerce de proximité</h3>
+                <p class="text-slate-500 text-xs leading-relaxed">Ouvert toute l'année pour les habitants et les visiteurs.</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- CAROUSEL ACTIVITÉS --}}
+    <div class="mb-14 -mx-4 sm:mx-0">
+        <div class="relative overflow-hidden rounded-lg sm:rounded-xl" id="carousel">
+            <div class="flex transition-transform duration-500 ease-out" id="carousel-track">
+                {{-- Slide 1 : Recyclerie --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/recyclerie.jpg" alt="Recyclerie" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Recyclerie</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Textiles et objets récupérés, triés et valorisés localement.</p>
+                    </div>
+                </div>
+                {{-- Slide 2 : Friperie --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/friperie-01.jpg" alt="Friperie" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Friperie & Brocante</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Vêtements et objets accessibles à tous les budgets.</p>
+                    </div>
+                </div>
+                {{-- Slide 3 : Espace Enfants --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/jouets.jpg" alt="Espace enfants" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Espace Enfants</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Coin jeu et lecture apprécié des familles du village.</p>
+                    </div>
+                </div>
+                {{-- Slide 4 : Commerce de proximité --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/devanture.jpg" alt="Devanture boutique" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Commerce de proximité</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Ouvert toute l'année pour les habitants et les visiteurs.</p>
+                    </div>
+                </div>
+                {{-- Slide 5 : Réunion publique --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/reunion-02.jpg" alt="Réunion publique" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Réunion publique</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">24 mai 2026 — Une vingtaine de personnes rassemblées au cœur du village.</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Flèches --}}
+            <button onclick="carouselPrev()" class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-900 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+            </button>
+            <button onclick="carouselNext()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-900 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </button>
+
+            {{-- Dots --}}
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                <button onclick="carouselGo(0)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="0"></button>
+                <button onclick="carouselGo(1)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="1"></button>
+                <button onclick="carouselGo(2)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="2"></button>
+                <button onclick="carouselGo(3)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="3"></button>
+                <button onclick="carouselGo(4)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="4"></button>
+            </div>
+        </div>
+    </div>
+
+    @push('head')
+    <script>
+        let carouselIndex = 0;
+        const carouselTotal = 5;
+        const track = document.getElementById('carousel-track');
+
+        function carouselUpdate() {
+            track.style.transform = 'translateX(-' + (carouselIndex * 100) + '%)';
+            document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+                dot.classList.toggle('bg-white', i === carouselIndex);
+                dot.classList.toggle('bg-white/60', i !== carouselIndex);
+            });
+        }
+
+        function carouselNext() {
+            carouselIndex = (carouselIndex + 1) % carouselTotal;
+            carouselUpdate();
+        }
+
+        function carouselPrev() {
+            carouselIndex = (carouselIndex - 1 + carouselTotal) % carouselTotal;
+            carouselUpdate();
+        }
+
+        function carouselGo(i) {
+            carouselIndex = i;
+            carouselUpdate();
+        }
+
+        carouselUpdate();
+
+        // Auto-play toutes les 5 secondes
+        let autoplay = setInterval(carouselNext, 5000);
+
+        // Pause au survol
+        document.getElementById('carousel').addEventListener('mouseenter', () => clearInterval(autoplay));
+        document.getElementById('carousel').addEventListener('mouseleave', () => {
+            clearInterval(autoplay);
+            autoplay = setInterval(carouselNext, 5000);
+        });
+    </script>
+    @endpush
+
+    {{-- HISTOIRE --}}
+    <div class="bg-white rounded-lg border border-slate-200 p-6 mb-14">
+        <h2 class="text-xl font-bold text-slate-900 mb-4">Depuis 2022</h2>
+        <p class="text-slate-600 text-sm leading-relaxed mb-4">
+            La Séraphothèque est implantée dans l'ancien bâtiment scolaire du Rozier.
+            Exploitée par <strong>Anna El Agri</strong> et <strong>Aurélien Tisserand</strong>,
+            parents de deux enfants scolarisés au village, l'activité a démarré sur un bail précaire
+            renouvelé tous les six mois. Sans incident pendant quatre ans.
+        </p>
+        <p class="text-slate-600 text-sm leading-relaxed">
+            Au fil du temps, la boutique est devenue bien plus qu'un commerce :
+            un <strong>espace de rencontre</strong>, un <strong>lieu de vie</strong> apprécié des enfants et des adultes,
+            une <strong>initiative locale, sociale et écologique</strong> participant à la vie du village toute l'année.
         </p>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        <!-- Carte 1 : Les bougies -->
-        <a href="https://les-bougies-de-seraphie.fr" target="_blank" class="group bg-white rounded-lg border border-slate-200 overflow-hidden hover:border-slate-400 hover:shadow-md transition">
-            <div class="h-40 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                <span class="text-5xl">🕯️</span>
+    {{-- PHOTOS RÉUNION PUBLIQUE --}}
+    <div class="mb-14">
+        <h2 class="text-xl font-bold text-slate-900 mb-4">Réunion publique — 24 mai 2026</h2>
+        <p class="text-slate-600 text-sm mb-4">
+            Une vingtaine de personnes de tous âges rassemblées en plein air devant la boutique
+            pour échanger sur l'avenir du commerce au cœur du village.
+        </p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="rounded-lg overflow-hidden border border-slate-200">
+                <img src="/images/seraphotheque/reunion-01.jpg" alt="Devanture de la Séraphothèque avec la banderole Commerce en danger" class="w-full h-40 object-cover hover:scale-105 transition">
             </div>
-            <div class="p-5">
-                <h3 class="font-semibold text-slate-900 mb-1 group-hover:text-slate-700">Les Bougies de Seraphie</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">Artisanat local a base de cire vegetale. Bougies parfumees fabriquees au village.</p>
-                <span class="inline-block mt-3 text-xs text-amber-600 font-medium">Visiter le site &rarr;</span>
+            <div class="rounded-lg overflow-hidden border border-slate-200">
+                <img src="/images/seraphotheque/reunion-02.jpg" alt="Réunion publique en cercle dans la cour de village" class="w-full h-40 object-cover hover:scale-105 transition">
             </div>
-        </a>
-
-        <!-- Carte 2 : Fundisc -->
-        <a href="https://fundisc.fr" target="_blank" class="group bg-white rounded-lg border border-slate-200 overflow-hidden hover:border-slate-400 hover:shadow-md transition">
-            <div class="h-40 bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center">
-                <span class="text-5xl">🎵</span>
+            <div class="rounded-lg overflow-hidden border border-slate-200">
+                <img src="/images/seraphotheque/reunion-03.jpg" alt="Participants de tous âges écoutant attentivement" class="w-full h-40 object-cover hover:scale-105 transition">
             </div>
-            <div class="p-5">
-                <h3 class="font-semibold text-slate-900 mb-1 group-hover:text-slate-700">Fundisc</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">Disquaire local et evenements musicaux. Vinyles, concerts et culture au Rozier.</p>
-                <span class="inline-block mt-3 text-xs text-violet-600 font-medium">Visiter le site &rarr;</span>
-            </div>
-        </a>
-
-        <!-- Carte 3 : Marche -->
-        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
-            <div class="h-40 bg-gradient-to-br from-emerald-100 to-green-100 flex items-center justify-center">
-                <span class="text-5xl">🥬</span>
-            </div>
-            <div class="p-5">
-                <h3 class="font-semibold text-slate-900 mb-1">Marche du dimanche</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">Tous les dimanches de 8h a 13h sur la place de la mairie. Producteurs locaux et artisans.</p>
-                <span class="inline-block mt-3 text-xs text-emerald-600 font-medium">Place de la Mairie, dimanches 8h-13h</span>
+            <div class="rounded-lg overflow-hidden border border-slate-200">
+                <img src="/images/seraphotheque/reunion-04.jpg" alt="Ambiance conviviale sous le soleil du Rozier" class="w-full h-40 object-cover hover:scale-105 transition">
             </div>
         </div>
-
-        <!-- Carte 4 : Patrimoine -->
-        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
-            <div class="h-40 bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">
-                <span class="text-5xl">🏛️</span>
-            </div>
-            <div class="p-5">
-                <h3 class="font-semibold text-slate-900 mb-1">Patrimoine</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">Chapelle Saint-Etienne, lavoirs, sentiers historiques. Decouvrez l'histoire du Rozier.</p>
-            </div>
-        </div>
-
-        <!-- Carte 5 : Nature -->
-        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
-            <div class="h-40 bg-gradient-to-br from-sky-100 to-blue-100 flex items-center justify-center">
-                <span class="text-5xl">🌿</span>
-            </div>
-            <div class="p-5">
-                <h3 class="font-semibold text-slate-900 mb-1">Randonnees & Nature</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">Circuits balises, faune locale, espaces proteges. Partez a la decouverte de nos paysages.</p>
-            </div>
-        </div>
-
-        <!-- Carte 6 : Brocante -->
-        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
-            <div class="h-40 bg-gradient-to-br from-yellow-100 to-amber-100 flex items-center justify-center">
-                <span class="text-5xl">🤝</span>
-            </div>
-            <div class="p-5">
-                <h3 class="font-semibold text-slate-900 mb-1">Brocante & Entraide</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">Petites annonces, dons, services entre voisins. Donnez, echangez, partagez.</p>
-            </div>
-        </div>
-
     </div>
 
-    <!-- CTA Communaute -->
+    {{-- CONTEXTE / MOBILISATION (factuel, posé) --}}
+    <div class="bg-amber-50 rounded-lg border border-amber-200 p-6 mb-14">
+        <h2 class="text-lg font-bold text-amber-900 mb-3">Un projet qui cherche sa stabilité</h2>
+        <p class="text-amber-800 text-sm leading-relaxed mb-4">
+            Depuis le printemps 2026, l'avenir du local est incertain.
+            La commune souhaite reprendre le bâtiment sans projet formalisé à ce jour.
+            Les exploitants ont retiré leurs installations extérieures, sollicité une
+            <strong>autorisation d'occupation temporaire</strong> et demandé la communication
+            de documents administratifs — toujours sans réponse.
+        </p>
+        <p class="text-amber-800 text-sm leading-relaxed mb-4">
+            La démarche des exploitants est simple : obtenir un <strong>cadre stable, transparent
+            et appliqué de manière égale à tous les commerces du village</strong>.
+            Ils restent disponibles pour tout échange constructif.
+        </p>
+        <div class="flex flex-wrap gap-3 mt-4">
+            <a href="https://www.change.org/p/pour-le-maintien-de-la-séraphothèque-au-cœur-du-rozier-48150"
+               target="_blank"
+               class="inline-block bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-800 transition">
+                Signer la pétition
+            </a>
+            <a href="/contact"
+               class="inline-block bg-white text-amber-800 border border-amber-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-100 transition">
+                Nous contacter
+            </a>
+        </div>
+    </div>
+
+    {{-- RÉSEAUX --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
+        <a href="https://www.instagram.com/seraphotheque/" target="_blank"
+           class="group flex items-center gap-3 bg-white rounded-lg border border-slate-200 p-4 hover:border-pink-300 hover:shadow-sm transition">
+            <span class="text-2xl">📸</span>
+            <div>
+                <div class="font-semibold text-slate-900 text-sm">Instagram</div>
+                <div class="text-slate-500 text-xs">@seraphotheque</div>
+            </div>
+        </a>
+        <a href="https://www.facebook.com/seraphotheque/" target="_blank"
+           class="group flex items-center gap-3 bg-white rounded-lg border border-slate-200 p-4 hover:border-blue-300 hover:shadow-sm transition">
+            <span class="text-2xl">👍</span>
+            <div>
+                <div class="font-semibold text-slate-900 text-sm">Facebook</div>
+                <div class="text-slate-500 text-xs">La Séraphothèque | Le Rozier</div>
+            </div>
+        </a>
+    </div>
+
+    {{-- CTA Communauté — masqué pour le moment --}}
+    @if(false)
     <div class="bg-slate-900 rounded-lg p-8 text-center text-white">
-        <h3 class="text-xl font-semibold mb-3">Rejoignez la communaute</h3>
+        <h3 class="text-xl font-semibold mb-3">Le Rozier, c'est aussi vous</h3>
         <p class="text-slate-300 text-sm mb-6 max-w-lg mx-auto">
-            Echangez avec vos voisins, participez aux forums thematiques et restez informe de la vie du village.
+            Rejoignez les forums de la communauté pour échanger sur la vie du village,
+            le patrimoine, la nature et les initiatives locales.
         </p>
         @auth
-            <a href="{{ route('community.index') }}" class="inline-block bg-white text-slate-900 px-5 py-2.5 rounded-md text-sm font-medium hover:bg-slate-100 transition">
-                Acceder aux forums
+            <a href="{{ route('community.index') }}"
+               class="inline-block bg-white text-slate-900 px-5 py-2.5 rounded-md text-sm font-medium hover:bg-slate-100 transition">
+                Accéder aux forums
             </a>
         @else
-            <a href="/register" class="inline-block bg-white text-slate-900 px-5 py-2.5 rounded-md text-sm font-medium hover:bg-slate-100 transition">
-                Creer un compte
+            <a href="/register"
+               class="inline-block bg-white text-slate-900 px-5 py-2.5 rounded-md text-sm font-medium hover:bg-slate-100 transition">
+                Créer un compte
             </a>
-            <p class="text-slate-400 text-xs mt-4">Deja membre ? <a href="/login" class="text-white underline">Se connecter</a></p>
+            <p class="text-slate-400 text-xs mt-4">Déjà membre ? <a href="/login" class="text-white underline">Se connecter</a></p>
         @endauth
     </div>
+    @endif
+
 </div>
 @endsection
