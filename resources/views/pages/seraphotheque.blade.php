@@ -186,28 +186,76 @@
         </p>
     </div>
 
-    {{-- PHOTOS RÉUNION PUBLIQUE --}}
+    {{-- REUNIONS PUBLIQUES — accordéon extensible --}}
     <div class="mb-14">
-        <h2 class="text-xl font-bold text-slate-900 mb-4">Réunion publique — 24 mai 2026</h2>
-        <p class="text-slate-600 text-sm mb-4">
-            Une vingtaine de personnes de tous âges rassemblées en plein air devant la boutique
-            pour échanger sur l'avenir du commerce au cœur du village.
-        </p>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="rounded-lg overflow-hidden border border-slate-200">
-                <img src="/images/seraphotheque/reunion-01.jpg" alt="Devanture de la Séraphothèque avec la banderole Commerce en danger" class="w-full h-40 object-cover hover:scale-105 transition">
+        <h2 class="text-xl font-bold text-slate-900 mb-4">Réunions publiques</h2>
+
+        {{-- Réunion 1 : 24 mai 2026 --}}
+        <details class="group bg-white rounded-lg border border-slate-200 overflow-hidden mb-3 open:shadow-sm transition">
+            <summary class="flex items-center gap-4 p-4 cursor-pointer list-none select-none hover:bg-slate-50 transition">
+                <img src="/images/seraphotheque/reunion-01.jpg" alt="" class="w-20 h-20 rounded-md object-cover flex-shrink-0 border border-slate-100">
+                <div class="flex-1 min-w-0">
+                    <div class="text-xs text-slate-500 font-medium mb-0.5">24 mai 2026</div>
+                    <h3 class="font-semibold text-slate-900 text-sm leading-snug">Première réunion publique — « Commerce en danger »</h3>
+                    <p class="text-slate-500 text-xs mt-1 truncate">Une vingtaine de personnes rassemblées devant la boutique.</p>
+                </div>
+                <svg class="w-5 h-5 text-slate-400 flex-shrink-0 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+            </summary>
+            <div class="px-4 pb-5 pt-1 border-t border-slate-100">
+                <div class="text-slate-600 text-sm leading-relaxed mb-4 space-y-3">
+                    <p>
+                        Réunion publique conviviale organisée en plein air devant la Séraphothèque.
+                        La devanture affichait une banderole « Commerce en danger ».
+                        Une vingtaine de personnes de tous âges — habitants, soutiens, élus — se sont rassemblées
+                        pour échanger sur l'avenir du commerce au cœur du village.
+                    </p>
+                    <p>
+                        Les échanges ont porté sur le cadre juridique précaire du bail,
+                        l'absence de projet formalisé de la commune et la nécessité d'un
+                        <strong>traitement équitable entre tous les commerces du village</strong>.
+                        Aucune décision administrative n'a été annoncée ce jour.
+                    </p>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="rounded-lg overflow-hidden border border-slate-200">
+                        <img src="/images/seraphotheque/reunion-01.jpg" alt="Devanture avec banderole Commerce en danger" class="w-full h-32 object-cover hover:scale-105 transition">
+                    </div>
+                    <div class="rounded-lg overflow-hidden border border-slate-200">
+                        <img src="/images/seraphotheque/reunion-02.jpg" alt="Réunion en cercle dans la cour" class="w-full h-32 object-cover hover:scale-105 transition">
+                    </div>
+                    <div class="rounded-lg overflow-hidden border border-slate-200">
+                        <img src="/images/seraphotheque/reunion-03.jpg" alt="Participants écoutant attentivement" class="w-full h-32 object-cover hover:scale-105 transition">
+                    </div>
+                    <div class="rounded-lg overflow-hidden border border-slate-200">
+                        <img src="/images/seraphotheque/reunion-04.jpg" alt="Ambiance conviviale au soleil" class="w-full h-32 object-cover hover:scale-105 transition">
+                    </div>
+                </div>
             </div>
-            <div class="rounded-lg overflow-hidden border border-slate-200">
-                <img src="/images/seraphotheque/reunion-02.jpg" alt="Réunion publique en cercle dans la cour de village" class="w-full h-40 object-cover hover:scale-105 transition">
+        </details>
+
+        {{-- Réunion 2 : template prêt --}}
+        {{--
+        <details class="group bg-white rounded-lg border border-slate-200 overflow-hidden mb-3 open:shadow-sm transition">
+            <summary class="flex items-center gap-4 p-4 cursor-pointer list-none select-none hover:bg-slate-50 transition">
+                <div class="w-20 h-20 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0 border border-slate-100 text-2xl">📅</div>
+                <div class="flex-1 min-w-0">
+                    <div class="text-xs text-slate-500 font-medium mb-0.5">JJ mois 2026</div>
+                    <h3 class="font-semibold text-slate-900 text-sm leading-snug">Titre de la réunion</h3>
+                    <p class="text-slate-500 text-xs mt-1 truncate">Résumé en une ligne...</p>
+                </div>
+                <svg class="w-5 h-5 text-slate-400 flex-shrink-0 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+            </summary>
+            <div class="px-4 pb-5 pt-1 border-t border-slate-100">
+                <p class="text-slate-600 text-sm leading-relaxed mb-4">Compte-rendu ici...</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="rounded-lg overflow-hidden border border-slate-200"><img src="/images/seraphotheque/reunion-future-01.jpg" alt="" class="w-full h-32 object-cover"></div>
+                </div>
             </div>
-            <div class="rounded-lg overflow-hidden border border-slate-200">
-                <img src="/images/seraphotheque/reunion-03.jpg" alt="Participants de tous âges écoutant attentivement" class="w-full h-40 object-cover hover:scale-105 transition">
-            </div>
-            <div class="rounded-lg overflow-hidden border border-slate-200">
-                <img src="/images/seraphotheque/reunion-04.jpg" alt="Ambiance conviviale sous le soleil du Rozier" class="w-full h-40 object-cover hover:scale-105 transition">
-            </div>
-        </div>
+        </details>
+        --}}
+
     </div>
+
 
     {{-- CONTEXTE / MOBILISATION (factuel, posé) --}}
     <div class="bg-amber-50 rounded-lg border border-amber-200 p-6 mb-14">
