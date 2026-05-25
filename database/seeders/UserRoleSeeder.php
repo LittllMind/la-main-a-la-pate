@@ -46,6 +46,7 @@ class UserRoleSeeder extends Seeder
         ];
 
         foreach ($users as $data) {
+            $data['email_verified_at'] = now();
             User::updateOrCreate(
                 ['email' => $data['email']],
                 $data
