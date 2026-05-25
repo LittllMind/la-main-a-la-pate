@@ -33,7 +33,7 @@
                     <a href="/logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="text-gray-400 hover:text-white transition">Déconnexion</a>
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
                 @else
-                    <a href="/login" class="text-gray-400 hover:text-white transition">Connexion</a>
+                    {{-- Connexion masquée le temps de formalisation --}}
                 @endauth
             </div>
         </div>
@@ -51,7 +51,7 @@
                 © {{ date('Y') }} <span class="gradient-text font-semibold">La Main à la Pâte</span> — Veille IA Agentique
             </div>
             <div class="flex items-center gap-6 text-sm text-gray-500">
-                <a href="/contact" class="hover:text-white transition">Contact</a>
+                {{-- Contact masqué le temps de formalisation --}}
                 <a href="https://t.me/+votre_groupe" target="_blank" class="hover:text-white transition">Telegram</a>
             </div>
         </div>

@@ -30,8 +30,7 @@
                             <button type="submit" class="text-slate-500 hover:text-red-600 text-sm">Deconnexion</button>
                         </form>
                     @else
-                        <a href="/login" class="text-slate-600 hover:text-slate-900">Connexion</a>
-                        <a href="/register" class="bg-slate-900 text-white px-3 py-1.5 rounded-md text-sm hover:bg-slate-700">S'inscrire</a>
+                        {{-- Connexion / S'inscrire masqués le temps de formalisation --}}
                     @endauth
                 </div>
             </div>

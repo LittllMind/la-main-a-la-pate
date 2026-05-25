@@ -23,7 +23,7 @@
                 <div class="hidden sm:flex items-center gap-6">
                     <a href="/kiosque" class="hover:text-purple-400 transition">Catalogue</a>
                     <a href="/about" class="hover:text-purple-400 transition">Le Concept</a>
-                    <a href="/contact" class="hover:text-purple-400 transition">Contact</a>
+                    {{-- Contact masqué le temps de formalisation --}}
                     @auth
                         <a href="/cart" class="hover:text-purple-400 transition">Panier</a>
                         <a href="{{ route('orders.my') }}" class="hover:text-purple-400 transition">Mes commandes</a>
@@ -39,7 +39,7 @@
                             <button type="submit" class="text-red-400 hover:text-red-300 transition">Déconnexion</button>
                         </form>
                     @else
-                        <a href="/login" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-lg transition">Connexion</a>
+                        {{-- Connexion masquée le temps de formalisation --}}
                     @endauth
                 </div>
                 <!-- Mobile menu button -->
@@ -53,7 +53,7 @@
             <div x-show="mobileMenuOpen" @click.away="mobileMenuOpen = false" x-cloak class="sm:hidden mt-4 space-y-2">
                 <a href="/kiosque" class="block text-purple-400 font-semibold py-2">Catalogue</a>
                 <a href="/about" class="block hover:text-purple-400 py-2">Le Concept</a>
-                <a href="/contact" class="block hover:text-purple-400 py-2">Contact</a>
+                {{-- Contact masqué --}}
                 @auth
                     <a href="/cart" class="block hover:text-purple-400 py-2">Panier</a>
                     <a href="{{ route('orders.my') }}" class="block hover:text-purple-400 py-2">Mes commandes</a>
@@ -64,7 +64,7 @@
                         <button type="submit" class="text-red-400 py-2">Déconnexion</button>
                     </form>
                 @else
-                    <a href="/login" class="block bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-2 rounded-lg text-center">Connexion</a>
+                    {{-- Connexion masquée le temps de formalisation --}}
                 @endauth
             </div>
         </div>

@@ -32,10 +32,7 @@
                             <button type="submit" class="text-slate-500 hover:text-red-600 text-sm transition">Deconnexion</button>
                         </form>
                     @else
-                        <a href="/a-propos" class="text-slate-600 hover:text-slate-900 transition">A propos</a>
-                        <a href="/contact" class="text-slate-600 hover:text-slate-900 transition">Contact</a>
-                        <a href="/login" class="text-slate-600 hover:text-slate-900 transition">Connexion</a>
-                        <a href="/register" class="bg-slate-900 text-white px-3 py-1.5 rounded-md text-sm hover:bg-slate-700 transition">S'inscrire</a>
+                        {{-- A propos / Contact / Connexion / S'inscrire masqués le temps de formalisation --}}
                     @endauth
                 </div>
                 <button id="mobile-menu-btn" class="sm:hidden text-slate-600">
@@ -55,10 +52,7 @@
                         <button type="submit" class="text-slate-500 hover:text-red-600 py-1">Deconnexion</button>
                     </form>
                 @else
-                    <a href="/a-propos" class="block text-slate-600 hover:text-slate-900 py-1">A propos</a>
-                    <a href="/contact" class="block text-slate-600 hover:text-slate-900 py-1">Contact</a>
-                    <a href="/login" class="block text-slate-600 hover:text-slate-900 py-1">Connexion</a>
-                    <a href="/register" class="block text-slate-900 font-medium py-1">S'inscrire</a>
+                    {{-- A propos / Contact / Connexion / S'inscrire masqués le temps de formalisation --}}
                 @endauth
             </div>
         </div>
@@ -88,8 +82,7 @@
                     <ul class="space-y-1 text-xs">
                         <li><a href="/" class="hover:text-white transition">Accueil</a></li>
                         <li><a href="/seraphotheque" class="hover:text-white transition">Seraphotheque</a></li>
-                        <li><a href="/a-propos" class="hover:text-white transition">A propos</a></li>
-                        <li><a href="/contact" class="hover:text-white transition">Contact</a></li>
+                        {{-- A propos / Contact masqués le temps de formalisation --}}
                     </ul>
                 </div>
                 <div>
