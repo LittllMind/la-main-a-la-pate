@@ -285,7 +285,6 @@
         </div>
     </div>
 
-    @push('head')
     <script>
         let carouselIndex = 0;
         const carouselTotal = 5;
@@ -326,7 +325,6 @@
             autoplay = setInterval(carouselNext, 5000);
         });
     </script>
-    @endpush
 
 </div>
 @endsection
