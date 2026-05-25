@@ -62,114 +62,6 @@
         </div>
     </div>
 
-    {{-- CAROUSEL ACTIVITÉS --}}
-    <div class="mb-14 -mx-4 sm:mx-0">
-        <div class="relative overflow-hidden rounded-lg sm:rounded-xl" id="carousel">
-            <div class="flex transition-transform duration-500 ease-out" id="carousel-track">
-                {{-- Slide 1 : Recyclerie --}}
-                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
-                    <img src="/images/seraphotheque/recyclerie.jpg" alt="Recyclerie" class="w-full h-full object-cover">
-                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
-                        <h3 class="text-white text-xl sm:text-2xl font-bold">Recyclerie</h3>
-                        <p class="text-white/80 text-sm sm:text-base mt-1">Textiles et objets récupérés, triés et valorisés localement.</p>
-                    </div>
-                </div>
-                {{-- Slide 2 : Friperie --}}
-                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
-                    <img src="/images/seraphotheque/friperie-01.jpg" alt="Friperie" class="w-full h-full object-cover">
-                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
-                        <h3 class="text-white text-xl sm:text-2xl font-bold">Friperie & Brocante</h3>
-                        <p class="text-white/80 text-sm sm:text-base mt-1">Vêtements et objets accessibles à tous les budgets.</p>
-                    </div>
-                </div>
-                {{-- Slide 3 : Espace Enfants --}}
-                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
-                    <img src="/images/seraphotheque/jouets.jpg" alt="Espace enfants" class="w-full h-full object-cover">
-                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
-                        <h3 class="text-white text-xl sm:text-2xl font-bold">Espace Enfants</h3>
-                        <p class="text-white/80 text-sm sm:text-base mt-1">Coin jeu et lecture apprécié des familles du village.</p>
-                    </div>
-                </div>
-                {{-- Slide 4 : Commerce de proximité --}}
-                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
-                    <img src="/images/seraphotheque/devanture.jpg" alt="Devanture boutique" class="w-full h-full object-cover">
-                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
-                        <h3 class="text-white text-xl sm:text-2xl font-bold">Commerce de proximité</h3>
-                        <p class="text-white/80 text-sm sm:text-base mt-1">Ouvert toute l'année pour les habitants et les visiteurs.</p>
-                    </div>
-                </div>
-                {{-- Slide 5 : Réunion publique --}}
-                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
-                    <img src="/images/seraphotheque/reunion-02.jpg" alt="Réunion publique" class="w-full h-full object-cover">
-                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
-                        <h3 class="text-white text-xl sm:text-2xl font-bold">Réunion publique</h3>
-                        <p class="text-white/80 text-sm sm:text-base mt-1">24 mai 2026 — Une vingtaine de personnes rassemblées au cœur du village.</p>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Flèches --}}
-            <button onclick="carouselPrev()" class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-900 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-            </button>
-            <button onclick="carouselNext()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-900 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-            </button>
-
-            {{-- Dots --}}
-            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                <button onclick="carouselGo(0)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="0"></button>
-                <button onclick="carouselGo(1)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="1"></button>
-                <button onclick="carouselGo(2)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="2"></button>
-                <button onclick="carouselGo(3)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="3"></button>
-                <button onclick="carouselGo(4)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="4"></button>
-            </div>
-        </div>
-    </div>
-
-    @push('head')
-    <script>
-        let carouselIndex = 0;
-        const carouselTotal = 5;
-        const track = document.getElementById('carousel-track');
-
-        function carouselUpdate() {
-            track.style.transform = 'translateX(-' + (carouselIndex * 100) + '%)';
-            document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
-                dot.classList.toggle('bg-white', i === carouselIndex);
-                dot.classList.toggle('bg-white/60', i !== carouselIndex);
-            });
-        }
-
-        function carouselNext() {
-            carouselIndex = (carouselIndex + 1) % carouselTotal;
-            carouselUpdate();
-        }
-
-        function carouselPrev() {
-            carouselIndex = (carouselIndex - 1 + carouselTotal) % carouselTotal;
-            carouselUpdate();
-        }
-
-        function carouselGo(i) {
-            carouselIndex = i;
-            carouselUpdate();
-        }
-
-        carouselUpdate();
-
-        // Auto-play toutes les 5 secondes
-        let autoplay = setInterval(carouselNext, 5000);
-
-        // Pause au survol
-        document.getElementById('carousel').addEventListener('mouseenter', () => clearInterval(autoplay));
-        document.getElementById('carousel').addEventListener('mouseleave', () => {
-            clearInterval(autoplay);
-            autoplay = setInterval(carouselNext, 5000);
-        });
-    </script>
-    @endpush
-
     {{-- HISTOIRE --}}
     <div class="bg-white rounded-lg border border-slate-200 p-6 mb-14">
         <h2 class="text-xl font-bold text-slate-900 mb-4">Depuis 2022</h2>
@@ -327,6 +219,114 @@
         @endauth
     </div>
     @endif
+
+    {{-- CAROUSEL ACTIVITÉS — en bas de page --}}
+    <div class="mb-14 -mx-4 sm:mx-0">
+        <div class="relative overflow-hidden rounded-lg sm:rounded-xl" id="carousel">
+            <div class="flex transition-transform duration-500 ease-out" id="carousel-track">
+                {{-- Slide 1 : Recyclerie --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/recyclerie.jpg" alt="Recyclerie" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Recyclerie</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Textiles et objets récupérés, triés et valorisés localement.</p>
+                    </div>
+                </div>
+                {{-- Slide 2 : Friperie --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/friperie-01.jpg" alt="Friperie" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Friperie & Brocante</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Vêtements et objets accessibles à tous les budgets.</p>
+                    </div>
+                </div>
+                {{-- Slide 3 : Espace Enfants --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/jouets.jpg" alt="Espace enfants" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Espace Enfants</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Coin jeu et lecture apprécié des familles du village.</p>
+                    </div>
+                </div>
+                {{-- Slide 4 : Commerce de proximité --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/devanture.jpg" alt="Devanture boutique" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Commerce de proximité</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Ouvert toute l'année pour les habitants et les visiteurs.</p>
+                    </div>
+                </div>
+                {{-- Slide 5 : Réunion publique --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/reunion-02.jpg" alt="Réunion publique" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Réunion publique</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">24 mai 2026 — Une vingtaine de personnes rassemblées au cœur du village.</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Flèches --}}
+            <button onclick="carouselPrev()" class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-900 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+            </button>
+            <button onclick="carouselNext()" class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-slate-900 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </button>
+
+            {{-- Dots --}}
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                <button onclick="carouselGo(0)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="0"></button>
+                <button onclick="carouselGo(1)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="1"></button>
+                <button onclick="carouselGo(2)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="2"></button>
+                <button onclick="carouselGo(3)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="3"></button>
+                <button onclick="carouselGo(4)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="4"></button>
+            </div>
+        </div>
+    </div>
+
+    @push('head')
+    <script>
+        let carouselIndex = 0;
+        const carouselTotal = 5;
+        const track = document.getElementById('carousel-track');
+
+        function carouselUpdate() {
+            track.style.transform = 'translateX(-' + (carouselIndex * 100) + '%)';
+            document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+                dot.classList.toggle('bg-white', i === carouselIndex);
+                dot.classList.toggle('bg-white/60', i !== carouselIndex);
+            });
+        }
+
+        function carouselNext() {
+            carouselIndex = (carouselIndex + 1) % carouselTotal;
+            carouselUpdate();
+        }
+
+        function carouselPrev() {
+            carouselIndex = (carouselIndex - 1 + carouselTotal) % carouselTotal;
+            carouselUpdate();
+        }
+
+        function carouselGo(i) {
+            carouselIndex = i;
+            carouselUpdate();
+        }
+
+        carouselUpdate();
+
+        // Auto-play toutes les 5 secondes
+        let autoplay = setInterval(carouselNext, 5000);
+
+        // Pause au survol
+        document.getElementById('carousel').addEventListener('mouseenter', () => clearInterval(autoplay));
+        document.getElementById('carousel').addEventListener('mouseleave', () => {
+            clearInterval(autoplay);
+            autoplay = setInterval(carouselNext, 5000);
+        });
+    </script>
+    @endpush
 
 </div>
 @endsection
