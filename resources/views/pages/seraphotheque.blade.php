@@ -18,8 +18,8 @@
         </div>
     </div>
 
-    {{-- 4 PILIERS AVEC PHOTOS --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-14">
+    {{-- 5 PILIERS AVEC PHOTOS --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-14">
         <div class="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition">
             <div class="h-44 overflow-hidden">
                 <img src="/images/seraphotheque/recyclerie.jpg" alt="Recyclerie textile et objets" class="w-full h-full object-cover hover:scale-105 transition">
@@ -32,22 +32,32 @@
         </div>
         <div class="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition">
             <div class="h-44 overflow-hidden">
-                <img src="/images/seraphotheque/friperie-01.jpg" alt="Friperie et brocante" class="w-full h-full object-cover hover:scale-105 transition">
+                <img src="/images/seraphotheque/artisanat.jpg" alt="Artisanat local" class="w-full h-full object-cover hover:scale-105 transition">
             </div>
             <div class="p-4 text-center">
-                <div class="text-2xl mb-1">👕</div>
-                <h3 class="font-semibold text-slate-900 text-sm mb-1">Friperie & Brocante</h3>
-                <p class="text-slate-500 text-xs leading-relaxed">Vêtements et objets accessibles à tous les budgets.</p>
+                <div class="text-2xl mb-1">🎨</div>
+                <h3 class="font-semibold text-slate-900 text-sm mb-1">Artisanat</h3>
+                <p class="text-slate-500 text-xs leading-relaxed">Créations et savoir-faire local, valorisés et mis en vente sur place.</p>
             </div>
         </div>
         <div class="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition">
             <div class="h-44 overflow-hidden">
-                <img src="/images/seraphotheque/jouets.jpg" alt="Espace enfants avec jouets" class="w-full h-full object-cover hover:scale-105 transition">
+                <img src="/images/seraphotheque/brocante.jpg" alt="Brocante et objets d'occasion" class="w-full h-full object-cover hover:scale-105 transition">
+            </div>
+            <div class="p-4 text-center">
+                <div class="text-2xl mb-1">🔮</div>
+                <h3 class="font-semibold text-slate-900 text-sm mb-1">Brocante</h3>
+                <p class="text-slate-500 text-xs leading-relaxed">Objets de seconde main, déco, outils et trouvailles pour toutes les bourses.</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition">
+            <div class="h-44 overflow-hidden">
+                <img src="/images/seraphotheque/espace-enfant.jpg" alt="Espace enfants avec jeux et coin lecture" class="w-full h-full object-cover hover:scale-105 transition">
             </div>
             <div class="p-4 text-center">
                 <div class="text-2xl mb-1">🧸</div>
                 <h3 class="font-semibold text-slate-900 text-sm mb-1">Espace Enfants</h3>
-                <p class="text-slate-500 text-xs leading-relaxed">Coin jeu et lecture apprécié des familles du village.</p>
+                <p class="text-slate-500 text-xs leading-relaxed">Coin jeu, lecture et jouets — un espace chaleureux apprécié des familles du village.</p>
             </div>
         </div>
         <div class="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition">
@@ -224,7 +234,7 @@
     <div class="mb-14 -mx-4 sm:mx-0">
         <div class="relative overflow-hidden rounded-lg sm:rounded-xl" id="carousel">
             <div class="flex transition-transform duration-500 ease-out" id="carousel-track">
-                {{-- Slide 1 : Recyclerie --}}
+                {{-- Slide 0 : Recyclerie --}}
                 <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
                     <img src="/images/seraphotheque/recyclerie.jpg" alt="Recyclerie" class="w-full h-full object-cover">
                     <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
@@ -232,20 +242,20 @@
                         <p class="text-white/80 text-sm sm:text-base mt-1">Textiles et objets récupérés, triés et valorisés localement.</p>
                     </div>
                 </div>
-                {{-- Slide 2 : Friperie --}}
+                {{-- Slide 2 : Brocante --}}
                 <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
-                    <img src="/images/seraphotheque/friperie-01.jpg" alt="Friperie" class="w-full h-full object-cover">
+                    <img src="/images/seraphotheque/brocante.jpg" alt="Brocante" class="w-full h-full object-cover">
                     <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
-                        <h3 class="text-white text-xl sm:text-2xl font-bold">Friperie & Brocante</h3>
-                        <p class="text-white/80 text-sm sm:text-base mt-1">Vêtements et objets accessibles à tous les budgets.</p>
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Brocante</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Objets de seconde main, déco, outils et trouvailles pour toutes les bourses.</p>
                     </div>
                 </div>
                 {{-- Slide 3 : Espace Enfants --}}
                 <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
-                    <img src="/images/seraphotheque/jouets.jpg" alt="Espace enfants" class="w-full h-full object-cover">
+                    <img src="/images/seraphotheque/espace-enfant.jpg" alt="Espace enfants" class="w-full h-full object-cover">
                     <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
                         <h3 class="text-white text-xl sm:text-2xl font-bold">Espace Enfants</h3>
-                        <p class="text-white/80 text-sm sm:text-base mt-1">Coin jeu et lecture apprécié des familles du village.</p>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Coin jeu, lecture et jouets — un espace chaleureux apprécié des familles du village.</p>
                     </div>
                 </div>
                 {{-- Slide 4 : Commerce de proximité --}}
@@ -256,7 +266,15 @@
                         <p class="text-white/80 text-sm sm:text-base mt-1">Ouvert toute l'année pour les habitants et les visiteurs.</p>
                     </div>
                 </div>
-                {{-- Slide 5 : Réunion publique --}}
+                {{-- Slide 5 : Artisanat --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/artisanat.jpg" alt="Artisanat" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Artisanat</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Créations et savoir-faire local, valorisés et mis en vente sur place.</p>
+                    </div>
+                </div>
+                {{-- Slide 6 : Réunion publique --}}
                 <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
                     <img src="/images/seraphotheque/reunion-02.jpg" alt="Réunion publique" class="w-full h-full object-cover">
                     <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
@@ -281,13 +299,14 @@
                 <button onclick="carouselGo(2)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="2"></button>
                 <button onclick="carouselGo(3)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="3"></button>
                 <button onclick="carouselGo(4)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="4"></button>
+                <button onclick="carouselGo(5)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="5"></button>
             </div>
         </div>
     </div>
 
     <script>
         let carouselIndex = 0;
-        const carouselTotal = 5;
+        const carouselTotal = 6;
         const track = document.getElementById('carousel-track');
 
         function carouselUpdate() {

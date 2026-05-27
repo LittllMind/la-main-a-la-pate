@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'La Main a la Pate')</title>
+@php
+    $isDev = in_array(request()->getHost(), ['127.0.0.1', 'localhost', '10.5.0.2']) || str_contains(request()->getHost(), ':8000') || str_contains(request()->getHost(), ':8001');
+@endphp
+@if($isDev)
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-dev-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-dev.png">
+@else
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+@endif
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
