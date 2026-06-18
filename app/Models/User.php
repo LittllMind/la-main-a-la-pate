@@ -2,60 +2,56 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
         'pseudonyme',
         'email',
         'password',
         'commune',
-        'avatar',
-        'rgpd_consent_at',
         'role',
+        'color',
     ];
 
+    /**
+     * The attributes that should be hidden.
+     *
+     * @var array<int, string>
+     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'rgpd_consent_at' => 'datetime',
     ];
 
-    public function isAdmin(): bool
+    protected static function booted(): void
     {
-        return $this->role === 'admin';
-    }
-
-    public function isCitoyen(): bool
-    {
-        return $this->role === 'citoyen' || $this->role === 'member' || $this->role === 'admin';
-    }
-
-    public function isInvite(): bool
-    {
-        return $this->role === 'invite';
-    }
-
-    public function displayName(): string
-    {
-        return $this->pseudonyme ?? $this->name;
-    }
-
-    public function avatarUrl(): string
-    {
-        return $this->avatar ?? 'https://ui-avatars.com/api/?name='.urlencode($this->displayName()).'&background=random';
+        static::creating(function (self $user) {
+            if (empty($user->color)) {
+                $user->color = sprintf('#%06X', mt_rand(0, 0xFFFFFF));
+            }
+        });
     }
 }

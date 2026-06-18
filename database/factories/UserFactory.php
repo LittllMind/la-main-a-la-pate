@@ -3,63 +3,30 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use App\Models\User;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
- */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
+    protected $model = User::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'name' => $this->faker->name(),
+            'pseudonyme' => $this->faker->userName(),
+            'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
-            'role' => 'client',
+            'password' => bcrypt('password'),
+            'commune' => 'Le Rozier',
+            'role' => 'citoyen',
+            'color' => sprintf('#%06X', mt_rand(0, 0xFFFFFF)),
         ];
     }
 
-    /**
-     * Indicate that the user is an admin.
-     */
     public function admin(): static
     {
         return $this->state(fn (array $attributes) => [
             'role' => 'admin',
-        ]);
-    }
-
-    /**
-     * Indicate that the user is an employee.
-     */
-    public function employe(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'employe',
-        ]);
-    }
-
-    /**
-     * Indicate that the user is a client.
-     */
-    public function client(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'client',
         ]);
     }
 }

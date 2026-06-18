@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\PostPublicController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\PostPublicController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,6 +27,23 @@ Route::get('/confidentialite', [ContactController::class, 'privacy'])->name('pri
 */
 Route::get('/hall', [PostPublicController::class, 'index'])->middleware('auth')->name('hall');
 Route::get('/actu/{slug}', [PostPublicController::class, 'show'])->middleware('auth')->name('posts.show');
+
+/*
+|---------------------------------------------------------------------------
+| ESPACE SUJETS (membres authentifies)
+|---------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function () {
+    Route::get('/', [SubjectController::class, 'index'])->name('index');
+    Route::get('/creer', [SubjectController::class, 'create'])->name('create');
+    Route::post('/', [SubjectController::class, 'store'])->name('store');
+    Route::post('/{subject:slug}/commentaires', [SubjectController::class, 'storeComment'])->name('comments.store');
+    Route::get('/{subject:slug}/modifier', [SubjectController::class, 'edit'])->name('edit');
+    Route::put('/{subject:slug}', [SubjectController::class, 'update'])->name('update');
+    Route::delete('/{subject:slug}', [SubjectController::class, 'destroy'])->name('destroy');
+    Route::patch('/{subject:slug}/publier', [SubjectController::class, 'publish'])->name('publish');
+    Route::get('/{subject:slug}', [SubjectController::class, 'show'])->name('show');
+});
 
 /*
 |---------------------------------------------------------------------------

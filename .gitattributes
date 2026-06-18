@@ -1,11 +1,15 @@
+# .gitattributes
 * text=auto eol=lf
-
-*.blade.php diff=html
-*.css diff=css
-*.html diff=html
-*.md diff=markdown
-*.php diff=php
-
-/.github export-ignore
-CHANGELOG.md export-ignore
-.styleci.yml export-ignore
+/public_html export-ignore
+.env export-ignore
+.env.* export-ignore
+!.env.example export-ignore
+node_modules export-ignore
+vendor export-ignore
+storage/framework/cache/* export-ignore
+storage/framework/sessions/* export-ignore
+storage/framework/views/* export-ignore
+storage/logs/* export-ignore
+*.log export-ignore
+.phpunit.result.cache export-ignore
+*.md~ export-ignore
