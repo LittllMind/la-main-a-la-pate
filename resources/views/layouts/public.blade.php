@@ -32,9 +32,9 @@
                     La Main a la Pate
                 </a>
                 <div class="hidden sm:flex items-center gap-6 text-sm">
-                    <a href="/" class="text-slate-600 hover:text-slate-900 transition">Hall</a>
-                    <a href="/seraphotheque" class="text-slate-600 hover:text-slate-900 transition">Seraphotheque</a>
+                    <a href="/" class="text-slate-600 hover:text-slate-900 transition">Seraphotheque</a>
                     @auth
+                        <a href="/hall" class="text-slate-600 hover:text-slate-900 transition">Hall</a>
                         <a href="{{ route('community.index') }}" class="text-slate-600 hover:text-slate-900 transition">Communaute</a>
                         <a href="/dashboard" class="text-slate-600 hover:text-slate-900 transition">Tableau de bord</a>
                         <form method="POST" action="{{ route('logout') }}" class="inline">
@@ -52,9 +52,9 @@
                 </button>
             </div>
             <div id="mobile-menu" class="hidden sm:hidden pb-4 space-y-2 text-sm">
-                <a href="/" class="block text-slate-600 hover:text-slate-900 py-1">Hall</a>
-                <a href="/seraphotheque" class="block text-slate-600 hover:text-slate-900 py-1">Seraphotheque</a>
+                <a href="/" class="block text-slate-600 hover:text-slate-900 py-1">Seraphotheque</a>
                 @auth
+                    <a href="/hall" class="block text-slate-600 hover:text-slate-900 py-1">Hall</a>
                     <a href="{{ route('community.index') }}" class="block text-slate-600 hover:text-slate-900 py-1">Communaute</a>
                     <a href="/dashboard" class="block text-slate-600 hover:text-slate-900 py-1">Tableau de bord</a>
                     <form method="POST" action="{{ route('logout') }}">
@@ -90,8 +90,11 @@
                 <div>
                     <h4 class="text-white font-semibold mb-2">Liens</h4>
                     <ul class="space-y-1 text-xs">
-                        <li><a href="/" class="hover:text-white transition">Hall</a></li>
-                        <li><a href="/seraphotheque" class="hover:text-white transition">Seraphotheque</a></li>
+                        <li><a href="/" class="hover:text-white transition">Seraphotheque</a></li>
+                        @auth
+                            <li><a href="/hall" class="hover:text-white transition">Hall</a></li>
+                            <li><a href="{{ route('community.index') }}" class="hover:text-white transition">Communaute</a></li>
+                        @endauth
                         {{-- A propos / Contact masqués le temps de formalisation --}}
                     </ul>
                 </div>

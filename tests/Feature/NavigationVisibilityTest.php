@@ -1,0 +1,35 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class NavigationVisibilityTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_guests_only_see_seraphotheque_brand_and_link(): void
+    {
+        $response = $this->get('/seraphotheque');
+
+        $response->assertStatus(200);
+        $response->assertSee('Seraphotheque');
+        $response->assertDontSee('Hall');
+        $response->assertDontSee('Communaute');
+        $response->assertDontSee('Tableau de bord');
+    }
+
+    public function test_authenticated_users_see_hall_and_community(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/seraphotheque');
+
+        $response->assertStatus(200);
+        $response->assertSee('Hall');
+        $response->assertSee('Communaute');
+        $response->assertSee('Seraphotheque');
+    }
+}

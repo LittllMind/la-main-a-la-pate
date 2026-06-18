@@ -28,8 +28,8 @@
         </article>
     @empty
         <div class="text-center text-slate-500 py-12 bg-white rounded-lg border border-slate-200">
-            <div class="text-3xl mb-2">📰</div>
-            Aucune publication pour le moment.
+        <div class="text-3xl mb-2">📰</div>
+        Aucune publication pour le moment.
         </div>
     @endforelse
 

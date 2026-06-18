@@ -11,15 +11,21 @@ use Illuminate\Support\Facades\Route;
 | ROUTES PUBLIQUES (sans inscription)
 |---------------------------------------------------------------------------
 */
-Route::get('/', [PostPublicController::class, 'index'])->name('home');
-Route::get('/actu/{slug}', [PostPublicController::class, 'show'])->name('posts.show');
-
+Route::get('/', [ContactController::class, 'seraphotheque'])->name('home');
 Route::get('/seraphotheque', [ContactController::class, 'seraphotheque'])->name('seraphotheque');
 Route::get('/a-propos', [ContactController::class, 'about'])->name('about');
 Route::get('/contact', [ContactController::class, 'contactForm'])->name('contact');
 Route::post('/contact', [ContactController::class, 'contactSubmit'])->name('contact.submit');
 Route::get('/mentions-legales', [ContactController::class, 'legal'])->name('legal');
 Route::get('/confidentialite', [ContactController::class, 'privacy'])->name('privacy');
+
+/*
+|---------------------------------------------------------------------------
+| HALL / ACTUALITÉS (membres authentifiés)
+|---------------------------------------------------------------------------
+*/
+Route::get('/hall', [PostPublicController::class, 'index'])->middleware('auth')->name('hall');
+Route::get('/actu/{slug}', [PostPublicController::class, 'show'])->middleware('auth')->name('posts.show');
 
 /*
 |---------------------------------------------------------------------------
