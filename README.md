@@ -1,216 +1,101 @@
-# Vinyl Stock 🎸
+# La Main à la Pâte
 
-> Plateforme de vente et gestion de vinyles hydrodécoupés
+> Plateforme communautaire du village du Rozier (48150)
 
-[![Tests](https://github.com/aurelien-c/vinyl-stock/actions/workflows/ci.yml/badge.svg)](https://github.com/aurelien-c/vinyl-stock/actions/workflows/ci.yml)
-[![Deploy](https://github.com/aurelien-c/vinyl-stock/actions/workflows/deploy.yml/badge.svg)](https://github.com/aurelien-c/vinyl-stock/actions/workflows/deploy.yml)
-![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
-[![PHP](https://img.shields.io/badge/PHP-8.3+-blue)](https://php.net)
-[![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20)](https://laravel.com)
-[![Stripe](https://img.shields.io/badge/Stripe-Ready-635BFF)](https://stripe.com)
+## À propos
 
-## 🎯 À propos
+La Main à la Pâte est un espace numérique participatif pour les habitants du Rozier. Il propose :
 
-Vinyl Stock est une plateforme e-commerce complète pour la gestion et la vente de vinyles hydrodécoupés. Elle intègre un **mode marché** (caisse/emport pour événements), un **kiosque public** de consultation, et un **dashboard administrateur** avec rapports et statistiques.
+- **La Séraphothèque** — page d'accueil publique avec les informations pratiques du village
+- **Le Hall** — fil d'actualités réservé aux membres
+- **Les Sujets** — documents de référence collaboratifs organisés par thème, avec fil de discussion
+- **La Communauté** — espaces de discussion thématiques (en préparation, routes existantes)
+- **L'Espace administrateur** — panneau de gestion des contenus et routes
 
-**Localisation** : 48150, Le Rozier, France
-
-## 🚀 Fonctionnalités
-
-### ✅ Terminé
-
-- [x] **Kiosque de consultation** — Grille publique avec filtrage
-- [x] **Tunnel de vente** — Panier, adresses, commandes
-- [x] **Paiement Stripe** — Checkout, webhooks, confirmations
-- [x] **RBAC** — Rôles (Admin/Employé/Client) sécurisés
-- [x] **Mode Marché** — Caisse emport avec annulation/restock
-- [x] **Rapports** — Exports PDF/CSV, stats mensuelles
-
-### 📋 En cours / À venir
-
-- [ ] Tests T14 — Mode Marché (validation)
-- [ ] Tests T15 — Performance
-- [ ] Déploiement production
-
-## 🛠️ Stack Technique
+## Stack technique
 
 | Composant | Technologie |
 |-----------|-------------|
 | Backend | PHP 8.3, Laravel 11 |
-| Frontend | Vue.js 3, Inertia.js, Tailwind CSS, Vite |
-| Base de données | MySQL 8.0 (production), SQLite (tests) |
-| Cache | Redis (optionnel) |
-| Paiement | Stripe |
-| Auth | Laravel Breeze + RBAC custom |
+| Frontend | Tailwind CSS, Vite, Blade |
+| Base de données | MySQL 8.0 |
+| Auth | Laravel Breeze |
 | Médias | Spatie Media Library |
 
-## 📚 Documentation
-
-| Document | Description |
-|----------|-------------|
-| [📐 Architecture](docs/ARCHITECTURE.md) | Structure technique, flux de données, sécurité RBAC |
-| [🚀 Déploiement](docs/DEPLOYMENT.md) | Guide complet déploiement Nginx + SSL |
-| [📡 API](docs/API.md) | Endpoints JSON, paramètres, codes d'erreur |
-| [✅ Post-Déploiement](docs/POST-DEPLOYMENT.md) | Checklist validation après mise en prod |
-| [🔧 Troubleshooting](docs/TROUBLESHOOTING.md) | Solutions erreurs courantes |
-| [💳 Stripe](docs/STRIPE_INSTALL.md) | Configuration paiements |
-| [🗺️ Adresses](docs/ADRESSES.md) | Système d'adresses clients |
-
-## 🧪 Tests
-
-### Exécution rapide
-
-```bash
-# Tous les tests
-php artisan test
-
-# Par catégorie
-php artisan test tests/Feature/Security/
-php artisan test tests/Feature/ModeMarche/
-php artisan test tests/Feature/Performance/
-
-# Avec couverture
-php artisan test --coverage
-```
-
-### Phases de sécurité (T13)
-
-```bash
-php artisan test tests/Feature/Security/SecurityTest.php
-# ~20 tests — Validation RBAC, IDOR, headers sécurité
-```
-
-### Mode Marché (T14)
-
-```bash
-php artisan test tests/Feature/ModeMarche/ModeMarcheTest.php
-# ~15 tests — Historique, annulation, export CSV
-```
-
-## 📋 Comptes de test
-
-| Rôle | Email | Mot de passe |
-|------|-------|-------------|
-| Admin | admin@example.com | password |
-| Employé | employe@example.com | password |
-| Client | client@example.com | password |
-
-> **⚠️ Production** : Changer les mots de passe !
-
-## 🚀 Installation locale
+## Installation locale
 
 ### Prérequis
 
 - PHP 8.3+
 - Composer 2.x
 - Node.js 20+
-- MySQL 8.0+ (ou SQLite pour tests)
+- MySQL 8.0+
 
 ### Installation
 
 ```bash
-# 1. Cloner
-git clone <repository-url> vinyl-stock
-cd vinyl-stock
+cd ~/projets/la-main-a-la-pate
 
-# 2. PHP
 composer install
+npm install
 
-# 3. Node
-npm ci
-
-# 4. Configuration
 cp .env.example .env
 php artisan key:generate
+```
 
-# 5. Éditer .env
-# DB_DATABASE=vinyl_stock
-# DB_USERNAME=root
-# DB_PASSWORD=secret
-# STRIPE_KEY=sk_test_...
+Configurer le `.env` :
 
-# 6. Base de données
+```env
+DB_DATABASE=la_main_a_la_pate
+DB_USERNAME=root
+DB_PASSWORD=...
+```
+
+```bash
 php artisan migrate --seed
-
-# 7. Assets
 npm run build
-
-# 8. Lancer
 php artisan serve
 ```
 
-### Health Check
+## Tests
 
 ```bash
-./scripts/health-check.sh --verbose
+php artisan test
 ```
 
-## 📦 Structure du projet
+## Comptes de test (seeder)
 
-```
-vinyl-stock/
-├── app/
-│   ├── Http/Controllers/    # API + Web
-│   │   ├── ModeMarcheController.php    # Caisse/emport
-│   │   └── KiosqueController.php       # Public
-│   ├── Models/
-│   ├── Services/            # Logique métier
-│   └── Policies/            # Autorisations RBAC
-├── database/
-├── resources/js/            # Vue + Inertia
-├── routes/web.php           # Routes
-├── tests/Feature/           # Tests intégration
-└── docs/                    # Documentation
+| Rôle | Email | Mot de passe |
+|---|---|---|
+| Admin | admin@lamainalapate.test | défini dans `UserRoleSeeder.php` |
+| Citoyen | citoyen@lamainalapate.test | défini dans `UserRoleSeeder.php` |
+| Visiteur | visiteur@lamainalapate.test | défini dans `UserRoleSeeder.php` |
+
+## Déploiement production
+
+Script prêt :
+
+```bash
+bash deploy-la-main-a-la-pate.sh
 ```
 
-## 🖥️ Utilisation
+Hébergement : Hostinger — voir `La-Main-a-la-Pate-Infra` dans Obsidian.
 
-### Kiosque (Client)
-```
-http://localhost:8000/kiosque
-```
-Parcourir le catalogue, ajouter au panier, commander.
+## Structure actuelle
 
-### Admin
-```
-http://localhost:8000/admin
-```
-Gestion vinyles, utilisateurs, rapports, stats.
+- `routes/web.php` — routes publiques, Hall, Sujets, Communauté, Admin
+- `app/Http/Controllers/SubjectController.php` — CRUD sujets/commentaires/versions
+- `app/Http/Controllers/AdminController.php` — panneau admin et routes
+- `app/Http/Controllers/DashboardController.php` — tableau de bord utilisateur
+- `resources/views/subjects/` — vues de l'espace Sujets
+- `resources/views/admin/` — vues de l'espace Admin
+- `tests/Feature/` — tests fonctionnels (TDD)
 
-### Mode Marché (Employé)
-```
-http://localhost:8000/admin/marche
-```
-Caisse pour événements (salons, marchés).
+## Documentation
 
-## 📊 Métriques
+- Architecture et déploiement : `[[La-Main-a-la-Pate-Infra]]` dans Obsidian
+- Journal et TODO : `~/Obsidian-Vault/DevOps/La-Main-a-la-pate/Journal/`
 
-| Objectif | Valeur |
-|----------|--------|
-| Chargement pages | < 2s |
-| Conversion | > 3% |
-| Uptime | 99.9% |
-| Tests passants | 100% |
+## Licence
 
-## 🤝 Contribuer
-
-1. Fork
-2. Branche: `git checkout -b feature/Nom`
-3. Test: `php artisan test` (100% vert)
-4. Commit: `git commit -m "feat: description"`
-5. PR avec description
-
-## 📄 Licence
-
-MIT License — voir [LICENSE](LICENSE)
-
-## 📞 Contact
-
-- **Projet** : Vinyl Stock
-- **Localisation** : 48150, Le Rozier
-
----
-
-**[⬆️ Documentation](#documentation)** | **[🚀 Déployer](docs/DEPLOYMENT.md)** | **[🔧 Dépanner](docs/TROUBLESHOOTING.md)**
-
-*Dernière mise à jour: mars 2026*
+MIT
