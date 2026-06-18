@@ -21,7 +21,7 @@ class NavigationVisibilityTest extends TestCase
         $response->assertDontSee('Tableau de bord');
     }
 
-    public function test_authenticated_users_see_hall_and_community(): void
+    public function test_authenticated_users_see_hall_and_subjects(): void
     {
         $user = User::factory()->create();
 
@@ -29,7 +29,19 @@ class NavigationVisibilityTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Hall');
-        $response->assertSee('Communaute');
+        $response->assertSee('Sujets');
         $response->assertSee('Seraphotheque');
+        $response->assertDontSee('Communaute');
+    }
+
+    public function test_admin_users_see_dashboard_link_and_admin_entry(): void
+    {
+        $user = User::factory()->admin()->create();
+
+        $response = $this->actingAs($user)->get('/seraphotheque');
+
+        $response->assertStatus(200);
+        $response->assertSee('Tableau de bord');
+        $response->assertSee('admin');
     }
 }

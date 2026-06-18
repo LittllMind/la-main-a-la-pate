@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PostPublicController;
@@ -79,6 +80,8 @@ Route::middleware(['auth', 'verified'])->prefix('communaute')->name('community.'
 |---------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified', 'isAdmin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'index'])->name('panel');
+    Route::get('/routes', [AdminController::class, 'routes'])->name('routes');
     Route::get('/posts', [PostPublicController::class, 'adminIndex'])->name('posts.index');
     Route::get('/posts/create', [PostPublicController::class, 'create'])->name('posts.create');
     Route::post('/posts', [PostPublicController::class, 'store'])->name('posts.store');

@@ -36,8 +36,12 @@
                     @auth
                         <a href="/sujets" class="text-slate-600 hover:text-slate-900 transition">Sujets</a>
                         <a href="/hall" class="text-slate-600 hover:text-slate-900 transition">Hall</a>
-                        <a href="{{ route('community.index') }}" class="text-slate-600 hover:text-slate-900 transition">Communaute</a>
                         <a href="/dashboard" class="text-slate-600 hover:text-slate-900 transition">Tableau de bord</a>
+
+                        @admin
+                            <a href="{{ route('admin.panel') }}" class="text-slate-600 hover:text-slate-900 transition">admin</a>
+                        @endadmin
+
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
                             <button type="submit" class="text-slate-500 hover:text-red-600 text-sm transition">Deconnexion</button>
@@ -57,8 +61,10 @@
                 @auth
                     <a href="/sujets" class="block text-slate-600 hover:text-slate-900 py-1">Sujets</a>
                     <a href="/hall" class="block text-slate-600 hover:text-slate-900 py-1">Hall</a>
-                    <a href="{{ route('community.index') }}" class="block text-slate-600 hover:text-slate-900 py-1">Communaute</a>
                     <a href="/dashboard" class="block text-slate-600 hover:text-slate-900 py-1">Tableau de bord</a>
+                    @admin
+                        <a href="{{ route('admin.panel') }}" class="block text-slate-600 hover:text-slate-900 py-1">admin</a>
+                    @endadmin
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="text-slate-500 hover:text-red-600 py-1">Deconnexion</button>
@@ -96,7 +102,6 @@
                         @auth
                             <li><a href="/sujets" class="hover:text-white transition">Sujets</a></li>
                             <li><a href="/hall" class="hover:text-white transition">Hall</a></li>
-                            <li><a href="{{ route('community.index') }}" class="hover:text-white transition">Communaute</a></li>
                         @endauth
                         {{-- A propos / Contact masqués le temps de formalisation --}}
                     </ul>
