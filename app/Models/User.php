@@ -59,4 +59,14 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
+
+    public function subjects()
+    {
+        return $this->hasMany(Subject::class);
+    }
+
+    public function subjectComments()
+    {
+        return $this->hasMany(SubjectComment::class);
+    }
 }
