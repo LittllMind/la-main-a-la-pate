@@ -82,4 +82,17 @@ class DashboardViewTest extends TestCase
         $response->assertSee('Mes sujets');
         $response->assertDontSee('Sujet d un autre');
     }
+
+    public function test_dashboard_displays_subject_status_label(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $draft = Subject::factory()->create(['user_id' => $user->id, 'title' => 'Brouillon test', 'status' => 'draft']);
+        $published = Subject::factory()->create(['user_id' => $user->id, 'title' => 'Public test', 'status' => 'published']);
+
+        $response = $this->actingAs($user)->get('/dashboard');
+
+        $response->assertOk();
+        $response->assertSee('Brouillon');
+        $response->assertSee('Publie');
+    }
 }

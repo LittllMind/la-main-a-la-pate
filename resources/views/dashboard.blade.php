@@ -24,7 +24,7 @@
                         <a href="{{ route('subjects.show', $subject) }}" class="block px-6 py-4 hover:bg-slate-50 transition">
                             <div class="flex items-center justify-between">
                                 <span class="font-medium text-slate-900">{{ $subject->title }}</span>
-                                <span class="text-xs text-slate-500">{{ $subject->is_published ? 'Publie' : 'Brouillon' }}</span>
+                                <span class="text-xs text-slate-500">{{ $subject->status === 'published' ? 'Publie' : 'Brouillon' }}</span>
                             </div>
                             <div class="text-xs text-slate-500 mt-1">{{ $subject->theme }}</div>
                         </a>

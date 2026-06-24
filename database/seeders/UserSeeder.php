@@ -15,6 +15,7 @@ class UserSeeder extends Seeder
             'password' => bcrypt('password'),
             'role' => 'admin',
             'rgpd_consent_at' => now(),
+            'email_verified_at' => now(),
         ]);
     }
 }

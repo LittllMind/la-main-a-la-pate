@@ -16,11 +16,10 @@ La Main à la Pâte est un espace numérique participatif pour les habitants du 
 
 | Composant | Technologie |
 |-----------|-------------|
-| Backend | PHP 8.3, Laravel 11 |
+| Backend | PHP 8.3, Laravel 10 |
 | Frontend | Tailwind CSS, Vite, Blade |
-| Base de données | MySQL 8.0 |
+| Base de donnees | MySQL 8.0 |
 | Auth | Laravel Breeze |
-| Médias | Spatie Media Library |
 
 ## Installation locale
 
