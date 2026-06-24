@@ -14,8 +14,8 @@ class TrustHosts extends Middleware
     public function hosts(): array
     {
         return [
-            'vinyles-stock.test',
-            '101d86c5eb26.ngrok-free.app',
+            'la-main-a-la-pate.test',
+            $this->allSubdomainsOfApplicationUrl(),
         ];
     }
 }

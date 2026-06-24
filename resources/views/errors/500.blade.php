@@ -11,8 +11,8 @@
         <h1 class="text-6xl font-bold text-gray-700 mb-4">500</h1>
         <p class="text-xl text-gray-600 mb-6">Une erreur est survenue</p>
         <p class="text-gray-500 mb-6">Notre équipe a été notifiée.</p>
-        <a href="{{ route('kiosque.index') }}" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700">
-            Retour au catalogue
+        <a href="{{ route('home') }}" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700">
+            Retour à l'accueil
         </a>
     </div>
 </div>

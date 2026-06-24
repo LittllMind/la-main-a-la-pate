@@ -1,7 +1,8 @@
 {
-    "name": "bougies-stock/bougies-stock",
+    "name": "littllmind/la-main-a-la-pate",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Plateforme communautaire La Main à la Pâte (Le Rozier).",
+
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

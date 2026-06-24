@@ -1,9 +1,6 @@
-# .gitattributes
 * text=auto eol=lf
-/public_html export-ignore
 .env export-ignore
 .env.* export-ignore
-!.env.example export-ignore
 node_modules export-ignore
 vendor export-ignore
 storage/framework/cache/* export-ignore
