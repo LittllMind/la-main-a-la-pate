@@ -16,6 +16,25 @@
         @endcan
     </div>
 
+    @php
+        $user = auth()->user();
+    @endphp
+    @if($user && $user->isModeratorOrAdmin() && $themes->count() > 0)
+        <form method="GET" action="{{ route('subjects.index') }}" class="mb-6 flex flex-wrap items-center gap-3">
+            <label for="theme-filter" class="text-sm font-medium text-slate-700">Filtrer par thème :</label>
+            <select id="theme-filter" name="theme" class="border border-slate-300 rounded-md px-3 py-2 text-sm">
+                <option value="">Tous les thèmes</option>
+                @foreach($themes as $theme)
+                    <option value="{{ $theme }}" {{ $selectedTheme === $theme ? 'selected' : '' }}>{{ $theme }}</option>
+                @endforeach
+            </select>
+            <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-900 transition">Filtrer</button>
+            @if($selectedTheme)
+                <a href="{{ route('subjects.index') }}" class="text-slate-500 text-sm hover:text-slate-800 transition">Réinitialiser</a>
+            @endif
+        </form>
+    @endif
+
     @if($subjects->count() === 0)
         <div class="text-center py-16 bg-white rounded-lg border border-slate-200">
             <div class="text-4xl mb-3">📝</div>

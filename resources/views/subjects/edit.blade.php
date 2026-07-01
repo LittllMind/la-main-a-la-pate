@@ -12,12 +12,21 @@
 
         <div class="mb-5">
             <label for="theme" class="block text-sm font-medium text-slate-700 mb-1">Thème</label>
-            <select id="theme" name="theme" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">
+            <select id="theme" name="theme" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" data-theme-toggle>
+                <option value="__new__" {{ old('theme', $subject->theme) === '__new__' ? 'selected' : '' }}>+ Autre thème</option>
                 @foreach($themes as $theme)
                     <option value="{{ $theme }}" {{ old('theme', $subject->theme) === $theme ? 'selected' : '' }}>{{ $theme }}</option>
                 @endforeach
             </select>
             @error('theme')
+                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="mb-5 {{ old('theme', $subject->theme) !== '__new__' ? 'hidden' : '' }}" id="theme-other-wrapper">
+            <label for="theme_other" class="block text-sm font-medium text-slate-700 mb-1">Nom du nouveau thème</label>
+            <input id="theme_other" name="theme_other" type="text" value="{{ old('theme_other') }}" maxlength="120" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">
+            @error('theme_other')
                 <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
             @enderror
         </div>

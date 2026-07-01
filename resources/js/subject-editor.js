@@ -1,6 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
     const editor = document.getElementById('editor');
     const textarea = document.getElementById('body');
+    const themeSelect = document.querySelector('[data-theme-toggle]');
+    const themeOtherWrapper = document.getElementById('theme-other-wrapper');
+
+    function toggleThemeOther() {
+        if (!themeSelect || !themeOtherWrapper) return;
+        const isNew = themeSelect.value === '__new__';
+        themeOtherWrapper.classList.toggle('hidden', !isNew);
+        if (!isNew) {
+            const input = themeOtherWrapper.querySelector('input');
+            if (input) input.value = '';
+        }
+    }
+
+    if (themeSelect) {
+        themeSelect.addEventListener('change', toggleThemeOther);
+        toggleThemeOther();
+    }
 
     if (!editor || !textarea) return;
 

@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 class SubjectController extends Controller
 {
-    private array $themes = [
+    private array $defaultThemes = [
         'Séraphothèque',
         'Urbanisme',
         'Mémoire',
@@ -36,30 +36,54 @@ class SubjectController extends Controller
             });
         }
 
-        $subjects = $query->paginate(20);
+        if ($user && $user->isModeratorOrAdmin()) {
+            $selectedTheme = request('theme');
+            if ($selectedTheme) {
+                $query->where('theme', $selectedTheme);
+            }
+        }
+
+        $subjects = $query->paginate(20)->withQueryString();
+
+        $existingThemes = Subject::where('status', '!=', 'archived')
+            ->distinct()
+            ->orderBy('theme')
+            ->pluck('theme');
+
+        $themes = collect($this->defaultThemes)
+            ->merge($existingThemes)
+            ->uniqueStrict()
+            ->sort()
+            ->values();
 
         return view('subjects.index', [
             'subjects' => $subjects,
-            'themes' => $this->themes,
+            'themes' => $themes,
+            'selectedTheme' => $selectedTheme ?? null,
         ]);
     }
 
     public function create()
     {
-        return view('subjects.create', ['themes' => $this->themes]);
+        return view('subjects.create', [
+            'themes' => collect($this->defaultThemes)->sort()->values(),
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'theme' => 'required|in:' . implode(',', $this->themes),
+            'theme' => 'required|string|max:120',
+            'theme_other' => 'nullable|string|max:120|required_if:theme,__new__',
             'title' => 'required|string|max:255',
             'body' => 'required|string|max:50000',
         ]);
 
+        $theme = $this->resolveTheme($validated['theme'], $validated['theme_other'] ?? null);
+
         $subject = Subject::create([
             'user_id' => auth()->id(),
-            'theme' => $validated['theme'],
+            'theme' => $theme,
             'title' => $validated['title'],
             'slug' => $this->uniqueSlug($validated['title']),
             'body' => $this->cleanHtml($validated['body']),
@@ -86,7 +110,7 @@ class SubjectController extends Controller
 
         return view('subjects.edit', [
             'subject' => $subject,
-            'themes' => $this->themes,
+            'themes' => collect($this->defaultThemes)->sort()->values(),
         ]);
     }
 
@@ -95,11 +119,14 @@ class SubjectController extends Controller
         Gate::authorize('update', $subject);
 
         $validated = $request->validate([
-            'theme' => 'required|in:' . implode(',', $this->themes),
+            'theme' => 'required|string|max:120',
+            'theme_other' => 'nullable|string|max:120',
             'title' => 'required|string|max:255',
             'body' => 'required|string|max:50000',
             'change_summary' => 'nullable|string|max:255',
         ]);
+
+        $theme = $this->resolveTheme($validated['theme'], $validated['theme_other'] ?? null);
 
         SubjectVersion::create([
             'subject_id' => $subject->id,
@@ -109,7 +136,7 @@ class SubjectController extends Controller
         ]);
 
         $subject->update([
-            'theme' => $validated['theme'],
+            'theme' => $theme,
             'title' => $validated['title'],
             'body' => $this->cleanHtml($validated['body']),
         ]);
@@ -155,6 +182,24 @@ class SubjectController extends Controller
         return redirect()
             ->route('subjects.show', $subject->slug)
             ->with('success', 'Sujet publie.');
+    }
+
+    private function resolveTheme(string $theme, ?string $other): string
+    {
+        if ($theme !== '__new__') {
+            return $theme;
+        }
+
+        $theme = trim($other ?? '');
+        if ($theme === '') {
+            return '';
+        }
+
+        $theme = mb_strtolower($theme);
+        $first = mb_strtoupper(mb_substr($theme, 0, 1));
+        $rest = mb_substr($theme, 1);
+
+        return $first . $rest;
     }
 
     private function uniqueSlug(string $title): string
