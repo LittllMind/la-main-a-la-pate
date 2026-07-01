@@ -16,7 +16,7 @@ class UserFactory extends Factory
             'pseudonyme' => $this->faker->userName(),
             'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => bcrypt('password'),
+            'password' => 'password',
             'commune' => 'Le Rozier',
             'role' => 'citoyen',
             'color' => sprintf('#%06X', mt_rand(0, 0xFFFFFF)),

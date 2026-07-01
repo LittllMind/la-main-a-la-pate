@@ -8,11 +8,11 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         User::create([
-            'name' => 'Administrateur',
-            'pseudonyme' => 'Admin',
-            'email' => 'admin@example.com',
+            'name' => 'Aurélien',
+            'pseudonyme' => 'littllmind',
+            'email' => 'aurelien.tisserand18@gmail.com',
             'email_verified_at' => now(),
-            'password' => bcrypt('password'),
+            'password' => 'NewProduction18@L',
             'role' => 'admin',
             'rgpd_consent_at' => now(),
             'email_verified_at' => now(),
