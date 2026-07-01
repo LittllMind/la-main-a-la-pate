@@ -5,6 +5,9 @@ import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 Alpine.start();
 
+// Subject wiki editor (contenteditable toolbar)
+import './subject-editor';
+
 // Composant Vue de test
 import TestComponent from './components/TestComponent.vue';
 

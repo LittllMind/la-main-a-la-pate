@@ -10,7 +10,7 @@ class SubjectEditorTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_editor_assets_include_focus_and_formatblock_helpers(): void
+    public function test_editor_displays_wiki_toolbar_buttons(): void
     {
         $user = User::factory()->create();
 
@@ -22,27 +22,41 @@ class SubjectEditorTest extends TestCase
         $response->assertSee('Gras');
         $response->assertSee('Italique');
         $response->assertSee('Liste à puces');
+        $response->assertSee('Citation');
+        $response->assertSee('Tableau');
+        $response->assertSee('Image');
         $response->assertSee('Lien');
-        $response->assertSee('createLink');
+
+        // Les nouveaux boutons portent les bons identifiants data-cmd.
+        $response->assertSee('insertQuote');
+        $response->assertSee('insertTable');
+        $response->assertSee('insertImage');
     }
 
-    public function test_editor_link_helper_is_present(): void
+    public function test_editor_assets_include_focus_and_formatblock_helpers(): void
     {
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get('/sujets/creer');
 
-        $response->assertSee('insertLink');
+        $response->assertSee('formatBlock');
+        $response->assertSee('h2');
+        $response->assertSee('contenteditable');
+        $response->assertSee('editor-contenteditable');
     }
 
-    public function test_editor_initializes_active_state_helpers(): void
+    public function test_editor_javascript_bundle_contains_wiki_helpers(): void
     {
-        $user = User::factory()->create();
+        $path = base_path('resources/js/subject-editor.js');
+        $this->assertFileExists($path);
 
-        $response = $this->actingAs($user)->get('/sujets/creer');
-
-        $response->assertSee("queryCommandState");
-        $response->assertSee("queryCommandValue");
-        $response->assertSee("toolbar-active");
+        $js = file_get_contents($path);
+        $this->assertStringContainsString('function insertLink()', $js);
+        $this->assertStringContainsString('function insertImage()', $js);
+        $this->assertStringContainsString('function insertTable()', $js);
+        $this->assertStringContainsString('function insertQuote()', $js);
+        $this->assertStringContainsString('queryCommandState', $js);
+        $this->assertStringContainsString('queryCommandValue', $js);
+        $this->assertStringContainsString('toolbar-active', $js);
     }
 }

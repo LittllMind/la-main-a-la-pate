@@ -14,7 +14,7 @@ class SubjectPolicy
 
     public function create(User $user): bool
     {
-        return $user->role === 'admin' || $user->role === 'citoyen';
+        return in_array($user->role, ['admin', 'moderator', 'citoyen', 'member']);
     }
 
     public function update(User $user, Subject $subject): bool
@@ -27,12 +27,19 @@ class SubjectPolicy
         return $user->role === 'admin' || $user->id === $subject->user_id;
     }
 
+    public function publish(User $user, Subject $subject): bool
+    {
+        return $this->canManage($user, $subject);
+    }
+
     private function canManage(?User $user, Subject $subject): bool
     {
         if ($user === null) {
             return false;
         }
 
-        return $user->role === 'admin' || $user->id === $subject->user_id;
+        return $user->isAdmin()
+            || $user->isModerator()
+            || $user->id === $subject->user_id;
     }
 }

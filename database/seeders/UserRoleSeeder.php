@@ -1,37 +1,41 @@
 <?php
-
 namespace Database\Seeders;
-
 use Illuminate\Database\Seeder;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 
 class UserRoleSeeder extends Seeder
 {
     /**
      * Rôles forum-municipal :
-     *   admin   → "Le Conseil Municipal" (gestion, modération)
-     *   citoyen → "Citoyen" (membre inscrit, peut participer)
-     *   invite  → "Visiteur" (accès lecture limitée)
+     *   admin     → "Le Conseil Municipal" (gestion, modération)
+     *   moderator → "Modérateur" (édition wiki, publication)
+     *   citoyen   → "Citoyen" (membre inscrit, peut participer)
+     *   invite    → "Visiteur" (accès lecture limitée)
      */
     public function run(): void
     {
-        $password = Hash::make('password');
-
         $users = [
             [
                 'name'       => 'Le Conseil Municipal',
                 'pseudonyme' => 'LaMairie',
                 'email'      => 'admin@lamainalapate.test',
-                'password'   => $password,
+                'password'   => 'password',
                 'commune'    => 'Commune Test',
                 'role'       => 'admin',
+            ],
+            [
+                'name'       => 'Pierre Modérateur',
+                'pseudonyme' => 'PierreModo',
+                'email'      => 'moderator@lamainalapate.test',
+                'password'   => 'password',
+                'commune'    => 'Commune Test',
+                'role'       => 'moderator',
             ],
             [
                 'name'       => 'Marie Dupont',
                 'pseudonyme' => 'MarieDuVillage',
                 'email'      => 'citoyen@lamainalapate.test',
-                'password'   => $password,
+                'password'   => 'password',
                 'commune'    => 'Commune Test',
                 'role'       => 'citoyen',
             ],
@@ -39,7 +43,7 @@ class UserRoleSeeder extends Seeder
                 'name'       => 'Visiteur Occasionnel',
                 'pseudonyme' => 'LePassant',
                 'email'      => 'visiteur@lamainalapate.test',
-                'password'   => $password,
+                'password'   => 'password',
                 'commune'    => null,
                 'role'       => 'invite',
             ],

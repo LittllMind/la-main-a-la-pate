@@ -38,6 +38,9 @@
                 <button type="button" data-cmd="bold" class="toolbar-btn toolbar-bold px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100 font-bold">Gras</button>
                 <button type="button" data-cmd="italic" class="toolbar-btn toolbar-italic px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100 italic">Italique</button>
                 <button type="button" data-cmd="insertUnorderedList" class="toolbar-btn toolbar-list px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste à puces</button>
+                <button type="button" data-cmd="insertQuote" class="toolbar-btn toolbar-quote px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation</button>
+                <button type="button" data-cmd="insertTable" class="toolbar-btn toolbar-table px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Tableau</button>
+                <button type="button" data-cmd="insertImage" class="toolbar-btn toolbar-image px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image</button>
                 <button type="button" data-cmd="createLink" class="toolbar-btn toolbar-link px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien</button>
             </div>
             <div id="editor" contenteditable="true" data-placeholder="Cliquez ici pour rédiger le document..." class="editor-contenteditable w-full min-h-[200px] border border-slate-300 rounded-md px-3 py-2 text-sm prose max-w-none">{!! old('body', $subject->body) !!}</div>
@@ -58,94 +61,6 @@
         </div>
     </form>
 </div>
-
-<script>
-    const editor = document.getElementById('editor');
-    const textarea = document.getElementById('body');
-
-    function exec(cmd, arg = null) {
-        document.execCommand(cmd, false, arg);
-        editor.focus();
-        syncPlaceholder();
-    }
-
-    function insertLink() {
-        const selection = document.getSelection();
-        const selectedText = selection.toString().trim();
-        const url = prompt('Adresse du lien (https://...)');
-        if (!url) return;
-
-        // Si du texte est sélectionné, on le remplace par un lien.
-        // Sinon on insère l'URL comme texte du lien à la position du curseur.
-        let linkText = selectedText || url;
-        const linkHtml = `<a href="${url}" rel="noopener noreferrer" target="_blank" class="text-emerald-700 hover:text-emerald-800 hover:underline">${linkText}</a>`;
-
-        if (selectedText) {
-            document.execCommand('insertHTML', false, linkHtml);
-        } else {
-            document.execCommand('insertHTML', false, linkHtml + '\u0026nbsp;');
-        }
-
-        editor.focus();
-        syncPlaceholder();
-    }
-
-    function updateToolbarState() {
-        document.querySelectorAll('.toolbar-btn').forEach(btn => {
-            const cmd = btn.dataset.cmd;
-            let active = false;
-            if (cmd === 'formatBlock') {
-                const arg = btn.dataset.arg;
-                const current = document.queryCommandValue('formatBlock');
-                active = current === arg || current === arg.toUpperCase();
-            } else if (cmd === 'insertUnorderedList') {
-                active = document.queryCommandState('insertUnorderedList');
-            } else if (cmd === 'createLink') {
-                active = document.queryCommandValue('createLink') !== 'false';
-            } else {
-                active = document.queryCommandState(cmd);
-            }
-            btn.classList.toggle('toolbar-active', active);
-        });
-    }
-
-    document.querySelectorAll('.toolbar-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const cmd = btn.dataset.cmd;
-            const arg = btn.dataset.arg || null;
-            if (cmd === 'createLink') {
-                insertLink();
-            } else {
-                exec(cmd, arg);
-            }
-            updateToolbarState();
-        });
-    });
-
-    function syncPlaceholder() {
-        if (editor.innerText.trim().length === 0) {
-            editor.classList.add('is-empty');
-        } else {
-            editor.classList.remove('is-empty');
-        }
-    }
-
-    editor.addEventListener('input', () => {
-        syncPlaceholder();
-        updateToolbarState();
-    });
-    editor.addEventListener('keyup', updateToolbarState);
-    editor.addEventListener('mouseup', updateToolbarState);
-    editor.addEventListener('focus', () => editor.classList.add('is-focused'));
-    editor.addEventListener('blur', () => editor.classList.remove('is-focused'));
-
-    syncPlaceholder();
-    updateToolbarState();
-
-    document.querySelector('form').addEventListener('submit', () => {
-        textarea.value = editor.innerHTML;
-    });
-</script>
 
 <style>
     .editor-contenteditable:empty::before,

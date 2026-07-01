@@ -66,9 +66,16 @@ php artisan test
 
 | Rôle | Email | Mot de passe |
 |---|---|---|
-| Admin | admin@lamainalapate.test | défini dans `UserRoleSeeder.php` |
+| Admin | aurelien.tisserand18@gmail.com | NewProduction18@L |
+| Modérateur | moderator@lamainalapate.test | défini dans `UserRoleSeeder.php` |
 | Citoyen | citoyen@lamainalapate.test | défini dans `UserRoleSeeder.php` |
 | Visiteur | visiteur@lamainalapate.test | défini dans `UserRoleSeeder.php` |
+
+**Rôles :**
+- `admin` — Conseil municipal : gestion complète.
+- `moderator` — Modérateur wiki : peut créer/éditer/publier les sujets de tout le monde.
+- `citoyen` / `member` — Membre : peut créer ses propres sujets et lire le Hall.
+- `invite` — Visiteur : accès lecture limité.
 
 ## Déploiement production
 

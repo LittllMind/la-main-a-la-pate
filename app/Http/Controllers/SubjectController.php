@@ -21,10 +21,22 @@ class SubjectController extends Controller
 
     public function index()
     {
-        $subjects = Subject::with('user')
+        $user = auth()->user();
+
+        $query = Subject::with('user')
             ->where('status', '!=', 'archived')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->orderBy('created_at', 'desc');
+
+        if ($user === null || ! $user->isModeratorOrAdmin()) {
+            $query->where(function ($q) use ($user) {
+                $q->where('status', 'published');
+                if ($user) {
+                    $q->orWhere('user_id', $user->id);
+                }
+            });
+        }
+
+        $subjects = $query->paginate(20);
 
         return view('subjects.index', [
             'subjects' => $subjects,
@@ -160,8 +172,83 @@ class SubjectController extends Controller
 
     private function cleanHtml(string $html): string
     {
-        $allowed = '<p><br></b><i><u><strong><em><ul><ol><li><h2><h3><a href title>';
+        $allowedTags = [
+            'p' => [],
+            'br' => [],
+            'strong' => [],
+            'b' => [],
+            'em' => [],
+            'i' => [],
+            'u' => [],
+            'ul' => [],
+            'ol' => [],
+            'li' => [],
+            'h2' => [],
+            'h3' => [],
+            'a' => ['href', 'title'],
+            'blockquote' => [],
+            'table' => ['class'],
+            'thead' => [],
+            'tbody' => [],
+            'tr' => [],
+            'th' => [],
+            'td' => ['class'],
+            'img' => ['src', 'alt', 'class'],
+        ];
 
-        return strip_tags($html, $allowed);
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="UTF-8"?>' . $html);
+        libxml_clear_errors();
+
+        $body = $dom->getElementsByTagName('body')->item(0);
+        if (! $body) {
+            return '';
+        }
+
+        $this->cleanNode($body, $allowedTags);
+
+        return trim($this->domInnerHtml($body));
+    }
+
+    private function cleanNode(\DOMElement $node, array $allowedTags): void
+    {
+        foreach (iterator_to_array($node->childNodes) as $child) {
+            if (! $child instanceof \DOMElement) {
+                continue;
+            }
+
+            $tag = strtolower($child->nodeName);
+
+            if (! isset($allowedTags[$tag])) {
+                $node->removeChild($child);
+                continue;
+            }
+
+            foreach (iterator_to_array($child->attributes) as $attr) {
+                if (! in_array($attr->nodeName, $allowedTags[$tag], true)) {
+                    $child->removeAttribute($attr->nodeName);
+                }
+            }
+
+            if ($tag === 'a') {
+                $href = $child->getAttribute('href');
+                if (! str_starts_with($href, 'http://') && ! str_starts_with($href, 'https://') && ! str_starts_with($href, '/')) {
+                    $child->setAttribute('href', '#');
+                }
+            }
+
+            $this->cleanNode($child, $allowedTags);
+        }
+    }
+
+    private function domInnerHtml(\DOMElement $element): string
+    {
+        $html = '';
+        foreach ($element->childNodes as $child) {
+            $html .= $element->ownerDocument->saveHTML($child);
+        }
+
+        return $html;
     }
 }

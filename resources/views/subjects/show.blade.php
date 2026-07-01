@@ -80,5 +80,10 @@
     .subject-document ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
     .subject-document p { margin-bottom: 1rem; }
     .subject-document a { color: #059669; text-decoration: underline; }
+    .subject-document blockquote { border-left: 4px solid #10b981; padding-left: 1rem; margin: 1rem 0; color: #475569; font-style: italic; }
+    .subject-document table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .subject-document th, .subject-document td { border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; text-align: left; }
+    .subject-document th { background-color: #f1f5f9; font-weight: 600; }
+    .subject-document img { border-radius: 0.5rem; border: 1px solid #e2e8f0; max-width: 100%; height: auto; }
 </style>
 @endsection

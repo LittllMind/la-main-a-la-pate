@@ -60,6 +60,21 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function isModerator(): bool
+    {
+        return $this->role === 'moderator';
+    }
+
+    public function isModeratorOrAdmin(): bool
+    {
+        return $this->isAdmin() || $this->isModerator();
+    }
+
+    public function isCitizen(): bool
+    {
+        return in_array($this->role, ['citoyen', 'member', 'admin', 'moderator']);
+    }
+
     public function subjects()
     {
         return $this->hasMany(Subject::class);
