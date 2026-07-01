@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LandingSectionController;
 use App\Http\Controllers\PostPublicController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubjectController;
@@ -88,6 +89,14 @@ Route::middleware(['auth', 'verified', 'isAdmin'])->prefix('admin')->name('admin
     Route::put('/posts/{post}', [PostPublicController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{post}', [PostPublicController::class, 'destroy'])->name('posts.destroy');
     Route::patch('/posts/{post}/publish', [PostPublicController::class, 'publish'])->name('posts.publish');
+
+    Route::get('/sections', [LandingSectionController::class, 'index'])->name('sections.index');
+    Route::get('/sections/create', [LandingSectionController::class, 'create'])->name('sections.create');
+    Route::post('/sections', [LandingSectionController::class, 'store'])->name('sections.store');
+    Route::get('/sections/{section}/edit', [LandingSectionController::class, 'edit'])->name('sections.edit');
+    Route::put('/sections/{section}', [LandingSectionController::class, 'update'])->name('sections.update');
+    Route::patch('/sections/{section}/toggle', [LandingSectionController::class, 'toggle'])->name('sections.toggle');
+    Route::delete('/sections/{section}', [LandingSectionController::class, 'destroy'])->name('sections.destroy');
 });
 
 require __DIR__.'/auth.php';

@@ -34,6 +34,18 @@
             <p class="text-sm text-slate-500 mt-1">Gestion des actualites publiees sur le Hall.</p>
         </a>
 
+        <a href="{{ route('admin.sections.index') }}" class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group">
+            <div class="flex items-start justify-between mb-4">
+                <div class="p-3 bg-orange-50 rounded-lg text-orange-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 00-1.3 4.146c2.7.818 5.5.416 7.955-1.223a11.619 11.619 0 011.013-7.135 9.479 9.479 0 00-1.045-7.325c-1.305-1.855-3.417-3.101-5.805-3.293a6.896 6.896 0 00-.567 0 6.896 6.896 0 00-.567 0c-2.388.192-4.5 1.438-5.805 3.293a9.479 9.479 0 00-1.045 7.325 11.619 11.619 0 011.013 7.135c2.455 1.639 5.255 2.041 7.955 1.223A2.25 2.25 0 0015 20.25h3.75A2.25 2.25 0 0021 18v-3.75" />
+                    </svg>
+                </div>
+            </div>
+            <h2 class="font-semibold text-slate-900 group-hover:text-emerald-700">Sections du Hall</h2>
+            <p class="text-sm text-slate-500 mt-1">Ordre et contenu des blocs de la page d'accueil.</p>
+        </a>
+
         <a href="/sujets" class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group">
             <div class="flex items-start justify-between mb-4">
                 <div class="p-3 bg-amber-50 rounded-lg text-amber-600">

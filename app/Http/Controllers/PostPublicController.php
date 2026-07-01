@@ -11,12 +11,7 @@ class PostPublicController extends Controller
 {
     public function index()
     {
-        $posts = Post::where('status', 'published')
-            ->whereNotNull('published_at')
-            ->orderBy('published_at', 'desc')
-            ->paginate(10);
-
-        return view('home', compact('posts'));
+        return view('home', LandingSectionController::sectionsForHall());
     }
 
     public function show($slug)

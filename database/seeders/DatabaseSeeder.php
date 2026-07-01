@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             PostSeeder::class,
             SpaceSeeder::class,
+            LandingSectionSeeder::class,
         ]);
     }
 }
