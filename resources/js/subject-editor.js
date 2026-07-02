@@ -36,6 +36,10 @@ function setupMarkdownEditors() {
                 insertTextAtCursor(textarea, btn.dataset.insert);
                 refresh();
             });
+
+            if (btn.dataset.tip) {
+                btn.title = btn.dataset.tip;
+            }
         });
 
         if (toggleBtn) {

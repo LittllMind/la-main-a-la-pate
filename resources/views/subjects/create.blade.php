@@ -37,26 +37,42 @@
             @enderror
         </div>
 
-        <div class="mb-5" data-markdown-editor>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Document de travail (Markdown)</label>
-
-            <div class="border border-slate-300 rounded-md p-2 mb-2 flex flex-wrap gap-2 bg-slate-50">
-                <button type="button" data-insert="## " title="Titre principal" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Titre</button>
-                <button type="button" data-insert="### " class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Sous-titre</button>
-                <button type="button" data-insert="**texte**" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Gras</button>
-                <button type="button" data-insert="*texte*" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Italique</button>
-                <button type="button" data-insert="\n- item\n" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste</button>
-                <button type="button" data-insert="\n\u003e " class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation</button>
-                <button type="button" data-insert="\n| Col | Col |\n| --- | --- |\n|     |     |\n" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Tableau</button>
-                <button type="button" data-insert="[texte](https://)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien</button>
-                <button type="button" data-insert="\n![legende](https://)\n" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image URL</button>
+        <div class="mb-5" data-markdown-editor data-help-reference>
+            <div class="flex items-center justify-between mb-1">
+                <label class="block text-sm font-medium text-slate-700">Contenu du document</label>
+                <span class="text-xs text-slate-500">Rédaction au format Markdown — simple et clair</span>
             </div>
 
-            <textarea id="body" name="body" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono" placeholder="Rédigez en Markdown...">{{ old('body') }}</textarea>
+            <div class="border border-slate-300 rounded-md p-2 mb-2 flex flex-wrap gap-2 bg-slate-50" aria-label="Mises en forme courantes">
+                <button type="button" data-insert="## " data-tip="Titre principal : ## Mon titre" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Titre <span class="text-slate-400">#</span></button>
+                <button type="button" data-insert="### " data-tip="Sous-titre : ### Mon sous-titre" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Sous-titre <span class="text-slate-400">#</span></button>
+                <button type="button" data-insert="**texte**" data-tip="Texte en gras : **mon mot**" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Gras <span class="text-slate-400">**</span></button>
+                <button type="button" data-insert="*texte*" data-tip="Texte en italique : *mon mot*" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Italique <span class="text-slate-400">*</span></button>
+                <button type="button" data-insert="\n- élément\n" data-tip="Liste à puces : - élément" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste <span class="text-slate-400">-</span></button>
+                <button type="button" data-insert="\n\u003e " data-tip="Citation : \u003e une phrase" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation <span class="text-slate-400">\u003e</span></button>
+                <button type="button" data-insert="\n| Colonne 1 | Colonne 2 |\n| --- | --- |\n| a | b |\n" data-tip="Tableau : utilise des | et des -" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Tableau <span class="text-slate-400">|</span></button>
+                <button type="button" data-insert="[texte](https://)" data-tip="Lien : [texte](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien <span class="text-slate-400">[...](...)</span></button>
+                <button type="button" data-insert="\n![légende](https://)\n" data-tip="Image : ![légende](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image URL <span class="text-slate-400">![...](...)</span></button>
+            </div>
+
+            <textarea id="body" name="body" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="Exemple de rédaction simple :
+
+# Mon sujet
+
+Un paragraphe introduit le document.
+
+## Une idée importante
+
+- Un premier point
+- Un deuxième point
+
+> Une citation issue d'une réunion ou d'un document
+
+Ajoutez des images dans la galerie du sujet, puis cliquez 'Copier markdown' pour les insérer ici.">{{ old('body') }}</textarea>
 
             <div class="mt-4">
                 <div class="text-xs font-medium text-slate-500 flex items-center gap-2 mb-2">
-                    <span>Aperçu</span>
+                    <span>Aperçu du rendu</span>
                     <button type="button" id="toggle-preview" class="text-emerald-700">Masquer</button>
                 </div>
                 <div id="preview" class="prose prose-slate max-w-none border border-slate-200 rounded-md p-4 min-h-[120px]"></div>
@@ -65,6 +81,23 @@
             @error('body')
                 <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
             @enderror
+
+            <details class="mt-4 text-sm text-slate-600 border border-slate-200 rounded-md">
+                <summary class="cursor-pointer px-3 py-2 bg-slate-50 font-medium">Rappel des raccourcis Markdown</summary>
+                <div class="p-3 space-y-1 text-xs grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div><span class="font-mono bg-slate-100 px-1 rounded"># Titre</span> → Titre principal</div>
+                    <div><span class="font-mono bg-slate-100 px-1 rounded">## Titre</span> → Sous-titre</div>
+                    <div><span class="font-mono bg-slate-100 px-1 rounded">**mot**</span> → Gras</div>
+                    <div><span class="font-mono bg-slate-100 px-1 rounded">*mot*</span> → Italique</div>
+                    <div><span class="font-mono bg-slate-100 px-1 rounded">- élément</span> → Liste à puces</div>
+                    <div><span class="font-mono bg-slate-100 px-1 rounded">> citation</span> → Citation</div>
+                    <div><span class="font-mono bg-slate-100 px-1 rounded">[texte](https://...)</span> → Lien</div>
+                    <div><span class="font-mono bg-slate-100 px-1 rounded">![légende](...)</span> → Image</div>
+                    <div class="sm:col-span-2 text-slate-500">
+                        Astuce : utilisez des lignes vides pour séparer les paragraphes. Les tableaux se construisent avec des | et une ligne |---|---|.
+                    </div>
+                </div>
+            </details>
         </div>
 
         <div class="flex items-center gap-3">
