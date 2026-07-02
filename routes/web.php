@@ -52,6 +52,7 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function
 
     Route::get('/{subject:slug}/images', [SubjectImageController::class, 'index'])->name('images.index');
     Route::post('/{subject:slug}/images', [SubjectImageController::class, 'store'])->name('images.store');
+    Route::post('/{subject:slug}/upload-image', [SubjectImageController::class, 'uploadInline'])->name('images.upload');
     Route::patch('/{subject:slug}/images/{image}', [SubjectImageController::class, 'update'])->name('images.update');
     Route::delete('/{subject:slug}/images/{image}', [SubjectImageController::class, 'destroy'])->name('images.destroy');
 

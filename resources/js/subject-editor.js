@@ -1,7 +1,101 @@
 document.addEventListener('DOMContentLoaded', () => {
     setupThemeToggle();
     setupMarkdownEditors();
+    setupInlineImageUploads();
 });
+
+function setupInlineImageUploads() {
+    document.querySelectorAll('[data-inline-upload]').forEach(input => {
+        const subjectId = input.dataset.subjectId;
+        if (! subjectId) return;
+
+        const textarea = input.closest('[data-markdown-editor]').querySelector('textarea[id="body"]');
+        if (! textarea) return;
+
+        input.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (! file) return;
+
+            const form = new FormData();
+            form.append('file', file);
+            const alt = file.name.replace(/\.[^/.]+$/, '');
+            form.append('alt', alt);
+
+            const btn = input.closest('label');
+            const originalText = btn ? btn.innerHTML : '';
+            if (btn) btn.innerHTML = 'Envoi...';
+
+            try {
+                const response = await fetch(`/sujets/${subjectId}/upload-image`, {
+                    method: 'POST',
+                    body: form,
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                });
+
+                if (! response.ok) throw new Error('Erreur serveur');
+                const data = await response.json();
+                insertTextAtCursor(textarea, `\n![${data.alt || alt}](${data.url})\n`);
+                const editor = textarea.closest('[data-markdown-editor]');
+                if (editor) editor.querySelector('#preview')?.dispatchEvent(new Event('forceRefresh'));
+            } catch (err) {
+                alert('L\'image n\'a pas pu être ajoutée.');
+            } finally {
+                if (btn) btn.innerHTML = originalText;
+                input.value = '';
+            }
+        });
+    });
+
+    document.querySelectorAll('textarea[id="body"]').forEach(textarea => {
+        const container = textarea.closest('[data-markdown-editor]');
+        if (! container) return;
+        const subjectId = container.querySelector('[data-inline-upload]')?.dataset.subjectId;
+        if (! subjectId) return;
+
+        textarea.addEventListener('paste', async (event) => {
+            const items = Array.from(event.clipboardData.items).filter(item => item.type.startsWith('image/'));
+            if (items.length === 0) return;
+            event.preventDefault();
+
+            for (const item of items) {
+                const file = item.getAsFile();
+                await uploadInlineImage(file, textarea, subjectId);
+            }
+        });
+
+        textarea.addEventListener('drop', async (event) => {
+            const files = Array.from(event.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            if (files.length === 0) return;
+            event.preventDefault();
+
+            for (const file of files) {
+                await uploadInlineImage(file, textarea, subjectId);
+            }
+        });
+    });
+}
+
+async function uploadInlineImage(file, textarea, subjectId) {
+    const form = new FormData();
+    form.append('file', file);
+    const alt = file.name.replace(/\.[^/.]+$/, '');
+    form.append('alt', alt);
+
+    try {
+        const response = await fetch(`/sujets/${subjectId}/upload-image`, {
+            method: 'POST',
+            body: form,
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+        });
+
+        if (! response.ok) throw new Error('Erreur serveur');
+        const data = await response.json();
+        insertTextAtCursor(textarea, `\n![${data.alt || alt}](${data.url})\n`);
+        textarea.dispatchEvent(new Event('input'));
+    } catch (err) {
+        alert('L\'image n\'a pas pu être ajoutée.');
+    }
+}
 
 function setupThemeToggle() {
     const selects = document.querySelectorAll('[data-theme-toggle]');

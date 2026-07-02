@@ -55,6 +55,10 @@
                 <button type="button" data-insert="[texte](https://)" data-tip="Lien : [texte](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien <span class="text-slate-400">[...](...)</span></button>
                 <button type="button" data-insert="\n![légende](https://)\n" data-tip="Image : ![légende](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image URL <span class="text-slate-400">![...](...)</span></button>
                 <a href="{{ route('subjects.images.index', $subject->slug) }}" target="_blank" class="toolbar-btn px-2 py-1 text-xs rounded bg-emerald-50 border border-emerald-300 hover:bg-emerald-100">Galerie du sujet</a>
+                <label class="toolbar-btn px-2 py-1 text-xs rounded bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 cursor-pointer">
+                    <input type="file" accept="image/*" class="hidden" data-inline-upload data-subject-id="{{ $subject->slug }}">
+                    Ajouter une image
+                </label>
             </div>
 
             <textarea id="body" name="body" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="Rédigez ici au format Markdown. Utilisez les boutons ci-dessus pour découvrir la syntaxe.">{{ old('body', $subject->body) }}</textarea>

@@ -54,6 +54,40 @@ class SubjectImageController extends Controller
             ->withFragment('image-' . $image->id);
     }
 
+    public function uploadInline(Request $request, Subject $subject)
+    {
+        Gate::authorize('update', $subject);
+
+        $request->validate([
+            'file' => 'required|image|max:10240',
+            'alt' => 'nullable|string|max:255',
+        ]);
+
+        $file = $request->file('file');
+        $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . Str::random(4) . '.' . $file->getClientOriginalExtension();
+        $path = "subjects/{$subject->id}/{$filename}";
+
+        Storage::disk(self::DISK)->put($path, file_get_contents($file->getRealPath()));
+
+        $maxPosition = SubjectImage::where('subject_id', $subject->id)->max('position') ?? 0;
+        $alt = $request->input('alt', $file->getClientOriginalName());
+
+        $image = SubjectImage::create([
+            'subject_id' => $subject->id,
+            'filename' => $filename,
+            'path' => $path,
+            'mime_type' => $file->getMimeType(),
+            'alt' => $alt,
+            'position' => $maxPosition + 1,
+        ]);
+
+        return response()->json([
+            'url' => $image->url(),
+            'alt' => $image->alt,
+            'filename' => $image->filename,
+        ]);
+    }
+
     public function update(Request $request, Subject $subject, SubjectImage $image)
     {
         Gate::authorize('update', $subject);
