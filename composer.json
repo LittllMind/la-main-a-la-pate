@@ -7,13 +7,14 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "bepsvpt/secure-headers": "^7.5",
         "fakerphp/faker": "*",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/breeze": "^1.29",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
-        "bepsvpt/secure-headers": "^7.5",
+        "league/html-to-markdown": "^5.1",
         "spatie/laravel-backup": "^8.8",
         "spatie/laravel-medialibrary": "^10.15",
         "stripe/stripe-php": "^19.4"

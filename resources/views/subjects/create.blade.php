@@ -2,8 +2,7 @@
 
 @section('title', 'Nouveau sujet — La Main à la Pâte')
 
-@section('content')
-<div class="max-w-3xl mx-auto px-4 py-8">
+@section('content')<div class="max-w-3xl mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-slate-900 mb-6">Nouveau sujet</h1>
 
     <form method="POST" action="{{ route('subjects.store') }}" class="bg-white rounded-lg border border-slate-200 p-6">
@@ -38,21 +37,31 @@
             @enderror
         </div>
 
-        <div class="mb-5">
-            <label class="block text-sm font-medium text-slate-700 mb-1">Document de travail</label>
+        <div class="mb-5" data-markdown-editor>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Document de travail (Markdown)</label>
+
             <div class="border border-slate-300 rounded-md p-2 mb-2 flex flex-wrap gap-2 bg-slate-50">
-                <button type="button" data-cmd="formatBlock" data-arg="h2" class="toolbar-btn toolbar-h2 px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Titre principal</button>
-                <button type="button" data-cmd="formatBlock" data-arg="h3" class="toolbar-btn toolbar-h3 px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Sous-titre</button>
-                <button type="button" data-cmd="bold" class="toolbar-btn toolbar-bold px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100 font-bold">Gras</button>
-                <button type="button" data-cmd="italic" class="toolbar-btn toolbar-italic px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100 italic">Italique</button>
-                <button type="button" data-cmd="insertUnorderedList" class="toolbar-btn toolbar-list px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste à puces</button>
-                <button type="button" data-cmd="insertQuote" class="toolbar-btn toolbar-quote px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation</button>
-                <button type="button" data-cmd="insertTable" class="toolbar-btn toolbar-table px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Tableau</button>
-                <button type="button" data-cmd="insertImage" class="toolbar-btn toolbar-image px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image</button>
-                <button type="button" data-cmd="createLink" class="toolbar-btn toolbar-link px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien</button>
+                <button type="button" data-insert="## " title="Titre principal" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Titre</button>
+                <button type="button" data-insert="### " class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Sous-titre</button>
+                <button type="button" data-insert="**texte**" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Gras</button>
+                <button type="button" data-insert="*texte*" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Italique</button>
+                <button type="button" data-insert="\n- item\n" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste</button>
+                <button type="button" data-insert="\n\u003e " class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation</button>
+                <button type="button" data-insert="\n| Col | Col |\n| --- | --- |\n|     |     |\n" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Tableau</button>
+                <button type="button" data-insert="[texte](https://)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien</button>
+                <button type="button" data-insert="\n![legende](https://)\n" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image URL</button>
             </div>
-            <div id="editor" contenteditable="true" data-placeholder="Cliquez ici pour rédiger le document..." class="editor-contenteditable w-full min-h-[200px] border border-slate-300 rounded-md px-3 py-2 text-sm prose max-w-none">{!! old('body') !!}</div>
-            <textarea id="body" name="body" hidden>{{ old('body') }}</textarea>
+
+            <textarea id="body" name="body" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-mono" placeholder="Rédigez en Markdown...">{{ old('body') }}</textarea>
+
+            <div class="mt-4">
+                <div class="text-xs font-medium text-slate-500 flex items-center gap-2 mb-2">
+                    <span>Aperçu</span>
+                    <button type="button" id="toggle-preview" class="text-emerald-700">Masquer</button>
+                </div>
+                <div id="preview" class="prose prose-slate max-w-none border border-slate-200 rounded-md p-4 min-h-[120px]"></div>
+            </div>
+
             @error('body')
                 <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
             @enderror
@@ -64,42 +73,4 @@
         </div>
     </form>
 </div>
-
-<style>
-    .editor-contenteditable:empty::before,
-    .editor-contenteditable.is-empty::before {
-        content: attr(data-placeholder);
-        color: #94a3b8;
-        pointer-events: none;
-    }
-    .editor-contenteditable.is-focused {
-        outline: 2px solid #10b981;
-        outline-offset: -2px;
-    }
-    .toolbar-btn.toolbar-h2 {
-        font-weight: 700;
-        font-size: 0.85rem;
-    }
-    .toolbar-btn.toolbar-h3 {
-        font-weight: 600;
-        font-size: 0.78rem;
-    }
-    .toolbar-btn.toolbar-bold {
-        font-weight: 800;
-    }
-    .toolbar-btn.toolbar-italic {
-        font-style: italic;
-    }
-    .toolbar-active,
-    .toolbar-btn.toolbar-active {
-        background-color: #0d9488 !important;
-        color: #fff !important;
-        border-color: #115e59 !important;
-        font-weight: 600 !important;
-    }
-    .toolbar-btn.toolbar-active:hover {
-        background-color: #115e59 !important;
-        border-color: #134e4a !important;
-    }
-</style>
 @endsection

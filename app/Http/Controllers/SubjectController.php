@@ -86,7 +86,7 @@ class SubjectController extends Controller
             'theme' => $theme,
             'title' => $validated['title'],
             'slug' => $this->uniqueSlug($validated['title']),
-            'body' => $this->cleanHtml($validated['body']),
+            'body' => $validated['body'],
             'status' => 'draft',
         ]);
 
@@ -138,7 +138,7 @@ class SubjectController extends Controller
         $subject->update([
             'theme' => $theme,
             'title' => $validated['title'],
-            'body' => $this->cleanHtml($validated['body']),
+            'body' => $validated['body'],
         ]);
 
         return redirect()

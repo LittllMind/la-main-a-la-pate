@@ -10,34 +10,29 @@ class SubjectWikiContentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_subject_body_keeps_wiki_tags_after_sanitization(): void
+    public function test_subject_body_stores_and_renders_markdown(): void
     {
-        $user = User::factory()->create(['role' => 'citoyen', 'password' => 'password']);
-        $body = "<p>Intro</p>\n"
-            . "<h2>Titre</h2>\n"
-            . "<blockquote>une citation</blockquote>\n"
-            . "<ul>\u003cli>item</li>\u003c/ul>\n"
-            . "<table class='wiki-table'><tbody><tr><td>a</td><td>b</td>\u003c/tr>\u003c/tbody>\u003c/table>\n"
-            . "<p><img src=\"https://example.com/img.jpg\" alt=\"test\"></p>\n"
-            . "<p><a href='https://example.com' title='lien'>liens</a></p>";
+        $user = User::factory()->create(['role' => 'citoyen']);
+        $body = "# Titre\n\nIntro avec **gras**.\n\n\u003e une citation\n\n- item\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n![legende](https://example.com/img.jpg)\n\n[lien](https://example.com)";
 
         $this->actingAs($user)
             ->post(route('subjects.store'), [
                 'theme' => 'Urbanisme',
-                'title' => 'Document wiki',
+                'title' => 'Document markdown',
                 'body' => $body,
             ])
             ->assertRedirect();
 
         $this->assertDatabaseHas('subjects', [
-            'title' => 'Document wiki',
+            'title' => 'Document markdown',
+            'body' => $body,
         ]);
 
-        $response = $this->actingAs($user)->get(route('subjects.show', 'document-wiki'));
+        $response = $this->actingAs($user)->get(route('subjects.show', 'document-markdown'));
         $response->assertOk();
+        $response->assertSee('Titre');
         $response->assertSee('une citation');
-        $response->assertSee('wiki-table');
         $response->assertSee('https://example.com/img.jpg');
-        $response->assertSee('liens');
+        $response->assertSee('lien');
     }
 }

@@ -1,160 +1,120 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const editor = document.getElementById('editor');
-    const textarea = document.getElementById('body');
-    const themeSelect = document.querySelector('[data-theme-toggle]');
-    const themeOtherWrapper = document.getElementById('theme-other-wrapper');
-
-    function toggleThemeOther() {
-        if (!themeSelect || !themeOtherWrapper) return;
-        const isNew = themeSelect.value === '__new__';
-        themeOtherWrapper.classList.toggle('hidden', !isNew);
-        if (!isNew) {
-            const input = themeOtherWrapper.querySelector('input');
-            if (input) input.value = '';
-        }
-    }
-
-    if (themeSelect) {
-        themeSelect.addEventListener('change', toggleThemeOther);
-        toggleThemeOther();
-    }
-
-    if (!editor || !textarea) return;
-
-    const form = editor.closest('form');
-
-    function exec(cmd, arg = null) {
-        document.execCommand(cmd, false, arg);
-        editor.focus();
-        syncPlaceholder();
-    }
-
-    function insertLink() {
-        const selection = document.getSelection();
-        const selectedText = selection.toString().trim();
-        const url = prompt('Adresse du lien (https://...)');
-        if (!url) return;
-
-        const linkText = selectedText || url;
-        const linkHtml = `<a href="${url.replace(/"/g, '&quot;')}" rel="noopener noreferrer" target="_blank" class="text-emerald-700 hover:text-emerald-800 hover:underline">${linkText}</a>`;
-
-        if (selectedText) {
-            document.execCommand('insertHTML', false, linkHtml);
-        } else {
-            document.execCommand('insertHTML', false, linkHtml + '\u0026nbsp;');
-        }
-
-        editor.focus();
-        syncPlaceholder();
-    }
-
-    function insertImage() {
-        const url = prompt('Adresse de l\'image (https://...)');
-        if (!url) return;
-
-        const alt = prompt('Texte alternatif (optionnel)') || '';
-        const imgHtml = `<img src="${encodeURI(url)}" alt="${alt.replace(/"/g, '&quot;')}" class="rounded-lg border border-slate-200 my-4 max-w-full h-auto"><br>`;
-
-        document.execCommand('insertHTML', false, imgHtml);
-        editor.focus();
-        syncPlaceholder();
-    }
-
-    function insertTable() {
-        let rows = parseInt(prompt('Nombre de lignes', '2'), 10) || 2;
-        let cols = parseInt(prompt('Nombre de colonnes', '3'), 10) || 3;
-
-        rows = Math.max(1, Math.min(rows, 10));
-        cols = Math.max(1, Math.min(cols, 6));
-
-        let rowsHtml = '';
-        for (let r = 0; r < rows; r++) {
-            rowsHtml += '<tr>';
-            for (let c = 0; c < cols; c++) {
-                rowsHtml += '<td class="border border-slate-300 px-3 py-2 empty-cell">\u0026nbsp;</td>';
-            }
-            rowsHtml += '</tr>';
-        }
-
-        const html = `<table class="wiki-table w-full border-collapse border border-slate-300 my-4 text-sm"><tbody>${rowsHtml}</tbody></table><br>`;
-
-        document.execCommand('insertHTML', false, html);
-        editor.focus();
-        syncPlaceholder();
-    }
-
-    function insertQuote() {
-        document.execCommand('formatBlock', false, 'blockquote');
-        editor.focus();
-        syncPlaceholder();
-    }
-
-    function updateToolbarState() {
-        document.querySelectorAll('.toolbar-btn').forEach(btn => {
-            const cmd = btn.dataset.cmd;
-            const arg = btn.dataset.arg;
-            let active = false;
-            if (cmd === 'formatBlock') {
-                const current = document.queryCommandValue('formatBlock');
-                active = current === arg || current === arg.toUpperCase();
-            } else if (cmd === 'insertQuote') {
-                let node = document.getSelection().anchorNode;
-                while (node && node !== editor) {
-                    if (node.nodeName.toLowerCase() === 'blockquote') {
-                        active = true;
-                        break;
-                    }
-                    node = node.parentElement;
-                }
-            } else if (cmd === 'insertUnorderedList') {
-                active = document.queryCommandState('insertUnorderedList');
-            } else {
-                active = document.queryCommandState(cmd);
-            }
-            btn.classList.toggle('toolbar-active', active);
-        });
-    }
-
-    document.querySelectorAll('.toolbar-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const cmd = btn.dataset.cmd;
-            const arg = btn.dataset.arg || null;
-
-            if (cmd === 'createLink') {
-                insertLink();
-            } else if (cmd === 'insertImage') {
-                insertImage();
-            } else if (cmd === 'insertTable') {
-                insertTable();
-            } else if (cmd === 'insertQuote') {
-                insertQuote();
-            } else {
-                exec(cmd, arg);
-            }
-
-            updateToolbarState();
-        });
-    });
-
-    function syncPlaceholder() {
-        editor.classList.toggle('is-empty', editor.innerText.trim().length === 0);
-    }
-
-    editor.addEventListener('input', () => {
-        syncPlaceholder();
-        updateToolbarState();
-    });
-    editor.addEventListener('keyup', updateToolbarState);
-    editor.addEventListener('mouseup', updateToolbarState);
-    editor.addEventListener('focus', () => editor.classList.add('is-focused'));
-    editor.addEventListener('blur', () => editor.classList.remove('is-focused'));
-
-    syncPlaceholder();
-    updateToolbarState();
-
-    if (form) {
-        form.addEventListener('submit', () => {
-            textarea.value = editor.innerHTML;
-        });
-    }
+    setupThemeToggle();
+    setupMarkdownEditors();
 });
+
+function setupThemeToggle() {
+    const selects = document.querySelectorAll('[data-theme-toggle]');
+    selects.forEach(select => {
+        const wrapper = document.getElementById('theme-other-wrapper');
+        if (! wrapper) return;
+
+        select.addEventListener('change', () => {
+            wrapper.classList.toggle('hidden', select.value !== '__new__');
+        });
+    });
+}
+
+function setupMarkdownEditors() {
+    document.querySelectorAll('[data-markdown-editor]').forEach(container => {
+        const textarea = container.querySelector('textarea[id="body"]');
+        const preview = container.querySelector('#preview');
+        const toggleBtn = container.querySelector('#toggle-preview');
+        if (! textarea || ! preview) return;
+
+        const renderer = buildMarkdownRenderer();
+        const refresh = () => {
+            preview.innerHTML = renderer.render(textarea.value);
+            preview.style.display = toggleBtn && toggleBtn.textContent === 'Masquer' ? 'block' : 'none';
+        };
+
+        textarea.addEventListener('input', refresh);
+        if (textarea.value) refresh();
+
+        container.querySelectorAll('[data-insert]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                insertTextAtCursor(textarea, btn.dataset.insert);
+                refresh();
+            });
+        });
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const hidden = preview.style.display === 'none';
+                preview.style.display = hidden ? 'block' : 'none';
+                toggleBtn.textContent = hidden ? 'Masquer' : 'Afficher';
+            });
+        }
+    });
+}
+
+function buildMarkdownRenderer() {
+    const rules = [
+        { regex: /^#{6}\s+(.*)$/gm, replace: '<h6>$1</h6>' },
+        { regex: /^#{5}\s+(.*)$/gm, replace: '<h5>$1</h5>' },
+        { regex: /^#{4}\s+(.*)$/gm, replace: '<h4>$1</h4>' },
+        { regex: /^#{3}\s+(.*)$/gm, replace: '<h3>$1</h3>' },
+        { regex: /^#{2}\s+(.*)$/gm, replace: '<h2>$1</h2>' },
+        { regex: /^#{1}\s+(.*)$/gm, replace: '<h1>$1</h1>' },
+        { regex: /\*\*(.+?)\*\*/g, replace: '<strong>$1</strong>' },
+        { regex: /\*(.+?)\*/g, replace: '\u003cem\u003e$1\u003c/em\u003e' },
+        { regex: /^\u003e\s+(.*)$/gm, replace: '<blockquote class="subject-quote"\u003e$1</blockquote\u003e' },
+        { regex: /`([^`]+)`/g, replace: '<code class="bg-slate-100 rounded px-1 text-sm"\u003e$1</code\u003e' },
+        { regex: /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, replace: '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline">$1</a\u003e' },
+        { regex: /!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)/g, replace: '<figure class="subject-figure"\u003e<img src="$2" alt="$1" class="subject-image"\u003e<figcaption\u003e$1</figcaption\u003e</figure\u003e' },
+    ];
+
+    return {
+        render(text) {
+            let html = escapeHtml(text)
+                .split(/\n{2,}/)
+                .map(block => {
+                    if (block.startsWith('|')) {
+                        return renderMarkdownTable(block);
+                    }
+                    rules.forEach(rule => {
+                        if (rule.regex.test(block)) {
+                            block = block.replace(rule.regex, rule.replace);
+                        }
+                    });
+                    return block.trim() ? `<p>${block.replace(/\n/g, '<br>')}</p>` : '';
+                })
+                .join('\n');
+
+            return html.replace(/\n/g, '');
+        },
+    };
+}
+
+function renderMarkdownTable(block) {
+    const rows = block.trim().split(/\n+/).filter(Boolean);
+    if (rows.length < 2) return `<p>${block}</p>`;
+
+    let html = '<table class="subject-table"\u003e<tbody\u003e';
+    rows.forEach((row, index) => {
+        if (index === 1 && /^\s*\|[-\s:|]+\|\s*$/.test(row)) return;
+        const cells = row.split('|').filter(c => c !== '');
+        const tag = index === 0 ? 'th' : 'td';
+        html += '<tr\u003e' + cells.map(c => `<${tag}\u003e${c.trim()}</${tag}\u003e`).join('') + '</tr\u003e';
+    });
+    html += '</tbody\u003e</table\u003e';
+
+    return html;
+}
+
+function insertTextAtCursor(textarea, text) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = textarea.value.substring(0, start);
+    const after = textarea.value.substring(end);
+
+    textarea.value = before + text + after;
+    textarea.selectionStart = textarea.selectionEnd = start + text.length;
+    textarea.focus();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}

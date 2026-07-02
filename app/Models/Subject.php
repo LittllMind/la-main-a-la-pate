@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use League\HTMLToMarkdown\HtmlConverter;
 
 class Subject extends Model
 {
@@ -31,6 +32,37 @@ class Subject extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(SubjectComment::class)->orderBy('created_at', 'asc');
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(SubjectImage::class)->orderBy('position')->orderBy('created_at');
+    }
+
+    public function renderBody(): string
+    {
+        $markdown = (string) $this->body;
+
+        if (str_contains($markdown, '<') && str_contains($markdown, '>')) {
+            $markdown = self::convertHtmlToMarkdown($markdown);
+        }
+
+        return Str::markdown($markdown, [
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+        ]);
+    }
+
+    public static function convertHtmlToMarkdown(string $html): string
+    {
+        $converter = new HtmlConverter([
+            'italic_style' => '*',
+            'bold_style' => '**',
+            'use_autolinks' => false,
+            'strip_tags' => true,
+        ]);
+
+        return $converter->convert($html);
     }
 
     protected static function booted(): void

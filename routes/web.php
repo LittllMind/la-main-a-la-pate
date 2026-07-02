@@ -8,6 +8,8 @@ use App\Http\Controllers\LandingSectionController;
 use App\Http\Controllers\PostPublicController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\SubjectImageController;
+use App\Http\Controllers\SubjectImportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,11 +42,19 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function
     Route::get('/', [SubjectController::class, 'index'])->name('index');
     Route::get('/creer', [SubjectController::class, 'create'])->name('create');
     Route::post('/', [SubjectController::class, 'store'])->name('store');
+    Route::get('/importer', [SubjectImportController::class, 'create'])->name('import.create');
+    Route::post('/importer', [SubjectImportController::class, 'store'])->name('import.store');
     Route::post('/{subject:slug}/commentaires', [SubjectController::class, 'storeComment'])->name('comments.store');
     Route::get('/{subject:slug}/modifier', [SubjectController::class, 'edit'])->name('edit');
     Route::put('/{subject:slug}', [SubjectController::class, 'update'])->name('update');
     Route::delete('/{subject:slug}', [SubjectController::class, 'destroy'])->name('destroy');
     Route::patch('/{subject:slug}/publier', [SubjectController::class, 'publish'])->name('publish');
+
+    Route::get('/{subject:slug}/images', [SubjectImageController::class, 'index'])->name('images.index');
+    Route::post('/{subject:slug}/images', [SubjectImageController::class, 'store'])->name('images.store');
+    Route::patch('/{subject:slug}/images/{image}', [SubjectImageController::class, 'update'])->name('images.update');
+    Route::delete('/{subject:slug}/images/{image}', [SubjectImageController::class, 'destroy'])->name('images.destroy');
+
     Route::get('/{subject:slug}', [SubjectController::class, 'show'])->name('show');
 });
 
