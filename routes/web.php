@@ -10,6 +10,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\SubjectImageController;
 use App\Http\Controllers\SubjectImportController;
+use App\Http\Controllers\SubjectPdfController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -55,6 +56,10 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function
     Route::post('/{subject:slug}/upload-image', [SubjectImageController::class, 'uploadInline'])->name('images.upload');
     Route::patch('/{subject:slug}/images/{image}', [SubjectImageController::class, 'update'])->name('images.update');
     Route::delete('/{subject:slug}/images/{image}', [SubjectImageController::class, 'destroy'])->name('images.destroy');
+
+    Route::get('/export-pdf', [SubjectPdfController::class, 'index'])->name('pdf.index');
+    Route::get('/{subject:slug}/pdf', [SubjectPdfController::class, 'show'])->name('pdf.show');
+    Route::get('/{subject:slug}/pdf-telecharger', [SubjectPdfController::class, 'download'])->name('pdf.download');
 
     Route::get('/{subject:slug}', [SubjectController::class, 'show'])->name('show');
 });

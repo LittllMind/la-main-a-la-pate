@@ -12,6 +12,11 @@ class SubjectPolicy
         return in_array($subject->status, ['published', 'archived']) || $this->canManage($user, $subject);
     }
 
+    public function viewAny(User $user): bool
+    {
+        return in_array($user->role, ['admin', 'moderator', 'citoyen', 'member']);
+    }
+
     public function create(User $user): bool
     {
         return in_array($user->role, ['admin', 'moderator', 'citoyen', 'member']);

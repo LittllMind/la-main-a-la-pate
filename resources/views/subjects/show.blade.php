@@ -18,6 +18,11 @@
             <span class="inline-block w-3 h-3 rounded-full" style="background-color: {{ $subject->user->color ?: '#64748b' }}"></span>
             Rédigé par {{ $subject->user->name }} — {{ $subject->updated_at->format('d/m/Y') }}
         </div>
+
+        <div class="flex items-center gap-3 mt-4">
+            <a href="{{ route('subjects.pdf.show', $subject->slug) }}" target="_blank" class="inline-block bg-slate-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition" data-testid="btn-pdf-show">Ouvrir le PDF</a>
+            <a href="{{ route('subjects.pdf.download', $subject->slug) }}" class="inline-block bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-200 transition" data-testid="btn-pdf-download">Télécharger le PDF</a>
+        </div>
     </div>
 
     <article class="bg-white rounded-lg border border-slate-200 p-6 mb-8 subject-document">
