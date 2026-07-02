@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 
 class SubjectImageController extends Controller
 {
+    private const DISK = 'subject_images';
+
     public function index(Subject $subject)
     {
         Gate::authorize('update', $subject);
@@ -33,7 +35,7 @@ class SubjectImageController extends Controller
         $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . Str::random(4) . '.' . $file->getClientOriginalExtension();
         $path = "subjects/{$subject->id}/{$filename}";
 
-        Storage::disk('public')->put($path, file_get_contents($file->getRealPath()));
+        Storage::disk(self::DISK)->put($path, file_get_contents($file->getRealPath()));
 
         $maxPosition = SubjectImage::where('subject_id', $subject->id)->max('position') ?? 0;
 
@@ -72,7 +74,7 @@ class SubjectImageController extends Controller
     {
         Gate::authorize('update', $subject);
 
-        Storage::disk('public')->delete($image->path);
+        Storage::disk(self::DISK)->delete($image->path);
         $image->delete();
 
         return redirect()

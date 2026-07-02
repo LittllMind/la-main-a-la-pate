@@ -24,6 +24,6 @@ class SubjectImage extends Model
 
     public function url(): string
     {
-        return Storage::disk('public')->url($this->path);
+        return Storage::disk('subject_images')->url($this->path);
     }
 }

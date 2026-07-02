@@ -9,10 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class SubjectImportController extends Controller
 {
+    private const DISK = 'subject_images';
     public function create()
     {
         Gate::authorize('create', Subject::class);
@@ -103,7 +103,7 @@ class SubjectImportController extends Controller
             $filename = Str::slug($alt ?: 'image') . '-' . $counter . '.' . $ext;
             $destPath = "subjects/{$subject->id}/{$filename}";
 
-            Storage::disk('public')->put($destPath, file_get_contents($fullPath));
+            Storage::disk(self::DISK)->put($destPath, file_get_contents($fullPath));
 
             $maxPosition = SubjectImage::where('subject_id', $subject->id)->max('position') ?? 0;
             SubjectImage::firstOrCreate(
@@ -116,7 +116,7 @@ class SubjectImportController extends Controller
                 ]
             );
 
-            $images[$src] = Storage::disk('public')->url($destPath);
+            $images[$src] = Storage::disk(self::DISK)->url($destPath);
 
             return "![{$alt}]({$images[$src]})";
         }, $markdown);

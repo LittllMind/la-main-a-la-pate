@@ -50,7 +50,7 @@ class SubjectMarkdownImageWorkflowTest extends TestCase
 
     public function test_image_upload_attaches_to_subject(): void
     {
-        Storage::fake('public');
+        Storage::fake('subject_images');
 
         $user = User::factory()->create();
         $subject = Subject::factory()->create(['user_id' => $user->id, 'status' => 'published']);
@@ -67,14 +67,14 @@ class SubjectMarkdownImageWorkflowTest extends TestCase
             'alt' => 'Plan du chauffage',
         ]);
 
-        $storedFiles = Storage::disk('public')->files("subjects/{$subject->id}");
+        $storedFiles = Storage::disk('subject_images')->files("subjects/{$subject->id}");
         $this->assertCount(1, $storedFiles, 'No image stored for subject');
         $this->assertStringContainsString('plan', $storedFiles[0]);
     }
 
     public function test_gallery_lists_subject_images(): void
     {
-        Storage::fake('public');
+        Storage::fake('subject_images');
 
         $user = User::factory()->create();
         $subject = Subject::factory()->create(['user_id' => $user->id, 'status' => 'published']);
@@ -95,7 +95,7 @@ class SubjectMarkdownImageWorkflowTest extends TestCase
 
     public function test_zip_import_creates_subject_with_markdown_and_images(): void
     {
-        Storage::fake('public');
+        Storage::fake('subject_images');
 
         $user = User::factory()->create(['role' => 'moderator']);
 
