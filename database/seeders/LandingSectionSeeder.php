@@ -33,7 +33,7 @@ class LandingSectionSeeder extends Seeder
                         </div>
                         <h2 class="text-2xl font-bold text-slate-900 mb-2">La Séraphothèque</h2>
                         <p class="text-slate-600 text-sm leading-relaxed mb-4">Friperie, brocante et recyclerie au cœur du Rozier depuis 2022. Un espace de rencontre, une initiative locale, sociale et écologique.</p>
-                        <div class="text-xs text-slate-500 mb-5">2 rue Louis Armand — 48150 Le Rozier — Ouvert à l'année</div>
+                        <div class="text-xs text-slate-500 mb-5">2 rue Louis Armand — 48150 Le Rozier — Ouvert a l\'annee</div>
                         <div class="flex flex-wrap gap-3">
                             <a href="{{ route(\'seraphotheque\') }}" class="inline-block bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">Découvrir la boutique</a>
                             <a href="https://www.change.org/p/pour-le-maintien-de-la-seraphotheque-au-cœur-du-rozier-48150" target="_blank" class="inline-block bg-white text-emerald-700 border border-emerald-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-50 transition">Signer la pétition</a>
