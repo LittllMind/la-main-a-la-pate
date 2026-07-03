@@ -5,81 +5,35 @@
 @section('content')
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-slate-900 mb-2">Panneau d'administration</h1>
-        <p class="text-slate-600 text-sm">Acces a toutes les routes existantes et aux outils de gestion.</p>
+        <p class="text-slate-600 text-sm">Accès rapide à toutes les actions de gestion du site.</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <a href="{{ route('admin.routes') }}" class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group">
-            <div class="flex items-start justify-between mb-4">
-                <div class="p-3 bg-emerald-50 rounded-lg text-emerald-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V3m0 18v-3.75m6-12V3m0 18v-3.75m-9 3.75h12" />
-                    </svg>
-                </div>
-                <span class="text-xs font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded">{{ collect($routeGroups)->sum(fn($routes) => count($routes)) }} routes</span>
+    @foreach($sections as $heading => $cards)
+        <section class="mb-10">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500 mb-4 border-b border-slate-200 pb-2">{{ $heading }}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($cards as $card)
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group flex flex-col">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="p-3 bg-{{ $card['color'] }}-50 rounded-lg text-{{ $card['color'] }}-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $card['icon'] }}" />
+                                </svg>
+                            </div>
+                            <a href="{{ $card['route'] }}" class="text-xs font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded hover:bg-emerald-50 hover:text-emerald-700 transition">Ouvrir</a>
+                        </div>
+                        <h3 class="font-semibold text-slate-900 group-hover:text-emerald-700 text-lg">{{ $card['title'] }}</h3>
+                        <p class="text-sm text-slate-500 mt-1 mb-4 flex-grow">{{ $card['description'] }}</p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($card['actions'] as $action)
+                                <a href="{{ $action['route'] }}" class="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 hover:bg-emerald-100 hover:text-emerald-800 transition">
+                                    {{ $action['label'] }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
             </div>
-            <h2 class="font-semibold text-slate-900 group-hover:text-emerald-700">Routes</h2>
-            <p class="text-sm text-slate-500 mt-1">Liste complete triee par groupe, avec liens directs.</p>
-        </a>
-
-        <a href="{{ route('admin.posts.index') }}" class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group">
-            <div class="flex items-start justify-between mb-4">
-                <div class="p-3 bg-blue-50 rounded-lg text-blue-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9v12m0 0h-3.75m3.75 0v1.5m0-1.5H21M3 19.5v-12a2.25 2.25 0 012.25-2.25h13.5a2.25 2.25 0 012.25 2.25v12" />
-                    </svg>
-                </div>
-            </div>
-            <h2 class="font-semibold text-slate-900 group-hover:text-emerald-700">Articles / Hall</h2>
-            <p class="text-sm text-slate-500 mt-1">Gestion des actualites publiees sur le Hall.</p>
-        </a>
-
-        <a href="{{ route('admin.users.index') }}" class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group">
-            <div class="flex items-start justify-between mb-4">
-                <div class="p-3 bg-indigo-50 rounded-lg text-indigo-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v.003A9.318 9.318 0 0112 21c-1.8 0-3.5-.5-5-1.4m10-1.928c1.274-1.067 2-2.634 2-4.25C17 9.516 14.761 7 12 7s-5 2.516-5 4.75c0 1.616.726 3.183 2 4.25M12 14.25c-1.8 0-3.5-.5-5-1.4m5 1.4v.003" />
-                    </svg>
-                </div>
-            </div>
-            <h2 class="font-semibold text-slate-900 group-hover:text-emerald-700">Utilisateurs</h2>
-            <p class="text-sm text-slate-500 mt-1">Gestion des comptes, rôles, emails et mots de passe.</p>
-        </a>
-
-        <a href="{{ route('admin.sections.index') }}" class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group">
-            <div class="flex items-start justify-between mb-4">
-                <div class="p-3 bg-orange-50 rounded-lg text-orange-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 00-1.3 4.146c2.7.818 5.5.416 7.955-1.223a11.619 11.619 0 011.013-7.135 9.479 9.479 0 00-1.045-7.325c-1.305-1.855-3.417-3.101-5.805-3.293a6.896 6.896 0 00-.567 0 6.896 6.896 0 00-.567 0c-2.388.192-4.5 1.438-5.805 3.293a9.479 9.479 0 00-1.045 7.325 11.619 11.619 0 011.013 7.135c2.455 1.639 5.255 2.041 7.955 1.223A2.25 2.25 0 0015 20.25h3.75A2.25 2.25 0 0021 18v-3.75" />
-                    </svg>
-                </div>
-            </div>
-            <h2 class="font-semibold text-slate-900 group-hover:text-emerald-700">Sections du Hall</h2>
-            <p class="text-sm text-slate-500 mt-1">Ordre et contenu des blocs de la page d'accueil.</p>
-        </a>
-
-        <a href="/sujets" class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group">
-            <div class="flex items-start justify-between mb-4">
-                <div class="p-3 bg-amber-50 rounded-lg text-amber-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                    </svg>
-                </div>
-            </div>
-            <h2 class="font-semibold text-slate-900 group-hover:text-emerald-700">Sujets</h2>
-            <p class="text-sm text-slate-500 mt-1">Documents de reference et fils de discussion.</p>
-        </a>
-
-        <a href="/communaute" class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group">
-            <div class="flex items-start justify-between mb-4">
-                <div class="p-3 bg-purple-50 rounded-lg text-purple-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m0 0a3 3 0 00-4.682 2.72M3 18.72a9.094 9.094 0 003.741.479 3 3 0 004.682-2.72m0 0a3 3 0 00-4.682-2.72M12 12a3 3 0 100-6 3 3 0 000 6z" />
-                    </svg>
-                </div>
-            </div>
-            <h2 class="font-semibold text-slate-900 group-hover:text-emerald-700">Communaute</h2>
-            <p class="text-sm text-slate-500 mt-1">Acces a l'espace communaute (masque en navigation publique).</p>
-        </a>
-    </div>
+        </section>
+    @endforeach
 @endsection

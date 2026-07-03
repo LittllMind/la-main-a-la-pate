@@ -26,14 +26,17 @@
                     La Main a la Pate — Admin
                 </a>
                 <div class="hidden sm:flex items-center gap-6 text-sm">
-                    <a href="/" class="text-slate-300 hover:text-white transition">Site public</a>
-                    <a href="{{ route('admin.panel') }}" class="text-slate-300 hover:text-white transition">Tableau de bord</a>
-                    <a href="{{ route('admin.routes') }}" class="text-slate-300 hover:text-white transition">Routes</a>
-                    <a href="{{ route('admin.posts.index') }}" class="text-slate-300 hover:text-white transition">Articles</a>
-                    <a href="{{ route('admin.users.index') }}" class="text-slate-300 hover:text-white transition">Utilisateurs</a>
+                    <a href="{{ route('admin.panel') }}" class="{{ request()->routeIs('admin.panel') ? 'text-white font-medium border-b-2 border-emerald-400 pb-0.5' : 'text-slate-300 hover:text-white transition' }}">Tableau de bord</a>
+                    <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'text-white font-medium border-b-2 border-emerald-400 pb-0.5' : 'text-slate-300 hover:text-white transition' }}">Utilisateurs</a>
+                    <a href="{{ route('admin.posts.index') }}" class="{{ request()->routeIs('admin.posts.*') ? 'text-white font-medium border-b-2 border-emerald-400 pb-0.5' : 'text-slate-300 hover:text-white transition' }}">Articles</a>
+                    <a href="{{ route('admin.sections.index') }}" class="{{ request()->routeIs('admin.sections.*') ? 'text-white font-medium border-b-2 border-emerald-400 pb-0.5' : 'text-slate-300 hover:text-white transition' }}">Sections</a>
+                    <a href="{{ route('subjects.index') }}" class="{{ request()->routeIs('subjects.*') ? 'text-white font-medium border-b-2 border-emerald-400 pb-0.5' : 'text-slate-300 hover:text-white transition' }}">Sujets</a>
+                    <a href="{{ route('admin.routes') }}" class="{{ request()->routeIs('admin.routes') ? 'text-white font-medium border-b-2 border-emerald-400 pb-0.5' : 'text-slate-300 hover:text-white transition' }}">Routes</a>
+                    <a href="{{ url('/') }}" class="text-slate-300 hover:text-white transition">Site public</a>
+
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
-                        <button type="submit" class="text-slate-400 hover:text-red-400 text-sm transition">Deconnexion</button>
+                        <button type="submit" class="text-slate-400 hover:text-red-400 text-sm transition">Déconnexion</button>
                     </form>
                 </div>
             </div>
