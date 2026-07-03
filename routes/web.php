@@ -11,6 +11,7 @@ use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\SubjectImageController;
 use App\Http\Controllers\SubjectImportController;
 use App\Http\Controllers\SubjectPdfController;
+use App\Http\Controllers\UserAdminController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -113,6 +114,15 @@ Route::middleware(['auth', 'verified', 'isAdmin'])->prefix('admin')->name('admin
     Route::put('/sections/{section}', [LandingSectionController::class, 'update'])->name('sections.update');
     Route::patch('/sections/{section}/toggle', [LandingSectionController::class, 'toggle'])->name('sections.toggle');
     Route::delete('/sections/{section}', [LandingSectionController::class, 'destroy'])->name('sections.destroy');
+
+    Route::get('/utilisateurs', [UserAdminController::class, 'index'])->name('users.index');
+    Route::get('/utilisateurs/creer', [UserAdminController::class, 'create'])->name('users.create');
+    Route::post('/utilisateurs', [UserAdminController::class, 'store'])->name('users.store');
+    Route::get('/utilisateurs/{user}/modifier', [UserAdminController::class, 'edit'])->name('users.edit');
+    Route::put('/utilisateurs/{user}', [UserAdminController::class, 'update'])->name('users.update');
+    Route::delete('/utilisateurs/{user}', [UserAdminController::class, 'destroy'])->name('users.destroy');
 });
 
 require __DIR__.'/auth.php';
+
+Route::redirect('/register', '/login')->name('register');

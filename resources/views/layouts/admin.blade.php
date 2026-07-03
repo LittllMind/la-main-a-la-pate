@@ -30,6 +30,7 @@
                     <a href="{{ route('admin.panel') }}" class="text-slate-300 hover:text-white transition">Tableau de bord</a>
                     <a href="{{ route('admin.routes') }}" class="text-slate-300 hover:text-white transition">Routes</a>
                     <a href="{{ route('admin.posts.index') }}" class="text-slate-300 hover:text-white transition">Articles</a>
+                    <a href="{{ route('admin.users.index') }}" class="text-slate-300 hover:text-white transition">Utilisateurs</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="text-slate-400 hover:text-red-400 text-sm transition">Deconnexion</button>

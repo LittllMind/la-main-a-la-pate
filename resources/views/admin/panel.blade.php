@@ -34,6 +34,18 @@
             <p class="text-sm text-slate-500 mt-1">Gestion des actualites publiees sur le Hall.</p>
         </a>
 
+        <a href="{{ route('admin.users.index') }}" class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group">
+            <div class="flex items-start justify-between mb-4">
+                <div class="p-3 bg-indigo-50 rounded-lg text-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v.003A9.318 9.318 0 0112 21c-1.8 0-3.5-.5-5-1.4m10-1.928c1.274-1.067 2-2.634 2-4.25C17 9.516 14.761 7 12 7s-5 2.516-5 4.75c0 1.616.726 3.183 2 4.25M12 14.25c-1.8 0-3.5-.5-5-1.4m5 1.4v.003" />
+                    </svg>
+                </div>
+            </div>
+            <h2 class="font-semibold text-slate-900 group-hover:text-emerald-700">Utilisateurs</h2>
+            <p class="text-sm text-slate-500 mt-1">Gestion des comptes, rôles, emails et mots de passe.</p>
+        </a>
+
         <a href="{{ route('admin.sections.index') }}" class="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-400 hover:shadow-sm transition group">
             <div class="flex items-start justify-between mb-4">
                 <div class="p-3 bg-orange-50 rounded-lg text-orange-600">
