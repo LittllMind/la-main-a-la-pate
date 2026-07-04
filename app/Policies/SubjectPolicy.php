@@ -65,6 +65,7 @@ class SubjectPolicy
 
         return $user->isAdmin()
             || $user->isModerator()
-            || $user->id === $subject->user_id;
+            || $user->id === $subject->user_id
+            || $subject->isCollaborator($user);
     }
 }
