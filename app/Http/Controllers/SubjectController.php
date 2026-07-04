@@ -27,12 +27,27 @@ class SubjectController extends Controller
             ->where('status', '!=', 'archived')
             ->orderBy('created_at', 'desc');
 
-        if ($user === null || ! $user->isModeratorOrAdmin()) {
+        // Filtrage par visibilité + status pour les non-admin
+        if ($user === null) {
+            // Visiteur = uniquement public published
+            $query->where('status', 'published')
+                  ->where('visibility', 'public');
+        } elseif (! $user->isModeratorOrAdmin()) {
+            // Citoyen = published public + published citoyen + ses propres drafts
             $query->where(function ($q) use ($user) {
-                $q->where('status', 'published');
-                if ($user) {
-                    $q->orWhere('user_id', $user->id);
-                }
+                $q->where(function ($q2) {
+                    $q2->where('status', 'published')
+                        ->whereIn('visibility', ['public', 'citoyen']);
+                })->orWhere(function ($q2) use ($user) {
+                    $q2->where('status', 'draft')
+                        ->where('user_id', $user->id);
+                });
+            });
+        } else {
+            // Admin/Mod = tout sauf archived (tous les sujets y compris les brouillons des autres)
+            $query->where(function ($q) {
+                $q->where('status', 'published')
+                  ->orWhere('status', 'draft');
             });
         }
 
@@ -175,9 +190,18 @@ class SubjectController extends Controller
 
     public function publish(Subject $subject)
     {
-        Gate::authorize('update', $subject);
+        Gate::authorize('publish', $subject);
 
-        $subject->update(['status' => 'published']);
+        if (! $subject->canBePublished()) {
+            return redirect()
+                ->route('subjects.show', $subject->slug)
+                ->with('error', 'Ce sujet nécessite l\'approbation unanime de ses collaborateurs avant publication.');
+        }
+
+        $subject->update([
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
 
         return redirect()
             ->route('subjects.show', $subject->slug)

@@ -9,7 +9,27 @@ class SubjectPolicy
 {
     public function view(?User $user, Subject $subject): bool
     {
-        return in_array($subject->status, ['published', 'archived']) || $this->canManage($user, $subject);
+        // Draft = auteur + admin uniquement
+        if ($subject->status === 'draft') {
+            return $this->canManage($user, $subject);
+        }
+
+        // Archived = admin uniquement
+        if ($subject->status === 'archived') {
+            return $user !== null && $user->isAdmin();
+        }
+
+        // Published : dépend de la visibilité
+        if ($subject->status === 'published') {
+            return match ($subject->visibility) {
+                'public'   => true,                           // tout le monde
+                'citoyen'  => $user !== null,                  // connecté n'importe quel rôle
+                'admin'    => $user !== null && $user->isAdmin(),
+                default    => false,
+            };
+        }
+
+        return false;
     }
 
     public function viewAny(User $user): bool
@@ -24,7 +44,7 @@ class SubjectPolicy
 
     public function update(User $user, Subject $subject): bool
     {
-        return $this->canManage($user, $subject);
+        return $this->canManage($user, $subject) || $subject->isCollaborator($user);
     }
 
     public function delete(User $user, Subject $subject): bool
@@ -34,7 +54,7 @@ class SubjectPolicy
 
     public function publish(User $user, Subject $subject): bool
     {
-        return $this->canManage($user, $subject);
+        return $this->canManage($user, $subject) || $subject->isCollaborator($user);
     }
 
     private function canManage(?User $user, Subject $subject): bool

@@ -8,6 +8,8 @@ use App\Http\Controllers\LandingSectionController;
 use App\Http\Controllers\PostPublicController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\SubjectCollaboratorController;
+use App\Http\Controllers\SubjectDocumentController;
 use App\Http\Controllers\SubjectImageController;
 use App\Http\Controllers\SubjectImportController;
 use App\Http\Controllers\SubjectPdfController;
@@ -52,11 +54,24 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function
     Route::delete('/{subject:slug}', [SubjectController::class, 'destroy'])->name('destroy');
     Route::patch('/{subject:slug}/publier', [SubjectController::class, 'publish'])->name('publish');
 
+    // Collaboration et votes de publication
+    Route::post('/{subject:slug}/collaborateurs', [SubjectCollaboratorController::class, 'store'])->name('collaborators.store');
+    Route::delete('/{subject:slug}/collaborateurs/{user}', [SubjectCollaboratorController::class, 'destroy'])->name('collaborators.destroy');
+    Route::post('/{subject:slug}/vote-publication', [SubjectCollaboratorController::class, 'startVote'])->name('collaborators.startVote');
+    Route::post('/{subject:slug}/voter', [SubjectCollaboratorController::class, 'vote'])->name('collaborators.vote');
+
     Route::get('/{subject:slug}/images', [SubjectImageController::class, 'index'])->name('images.index');
     Route::post('/{subject:slug}/images', [SubjectImageController::class, 'store'])->name('images.store');
     Route::post('/{subject:slug}/upload-image', [SubjectImageController::class, 'uploadInline'])->name('images.upload');
     Route::patch('/{subject:slug}/images/{image}', [SubjectImageController::class, 'update'])->name('images.update');
     Route::delete('/{subject:slug}/images/{image}', [SubjectImageController::class, 'destroy'])->name('images.destroy');
+
+    // Documents attachés au sujet (PDF, OCR, sources, audio...)
+    Route::get('/{subject:slug}/documents', [SubjectDocumentController::class, 'index'])->name('documents.index');
+    Route::post('/{subject:slug}/documents', [SubjectDocumentController::class, 'store'])->name('documents.store');
+    Route::patch('/{subject:slug}/documents/{document}', [SubjectDocumentController::class, 'update'])->name('documents.update');
+    Route::delete('/{subject:slug}/documents/{document}', [SubjectDocumentController::class, 'destroy'])->name('documents.destroy');
+    Route::get('/{subject:slug}/documents/{document}/telecharger', [SubjectDocumentController::class, 'download'])->name('documents.download');
 
     Route::get('/export-pdf', [SubjectPdfController::class, 'index'])->name('pdf.index');
     Route::get('/{subject:slug}/pdf', [SubjectPdfController::class, 'show'])->name('pdf.show');
