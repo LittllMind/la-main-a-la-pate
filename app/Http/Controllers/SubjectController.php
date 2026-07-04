@@ -40,7 +40,12 @@ class SubjectController extends Controller
                         ->whereIn('visibility', ['public', 'citoyen']);
                 })->orWhere(function ($q2) use ($user) {
                     $q2->where('status', 'draft')
-                        ->where('user_id', $user->id);
+                        ->where(function ($q3) use ($user) {
+                            $q3->where('user_id', $user->id)
+                                ->orWhereHas('collaborators', function ($q4) use ($user) {
+                                    $q4->where('users.id', $user->id);
+                                });
+                        });
                 });
             });
         } else {
