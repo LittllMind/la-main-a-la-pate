@@ -23,7 +23,7 @@ class SubjectController extends Controller
     {
         $user = auth()->user();
 
-        $query = Subject::with('user')
+        $query = Subject::with(['user', 'comments', 'collaborators'])
             ->where('status', '!=', 'archived')
             ->orderBy('created_at', 'desc');
 
