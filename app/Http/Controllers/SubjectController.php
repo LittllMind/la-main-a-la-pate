@@ -120,7 +120,7 @@ class SubjectController extends Controller
         Gate::authorize('view', $subject);
 
         return view('subjects.show', [
-            'subject' => $subject->load(['user', 'comments.user', 'versions.user']),
+            'subject' => $subject->load(['user', 'comments.user', 'versions.user', 'documents']),
         ]);
     }
 

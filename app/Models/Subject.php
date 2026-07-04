@@ -48,11 +48,7 @@ class Subject extends Model
     public function pdfDocuments(): HasMany
     {
         return $this->hasMany(SubjectDocument::class)
-            ->whereIn(SubjectDocument::raw('LOWER(filename)'), function ($q) {
-                $q->select(SubjectDocument::raw('filename'))
-                   ->from('subject_documents')
-                   ->whereRaw("LOWER(filename) LIKE '%.pdf'");
-            })
+            ->whereRaw("LOWER(filename) LIKE '%.pdf'")
             ->orderBy('position');
     }
 
