@@ -15,51 +15,51 @@ class CategorySubcategorySeeder extends Seeder
             [
                 'name'         => 'Conseil municipal & Gouvernance',
                 'slug'         => 'conseil-municipal-gouvernance',
-                'color'        => '#1e3a8a',
+                'color'        => '#93c5fd', // pastel bleu
                 'icon'         => '🏛️',
                 'sub_categories' => [
-                    ['name' => 'Conseils municipaux',        'color' => '#3b82f6'],
-                    ['name' => 'Élections & délibérations',   'color' => '#60a5fa'],
+                    ['name' => 'Conseils municipaux',        'color' => '#bfdbfe'],
+                    ['name' => 'Élections & délibérations',   'color' => '#dbeafe'],
                 ],
             ],
             [
                 'name'         => 'Patrimoine & Mémoire',
                 'slug'         => 'patrimoine-memoire',
-                'color'        => '#7f1d1d',
+                'color'        => '#fca5a5', // pastel rouge
                 'icon'         => '🏡',
                 'sub_categories' => [
-                    ['name' => 'Monuments & lieux de mémoire', 'color' => '#dc2626'],
-                    ['name' => 'Archives & généalogie',        'color' => '#f87171'],
+                    ['name' => 'Monuments & lieux de mémoire', 'color' => '#fecaca'],
+                    ['name' => 'Archives & généalogie',        'color' => '#fee2e2'],
                 ],
             ],
             [
                 'name'         => 'Éducation & Jeunesse',
                 'slug'         => 'education-jeunesse',
-                'color'        => '#064e3b',
+                'color'        => '#86efac', // pastel vert
                 'icon'         => '🏫',
                 'sub_categories' => [
-                    ['name' => 'Écoles & cantines',     'color' => '#10b981'],
-                    ['name' => 'Accueil périscolaire',   'color' => '#34d399'],
+                    ['name' => 'Écoles & cantines',     'color' => '#bbf7d0'],
+                    ['name' => 'Accueil périscolaire',   'color' => '#dcfce7'],
                 ],
             ],
             [
                 'name'         => 'Infrastructures & Travaux',
                 'slug'         => 'infrastructures-travaux',
-                'color'        => '#92400e',
+                'color'        => '#fcd34d', // pastel ambre
                 'icon'         => '🏗️',
                 'sub_categories' => [
-                    ['name' => 'Ponts & voirie',      'color' => '#f59e0b'],
-                    ['name' => 'Bâtiments communaux', 'color' => '#fbbf24'],
+                    ['name' => 'Ponts & voirie',      'color' => '#fde68a'],
+                    ['name' => 'Bâtiments communaux', 'color' => '#fef3c7'],
                 ],
             ],
             [
                 'name'         => 'Environnement & Cadre de vie',
                 'slug'         => 'environnement-cadre-de-vie',
-                'color'        => '#14532d',
+                'color'        => '#6ee7b7', // pastel émeraude
                 'icon'         => '🌿',
                 'sub_categories' => [
-                    ['name' => 'Camping & espaces verts', 'color' => '#22c55e'],
-                    ['name' => 'Eau & énergie',           'color' => '#4ade80'],
+                    ['name' => 'Camping & espaces verts', 'color' => '#a7f3d0'],
+                    ['name' => 'Eau & énergie',           'color' => '#d1fae5'],
                 ],
             ],
         ];

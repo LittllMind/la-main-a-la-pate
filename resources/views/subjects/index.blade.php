@@ -46,7 +46,7 @@
                 <article class="bg-white rounded-lg border border-slate-200 p-5 hover:border-slate-300 transition">
                     <div class="flex items-center gap-2 text-xs mb-2">
                         @if($subject->subCategory)
-                            <span class="px-2 py-0.5 rounded-full text-white" style="background-color: {{ $subject->subCategory->color ?? '#64748b' }}">
+                            <span class="px-2 py-0.5 rounded-full text-slate-800 font-medium" style="background-color: {{ $subject->subCategory->color ?? '#e2e8f0' }}">
                                 {{ $subject->subCategory->name }}
                             </span>
                         @elseif($subject->theme)

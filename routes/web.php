@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\FirstTimeSetupController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\ContactController;
@@ -136,6 +137,11 @@ Route::middleware(['auth', 'verified', 'isAdmin'])->prefix('admin')->name('admin
     Route::get('/utilisateurs/{user}/modifier', [UserAdminController::class, 'edit'])->name('users.edit');
     Route::put('/utilisateurs/{user}', [UserAdminController::class, 'update'])->name('users.update');
     Route::delete('/utilisateurs/{user}', [UserAdminController::class, 'destroy'])->name('users.destroy');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/first-setup', FirstTimeSetupController::class)->name('first-setup');
+    Route::post('/first-setup', [FirstTimeSetupController::class, 'store'])->name('first-setup.store');
 });
 
 require __DIR__.'/auth.php';

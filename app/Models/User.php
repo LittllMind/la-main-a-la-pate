@@ -20,10 +20,12 @@ class User extends Authenticatable
         'name',
         'pseudonyme',
         'email',
+        'username',
         'password',
         'commune',
         'role',
         'color',
+        'requires_setup',
     ];
 
     /**
