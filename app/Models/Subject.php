@@ -14,7 +14,7 @@ class Subject extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'theme', 'title', 'slug', 'body', 'status', 'locked_at'];
+    protected $fillable = ['user_id', 'theme', 'title', 'slug', 'body', 'status', 'locked_at', 'category_id', 'sub_category_id'];
 
     protected $casts = [
         'locked_at' => 'datetime',
@@ -23,6 +23,16 @@ class Subject extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function subCategory(): BelongsTo
+    {
+        return $this->belongsTo(SubCategory::class);
     }
 
     public function versions(): HasMany

@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Category extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'slug', 'color', 'display_order'];
+    protected $fillable = ['name', 'slug', 'color', 'display_order', 'icon'];
     public function posts(): HasMany { return $this->hasMany(Post::class); }
+    public function subjects(): HasMany { return $this->hasMany(Subject::class); }
+    public function subCategories(): HasMany { return $this->hasMany(SubCategory::class); }
 }

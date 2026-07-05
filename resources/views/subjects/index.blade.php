@@ -45,7 +45,13 @@
             @foreach($subjects as $subject)
                 <article class="bg-white rounded-lg border border-slate-200 p-5 hover:border-slate-300 transition">
                     <div class="flex items-center gap-2 text-xs mb-2">
-                        <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ $subject->theme }}</span>
+                        @if($subject->subCategory)
+                            <span class="px-2 py-0.5 rounded-full text-white" style="background-color: {{ $subject->subCategory->color ?? '#64748b' }}">
+                                {{ $subject->subCategory->name }}
+                            </span>
+                        @elseif($subject->theme)
+                            <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ $subject->theme }}</span>
+                        @endif
                         @if($subject->status === 'draft')
                             <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Brouillon</span>
                         @endif
