@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Subject;
 use App\Models\SubjectComment;
 use App\Models\SubjectVersion;
@@ -110,6 +111,15 @@ class SubjectController extends Controller
             'status' => 'draft',
         ]);
 
+        ActivityLog::log(
+            event: 'create',
+            user: auth()->user(),
+            entityType: 'subject',
+            entityId: $subject->id,
+            description: "Création du sujet « {$subject->title} »",
+            metadata: ['theme' => $theme, 'slug' => $subject->slug]
+        );
+
         return redirect()
             ->route('subjects.show', $subject->slug)
             ->with('success', 'Sujet cree.');
@@ -161,6 +171,15 @@ class SubjectController extends Controller
             'body' => $validated['body'],
         ]);
 
+        ActivityLog::log(
+            event: 'update',
+            user: auth()->user(),
+            entityType: 'subject',
+            entityId: $subject->id,
+            description: "Modification du sujet « {$subject->title} »",
+            metadata: ['change_summary' => $validated['change_summary'] ?? null]
+        );
+
         return redirect()
             ->route('subjects.show', $subject->slug)
             ->with('success', 'Document mis a jour.');
@@ -169,6 +188,15 @@ class SubjectController extends Controller
     public function destroy(Subject $subject)
     {
         Gate::authorize('delete', $subject);
+
+        ActivityLog::log(
+            event: 'delete',
+            user: auth()->user(),
+            entityType: 'subject',
+            entityId: $subject->id,
+            description: "Suppression du sujet « {$subject->title} »"
+        );
+
         $subject->delete();
 
         return redirect()->route('subjects.index')->with('success', 'Sujet supprime.');
@@ -207,6 +235,15 @@ class SubjectController extends Controller
             'status' => 'published',
             'published_at' => now(),
         ]);
+
+        ActivityLog::log(
+            event: 'publish',
+            user: auth()->user(),
+            entityType: 'subject',
+            entityId: $subject->id,
+            description: "Publication du sujet « {$subject->title} »",
+            metadata: ['visibility' => $subject->visibility]
+        );
 
         return redirect()
             ->route('subjects.show', $subject->slug)

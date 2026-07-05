@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\FirstTimeSetupController;
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\ContactController;
@@ -137,6 +138,8 @@ Route::middleware(['auth', 'verified', 'isAdmin'])->prefix('admin')->name('admin
     Route::get('/utilisateurs/{user}/modifier', [UserAdminController::class, 'edit'])->name('users.edit');
     Route::put('/utilisateurs/{user}', [UserAdminController::class, 'update'])->name('users.update');
     Route::delete('/utilisateurs/{user}', [UserAdminController::class, 'destroy'])->name('users.destroy');
+
+    Route::get('/activite', [ActivityLogController::class, 'index'])->name('activity');
 });
 
 Route::middleware(['auth'])->group(function () {

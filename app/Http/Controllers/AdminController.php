@@ -92,6 +92,16 @@ class AdminController extends Controller
                     'icon' => 'M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m0 0a3 3 0 00-4.682 2.72M3 18.72a9.094 9.094 0 003.741.479 3 3 0 004.682-2.72m0 0a3 3 0 00-4.682-2.72M12 12a3 3 0 100-6 3 3 0 000 6z',
                 ],
                 [
+                    'title' => "Journal d'activité",
+                    'description' => 'Suivi des connexions et modifications par les utilisateurs.',
+                    'route' => route('admin.activity'),
+                    'actions' => [
+                        ['label' => 'Consulter', 'route' => route('admin.activity')],
+                    ],
+                    'color' => 'rose',
+                    'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z',
+                ],
+                [
                     'title' => 'Routes du site',
                     'description' => 'Liste complète des routes, groupées par namespace.',
                     'route' => route('admin.routes'),
