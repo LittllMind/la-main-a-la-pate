@@ -43,7 +43,7 @@
                 @endforeach
             </select>
             <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-md text-sm hover:bg-emerald-700">Filtrer</button>
-            @if(request()-&gt;anyFilled(['search','event_type','entity_type']))
+            @if(request()->hasAny(['search','event_type','entity_type']))
                 <a href="{{ route('admin.activity') }}" class="px-4 py-2 text-slate-600 text-sm hover:text-slate-900">Reset</a>
             @endif
         </div>
