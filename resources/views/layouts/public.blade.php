@@ -32,10 +32,8 @@
                     La Main a la Pate
                 </a>
                 <div class="hidden sm:flex items-center gap-6 text-sm">
-                    <a href="/" class="text-slate-600 hover:text-slate-900 transition">Seraphotheque</a>
                     @auth
                         <a href="/sujets" class="text-slate-600 hover:text-slate-900 transition">Sujets</a>
-                        <a href="/hall" class="text-slate-600 hover:text-slate-900 transition">Hall</a>
                         <a href="/dashboard" class="text-slate-600 hover:text-slate-900 transition">Tableau de bord</a>
 
                         @admin
@@ -57,10 +55,8 @@
                 </button>
             </div>
             <div id="mobile-menu" class="hidden sm:hidden pb-4 space-y-2 text-sm">
-                <a href="/" class="block text-slate-600 hover:text-slate-900 py-1">Seraphotheque</a>
                 @auth
                     <a href="/sujets" class="block text-slate-600 hover:text-slate-900 py-1">Sujets</a>
-                    <a href="/hall" class="block text-slate-600 hover:text-slate-900 py-1">Hall</a>
                     <a href="/dashboard" class="block text-slate-600 hover:text-slate-900 py-1">Tableau de bord</a>
                     @admin
                         <a href="{{ route('admin.panel') }}" class="block text-slate-600 hover:text-slate-900 py-1">admin</a>
@@ -98,12 +94,9 @@
                 <div>
                     <h4 class="text-white font-semibold mb-2">Liens</h4>
                     <ul class="space-y-1 text-xs">
-                        <li><a href="/" class="hover:text-white transition">Seraphotheque</a></li>
                         @auth
                             <li><a href="/sujets" class="hover:text-white transition">Sujets</a></li>
-                            <li><a href="/hall" class="hover:text-white transition">Hall</a></li>
                         @endauth
-                        {{-- A propos / Contact masqués le temps de formalisation --}}
                     </ul>
                 </div>
                 <div>
