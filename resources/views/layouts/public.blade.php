@@ -35,6 +35,7 @@
                     @auth
                         <a href="/sujets" class="text-slate-600 hover:text-slate-900 transition">Sujets</a>
                         <a href="/dashboard" class="text-slate-600 hover:text-slate-900 transition">Tableau de bord</a>
+                        <a href="/profile" class="text-slate-600 hover:text-slate-900 transition">Mon profil</a>
 
                         @admin
                             <a href="{{ route('admin.panel') }}" class="text-slate-600 hover:text-slate-900 transition">admin</a>
@@ -58,6 +59,7 @@
                 @auth
                     <a href="/sujets" class="block text-slate-600 hover:text-slate-900 py-1">Sujets</a>
                     <a href="/dashboard" class="block text-slate-600 hover:text-slate-900 py-1">Tableau de bord</a>
+                    <a href="/profile" class="block text-slate-600 hover:text-slate-900 py-1">Mon profil</a>
                     @admin
                         <a href="{{ route('admin.panel') }}" class="block text-slate-600 hover:text-slate-900 py-1">admin</a>
                     @endadmin
