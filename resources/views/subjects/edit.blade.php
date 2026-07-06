@@ -155,7 +155,7 @@
                         <label class="block text-xs text-slate-500 mb-1">Ajouter un citoyen</label>
                         <select name="user_id" class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm">
                             <option value="">-- Sélectionner --</option>
-                            @foreach(App\Models\User::whereIn('role', ['citoyen', 'admin'])->orderBy('name')->get() as $citizen)
+                            @foreach(App\Models\User::whereIn('role', ['citoyen', 'moderator', 'admin'])->orderBy('name')->get() as $citizen)
                                 @if($citizen->id !== $subject->user_id && !$subject->collaborators->contains('id', $citizen->id))
                                     <option value="{{ $citizen->id }}">{{ $citizen->name }} ({{ $citizen->email }})</option>
                                 @endif

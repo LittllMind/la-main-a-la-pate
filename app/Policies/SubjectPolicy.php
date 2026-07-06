@@ -9,7 +9,12 @@ class SubjectPolicy
 {
     public function view(?User $user, Subject $subject): bool
     {
-        // Draft = auteur + admin uniquement
+        // Les collaborateurs peuvent toujours voir le sujet (même en draft)
+        if ($user !== null && $subject->isCollaborator($user)) {
+            return true;
+        }
+
+        // Draft = auteur + admin/moderator uniquement
         if ($subject->status === 'draft') {
             return $this->canManage($user, $subject);
         }
