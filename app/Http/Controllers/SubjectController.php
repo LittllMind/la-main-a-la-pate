@@ -29,11 +29,7 @@ class SubjectController extends Controller
             ->orderBy('created_at', 'desc');
 
         // Filtrage par visibilité + status pour les non-admin
-        if ($user === null) {
-            // Visiteur = uniquement public published
-            $query->where('status', 'published')
-                  ->where('visibility', 'public');
-        } elseif (! $user->isModeratorOrAdmin()) {
+        if (! $user->isModeratorOrAdmin()) {
             // Citoyen = published public + published citoyen + ses propres drafts
             $query->where(function ($q) use ($user) {
                 $q->where(function ($q2) {

@@ -3,13 +3,13 @@
 @section('title', $space->name)
 
 @section('content')
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl mx-auto px-4 py-8">
     <a href="{{ route('community.index') }}" class="text-sm text-slate-500 hover:text-slate-900 mb-4 inline-block">&larr; Tous les espaces</a>
 
     <div class="flex items-center gap-3 mb-6">
-        <div class="text-4xl">{{ $space->icon }}</div>
-        <div>
-            <h1 class="text-2xl font-bold text-slate-900">{{ $space->name }}</h1>
+        <div class="text-3xl sm:text-4xl">{{ $space->icon }}</div>
+        <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">{{ $space->name }}</h1>
             <p class="text-slate-500 text-sm">{{ $space->description }}</p>
         </div>
     </div>
@@ -23,15 +23,15 @@
     <div class="space-y-3">
         @forelse($topics as $topic)
         <div class="bg-white rounded-lg border border-slate-200 p-4 flex items-center justify-between hover:border-slate-300 transition">
-            <div>
-                <h2 class="font-semibold text-slate-900">
+            <div class="min-w-0 flex-1">
+                <h2 class="font-semibold text-slate-900 truncate">
                     @if($topic->is_pinned)<span class="text-amber-500 text-xs mr-1">EPINGLE</span>@endif
                     <a href="{{ route('community.topic.show', [$space->slug, $topic->slug]) }}" class="hover:underline">
                         {{ $topic->title }}
                     </a>
                 </h2>
                 <p class="text-xs text-slate-500 mt-1">
-                    par {{ $topic->user->displayName() }} — {{ $topic->created_at->format('d/m/Y') }}
+                    par {{ $topic->user->displayName() }} &mdash; {{ $topic->created_at->format('d/m/Y') }}
                     @if($topic->replies_count ?? 0) · {{ $topic->replies_count }} reponses @endif
                     · {{ $topic->view_count }} vues
                 </p>
@@ -47,7 +47,7 @@
     <div class="mt-4">{{ $topics->links() }}</div>
 
     @auth
-    <div id="new-topic" class="mt-8 bg-white rounded-lg border border-slate-200 p-6">
+    <div id="new-topic" class="mt-8 bg-white rounded-lg border border-slate-200 p-4 sm:p-6">
         <h3 class="font-semibold text-slate-900 mb-4">Nouveau sujet</h3>
         <form method="POST" action="{{ route('community.topic.store', $space->slug) }}">
             @csrf

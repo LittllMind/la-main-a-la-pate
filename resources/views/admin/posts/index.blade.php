@@ -9,7 +9,7 @@
         <a href="{{ route('admin.posts.create') }}" class="bg-slate-900 text-white px-4 py-2 rounded-md text-sm hover:bg-slate-700">+ Nouvel article</a>
     </div>
 
-    <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="bg-white rounded-lg border border-slate-200 overflow-hidden overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-slate-50 border-b border-slate-200">
                 <tr>

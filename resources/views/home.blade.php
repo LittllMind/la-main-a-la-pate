@@ -11,7 +11,7 @@
     @if($section->key === 'actualites')
         <section class="max-w-3xl mx-auto px-4 pt-6 pb-4">
             <div class="mb-6">
-                <h1 class="text-3xl font-bold text-slate-900 mb-2">{{ $section->title }}</h1>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">{{ $section->title }}</h1>
                 @if($section->subtitle)
                     <p class="text-slate-500 text-sm">{{ $section->subtitle }}</p>
                 @endif
@@ -47,7 +47,7 @@
     @elseif($section->key === 'espace-membres')
         <section class="max-w-3xl mx-auto px-4 pb-10">
             <div class="mt-2 p-6 bg-slate-900 rounded-lg text-white text-center">
-                <h3 class="text-lg font-semibold mb-2">{{ $section->title }}</h3>
+                <h3 class="text-base sm:text-lg font-semibold mb-2">{{ $section->title }}</h3>
                 @if($section->subtitle)
                     <p class="text-slate-300 text-sm mb-4">{{ $section->subtitle }}</p>
                 @endif

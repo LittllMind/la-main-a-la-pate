@@ -7,10 +7,10 @@
 
     {{-- HERO --}}
     <div class="text-center mb-14">
-        <span class="inline-block text-6xl mb-4">🏠</span>
-        <h1 class="text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">La Séraphothèque</h1>
-        <p class="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Friperie, brocante et recyclerie au cœur du Rozier.<br>
+        <span class="inline-block text-5xl sm:text-6xl mb-4">🏠</span>
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">La Séraphothèque</h1>
+        <p class="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            Friperie, brocante et recyclerie au cœur du Rozier.<br class="hidden sm:block">
             Un commerce de proximité, un espace de rencontre, une initiative locale.
         </p>
         <div class="mt-4 text-sm text-slate-500">
@@ -94,8 +94,8 @@
 
         {{-- Réunion 1 : 24 mai 2026 --}}
         <details class="group bg-white rounded-lg border border-slate-200 overflow-hidden mb-3 open:shadow-sm transition">
-            <summary class="flex items-center gap-4 p-4 cursor-pointer list-none select-none hover:bg-slate-50 transition">
-                <img src="/images/seraphotheque/reunion-01.jpg" alt="" class="w-20 h-20 rounded-md object-cover flex-shrink-0 border border-slate-100">
+            <summary class="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 cursor-pointer list-none select-none hover:bg-slate-50 transition">
+                <img src="/images/seraphotheque/reunion-01.jpg" alt="" class="w-14 h-14 sm:w-20 sm:h-20 rounded-md object-cover flex-shrink-0 border border-slate-100">
                 <div class="flex-1 min-w-0">
                     <div class="text-xs text-slate-500 font-medium mb-0.5">24 mai 2026</div>
                     <h3 class="font-semibold text-slate-900 text-sm leading-snug">Première réunion publique — « Commerce en danger »</h3>

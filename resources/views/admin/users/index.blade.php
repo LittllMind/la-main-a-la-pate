@@ -20,7 +20,7 @@
         <div class="mb-4 p-4 bg-red-50 text-red-800 rounded-md text-sm">{{ session('error') }}</div>
     @endif
 
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
         <table class="min-w-full divide-y divide-slate-200">
             <thead class="bg-slate-50">
                 <tr>

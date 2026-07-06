@@ -26,6 +26,11 @@ body {
     background: #f9fafb;
 }
 
+img {
+    max-width: 100%;
+    height: auto;
+}
+
 /* Container */
 .container {
     max-width: 1200px;

@@ -3,11 +3,11 @@
 @section('title', $topic->title)
 
 @section('content')
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl mx-auto px-4 py-8">
     <a href="{{ route('community.show', $space->slug) }}" class="text-sm text-slate-500 hover:text-slate-900 mb-4 inline-block">&larr; {{ $space->name }}</a>
 
-    <div class="bg-white rounded-lg border border-slate-200 p-6 mb-4">
-        <h1 class="text-xl font-bold text-slate-900 mb-2">{{ $topic->title }}</h1>
+    <div class="bg-white rounded-lg border border-slate-200 p-4 sm:p-6 mb-4">
+        <h1 class="text-lg sm:text-xl font-bold text-slate-900 mb-2">{{ $topic->title }}</h1>
         <div class="flex items-center gap-2 text-xs text-slate-500 mb-4">
             <span class="font-medium text-slate-700">{{ $topic->user->displayName() }}</span>
             <span>·</span>

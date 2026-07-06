@@ -3,8 +3,8 @@
 @section('title', $post->title)
 
 @section('content')
-<div class="max-w-3xl mx-auto">
-    <a href="/" class="text-sm text-slate-500 hover:text-slate-900 mb-4 inline-block">&larr; Retour aux actualites</a>
+<div class="max-w-3xl mx-auto px-4">
+    <a href="{{ route('hall') }}" class="text-sm text-slate-500 hover:text-slate-900 mb-4 inline-block">&larr; Retour aux actualites</a>
 
     <article class="bg-white rounded-lg border border-slate-200 p-6 md:p-8">
         <div class="flex items-center gap-2 text-xs text-slate-500 mb-3">

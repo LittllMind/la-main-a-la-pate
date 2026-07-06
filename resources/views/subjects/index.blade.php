@@ -5,8 +5,8 @@
 @section('content')
 <div class="max-w-5xl mx-auto px-4 py-8">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-slate-900">Espace sujets</h1>
+        <div class="min-w-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Espace sujets</h1>
             <p class="text-slate-500 text-sm mt-1">Documents de travail et discussion par thème.</p>
         </div>
         @can('create', App\Models\Subject::class)

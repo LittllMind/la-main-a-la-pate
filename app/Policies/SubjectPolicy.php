@@ -22,7 +22,7 @@ class SubjectPolicy
         // Published : dépend de la visibilité
         if ($subject->status === 'published') {
             return match ($subject->visibility) {
-                'public'   => true,                           // tout le monde
+                'public'   => $user !== null,                  // connecté obligatoire
                 'citoyen'  => $user !== null,                  // connecté n'importe quel rôle
                 'admin'    => $user !== null && $user->isAdmin(),
                 default    => false,

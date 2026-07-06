@@ -71,17 +71,20 @@
                        class="block w-full rounded-md border-slate-300 text-sm focus:border-slate-900 focus:ring-slate-900" />
             </div>
 
-            <div class="mt-6 flex items-center justify-between">
-                <form method="POST" action="{{ route('logout') }}" class="inline">
-                    @csrf
-                    <button type="submit" class="text-sm text-slate-500 hover:text-red-600 transition">Annuler et me déconnecter</button>
-                </form>
+            <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <a href="{{ route('logout') }}"
+                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                   class="text-sm text-slate-500 hover:text-red-600 transition">
+                    Annuler et me deconnecter
+                </a>
 
                 <button type="submit" class="px-5 py-2.5 bg-emerald-700 text-white text-sm font-medium rounded-md hover:bg-emerald-800 transition">
                     Enregistrer mon profil
                 </button>
             </div>
         </form>
+
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">@csrf</form>
     </div>
 </div>
 @endsection
