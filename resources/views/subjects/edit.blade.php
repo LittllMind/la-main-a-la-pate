@@ -98,112 +98,112 @@
             <input id="change_summary" name="change_summary" type="text" maxlength="255" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">
         </div>
 
-        {{-- Section Collaboration --}}
-        <div class="mb-6 border border-slate-200 rounded-md p-4">
-            <h2 class="text-sm font-semibold text-slate-800 mb-3">Collaborateurs</h2>
-
-            @php
-                $isAuthorOrAdmin = auth()->user()->isAdmin() || auth()->user()->id === $subject->user_id;
-            @endphp
-
-            {{-- Liste des collaborateurs existants --}}
-            @if($subject->collaborators->isNotEmpty())
-                <ul class="space-y-1 mb-3">
-                    @foreach($subject->collaborators as $collaborator)
-                        <li class="flex items-center justify-between text-sm">
-                            <span class="text-slate-700">{{ $collaborator->name }} ({{ $collaborator->email }})</span>
-                            @if($isAuthorOrAdmin)
-                                <form method="POST" action="{{ route('subjects.collaborators.destroy', [$subject->slug, $collaborator]) }}" class="inline" onsubmit="return confirm('Retirer ce collaborateur ?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 text-xs hover:underline">Retirer</button>
-                                </form>
-                            @endif
-                        </li>
-                    @endforeach
-                </ul>
-
-                {{-- État du vote --}}
-                @php
-                    $votes = $subject->publicationVotes->keyBy('user_id');
-                @endphp
-                <div class="mb-3 text-sm">
-                    <span class="font-medium text-slate-700">État du vote de publication :</span>
-                    @foreach($subject->collaborators as $collaborator)
-                        @php $vote = $votes[$collaborator->id] ?? null; @endphp
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-slate-600">{{ $collaborator->name }} :</span>
-                            @if($vote && $vote->vote === 'approved')
-                                <span class="text-emerald-600 font-medium">Approuvé</span>
-                            @elseif($vote && $vote->vote === 'rejected')
-                                <span class="text-red-600 font-medium">Rejeté</span>
-                            @else
-                                <span class="text-amber-600">En attente</span>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <p class="text-slate-500 text-sm mb-3">Aucun collaborateur sur ce sujet.</p>
-            @endif
-
-            {{-- Ajouter un collaborateur --}}
-            @if($isAuthorOrAdmin)
-                <form method="POST" action="{{ route('subjects.collaborators.store', $subject->slug) }}" class="flex items-end gap-2 mb-3">
-                    @csrf
-                    <div class="flex-1">
-                        <label class="block text-xs text-slate-500 mb-1">Ajouter un citoyen</label>
-                        <select name="user_id" class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm">
-                            <option value="">-- Sélectionner --</option>
-                            @foreach(App\Models\User::whereIn('role', ['citoyen', 'moderator', 'admin'])->orderBy('name')->get() as $citizen)
-                                @if($citizen->id !== $subject->user_id && !$subject->collaborators->contains('id', $citizen->id))
-                                    <option value="{{ $citizen->id }}">{{ $citizen->name }} ({{ $citizen->email }})</option>
-                                @endif
-                            @endforeach
-                        </select>
-                    </div>
-                    <button type="submit" class="bg-slate-700 text-white px-3 py-1.5 rounded-md text-sm hover:bg-slate-800">Ajouter</button>
-                </form>
-
-                {{-- Démarrer un vote --}}
-                @if($subject->collaborators->isNotEmpty() && $subject->status === 'draft')
-                    <form method="POST" action="{{ route('subjects.collaborators.startVote', $subject->slug) }}" class="mb-2">
-                        @csrf
-                        <button type="submit" class="text-sm text-emerald-700 font-medium hover:underline">
-                            🗳️ Lancer le vote de publication
-                        </button>
-                    </form>
-                @endif
-            @endif
-
-            {{-- Voter (visible par les collaborateurs) --}}
-            @if($subject->isCollaborator(auth()->user()) && $subject->status === 'draft')
-                @php
-                    $myVote = $subject->publicationVotes()->where('user_id', auth()->id())->first();
-                @endphp
-                @if($myVote && $myVote->vote === 'pending')
-                    <div class="flex gap-2 mt-2">
-                        <form method="POST" action="{{ route('subjects.collaborators.vote', $subject->slug) }}">
-                            @csrf
-                            <input type="hidden" name="vote" value="approved">
-                            <button type="submit" class="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-700">✓ Approuver</button>
-                        </form>
-                        <form method="POST" action="{{ route('subjects.collaborators.vote', $subject->slug) }}">
-                            @csrf
-                            <input type="hidden" name="vote" value="rejected">
-                            <button type="submit" class="bg-red-100 text-red-700 border border-red-300 px-3 py-1 rounded text-sm hover:bg-red-200">✗ Rejeter</button>
-                        </form>
-                    </div>
-                @elseif($myVote)
-                    <p class="text-sm text-slate-500 mt-2">Vous avez voté : <strong>{{ $myVote->vote === 'approved' ? 'Approuvé' : 'Rejeté' }}</strong></p>
-                @endif
-            @endif
-        </div>
-
         <div class="flex items-center gap-3">
             <button type="submit" class="bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">Enregistrer</button>
             <a href="{{ route('subjects.show', $subject->slug) }}" class="text-slate-500 text-sm hover:text-slate-800 transition">Annuler</a>
         </div>
     </form>
+
+    {{-- Section Collaboration — hors du form principal pour éviter l'imbrication --}}
+    <div class="bg-white rounded-lg border border-slate-200 p-6 mt-6">
+        <h2 class="text-sm font-semibold text-slate-800 mb-3">Collaborateurs</h2>
+
+        @php
+            $isAuthorOrAdmin = auth()->user()->isAdmin() || auth()->user()->id === $subject->user_id;
+        @endphp
+
+        {{-- Liste des collaborateurs existants --}}
+        @if($subject->collaborators->isNotEmpty())
+            <ul class="space-y-1 mb-3">
+                @foreach($subject->collaborators as $collaborator)
+                    <li class="flex items-center justify-between text-sm">
+                        <span class="text-slate-700">{{ $collaborator->name }} ({{ $collaborator->email }})</span>
+                        @if($isAuthorOrAdmin)
+                            <form method="POST" action="{{ route('subjects.collaborators.destroy', [$subject->slug, $collaborator]) }}" class="inline" onsubmit="return confirm('Retirer ce collaborateur ?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-600 text-xs hover:underline">Retirer</button>
+                            </form>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+
+            {{-- État du vote --}}
+            @php
+                $votes = $subject->publicationVotes->keyBy('user_id');
+            @endphp
+            <div class="mb-3 text-sm">
+                <span class="font-medium text-slate-700">État du vote de publication :</span>
+                @foreach($subject->collaborators as $collaborator)
+                    @php $vote = $votes[$collaborator->id] ?? null; @endphp
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-slate-600">{{ $collaborator->name }} :</span>
+                        @if($vote && $vote->vote === 'approved')
+                            <span class="text-emerald-600 font-medium">Approuvé</span>
+                        @elseif($vote && $vote->vote === 'rejected')
+                            <span class="text-red-600 font-medium">Rejeté</span>
+                        @else
+                            <span class="text-amber-600">En attente</span>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <p class="text-slate-500 text-sm mb-3">Aucun collaborateur sur ce sujet.</p>
+        @endif
+
+        {{-- Ajouter un collaborateur --}}
+        @if($isAuthorOrAdmin)
+            <form method="POST" action="{{ route('subjects.collaborators.store', $subject->slug) }}" class="flex items-end gap-2 mb-3">
+                @csrf
+                <div class="flex-1">
+                    <label class="block text-xs text-slate-500 mb-1">Ajouter un citoyen</label>
+                    <select name="user_id" class="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm">
+                        <option value="">-- Sélectionner --</option>
+                        @foreach(App\Models\User::whereIn('role', ['citoyen', 'moderator', 'admin'])->orderBy('name')->get() as $citizen)
+                            @if($citizen->id !== $subject->user_id && !$subject->collaborators->contains('id', $citizen->id))
+                                <option value="{{ $citizen->id }}">{{ $citizen->name }} ({{ $citizen->email }})</option>
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="bg-slate-700 text-white px-3 py-1.5 rounded-md text-sm hover:bg-slate-800">Ajouter</button>
+            </form>
+
+            {{-- Démarrer un vote --}}
+            @if($subject->collaborators->isNotEmpty() && $subject->status === 'draft')
+                <form method="POST" action="{{ route('subjects.collaborators.startVote', $subject->slug) }}" class="mb-2">
+                    @csrf
+                    <button type="submit" class="text-sm text-emerald-700 font-medium hover:underline">
+                        🗳️ Lancer le vote de publication
+                    </button>
+                </form>
+            @endif
+        @endif
+
+        {{-- Voter (visible par les collaborateurs) --}}
+        @if($subject->isCollaborator(auth()->user()) && $subject->status === 'draft')
+            @php
+                $myVote = $subject->publicationVotes()->where('user_id', auth()->id())->first();
+            @endphp
+            @if($myVote && $myVote->vote === 'pending')
+                <div class="flex gap-2 mt-2">
+                    <form method="POST" action="{{ route('subjects.collaborators.vote', $subject->slug) }}">
+                        @csrf
+                        <input type="hidden" name="vote" value="approved">
+                        <button type="submit" class="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-700">✓ Approuver</button>
+                    </form>
+                    <form method="POST" action="{{ route('subjects.collaborators.vote', $subject->slug) }}">
+                        @csrf
+                        <input type="hidden" name="vote" value="rejected">
+                        <button type="submit" class="bg-red-100 text-red-700 border border-red-300 px-3 py-1 rounded text-sm hover:bg-red-200">✗ Rejeter</button>
+                    </form>
+                </div>
+            @elseif($myVote)
+                <p class="text-sm text-slate-500 mt-2">Vous avez voté : <strong>{{ $myVote->vote === 'approved' ? 'Approuvé' : 'Rejeté' }}</strong></p>
+            @endif
+        @endif
+    </div>
 </div>
 @endsection
