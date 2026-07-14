@@ -282,6 +282,30 @@
                         <p class="text-white/80 text-sm sm:text-base mt-1">24 mai 2026 — Une vingtaine de personnes rassemblées au cœur du village.</p>
                     </div>
                 </div>
+                {{-- Slide 7 : Espace Enfants — nouvelles photos Anna 14/07/2026 --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/carousel-enfants-2026-07-14.jpg" alt="Espace enfants — jouets, figurines et coin lecture" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Espace Enfants</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Coin jeu, lecture et jouets — un espace chaleureux apprécié des familles.</p>
+                    </div>
+                </div>
+                {{-- Slide 8 : Brocante — nouvelles photos Anna 14/07/2026 --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/carousel-brocante-2026-07-14.jpg" alt="Brocante — vaisselle vintage et objets de seconde main" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Brocante</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Vaisselle vintage, déco et trouvailles pour toutes les bourses.</p>
+                    </div>
+                </div>
+                {{-- Slide 9 : Artisanat — nouvelles photos Anna 14/07/2026 --}}
+                <div class="w-full flex-shrink-0 relative h-72 sm:h-80 lg:h-96">
+                    <img src="/images/seraphotheque/carousel-artisanat-2026-07-14.jpg" alt="Artisanat — céramiques et créations locales" class="w-full h-full object-cover">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 pt-16">
+                        <h3 class="text-white text-xl sm:text-2xl font-bold">Artisanat</h3>
+                        <p class="text-white/80 text-sm sm:text-base mt-1">Créations et savoir-faire local, mis en valeur sur place.</p>
+                    </div>
+                </div>
             </div>
 
             {{-- Flèches --}}
@@ -300,13 +324,16 @@
                 <button onclick="carouselGo(3)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="3"></button>
                 <button onclick="carouselGo(4)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="4"></button>
                 <button onclick="carouselGo(5)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="5"></button>
+                <button onclick="carouselGo(6)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="6"></button>
+                <button onclick="carouselGo(7)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="7"></button>
+                <button onclick="carouselGo(8)" class="carousel-dot w-2 h-2 rounded-full bg-white/60 hover:bg-white transition" data-index="8"></button>
             </div>
         </div>
     </div>
 
     <script>
         let carouselIndex = 0;
-        const carouselTotal = 6;
+        const carouselTotal = 9;
         const track = document.getElementById('carousel-track');
 
         function carouselUpdate() {
