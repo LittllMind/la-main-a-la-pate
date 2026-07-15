@@ -24,13 +24,12 @@ class SubjectController extends Controller
     {
         $user = auth()->user();
 
-        $query = Subject::with(['user', 'comments', 'collaborators', 'subCategory'])
+        $query = Subject::with(['user', 'comments', 'collaborators', 'subCategory', 'category'])
             ->where('status', '!=', 'archived')
             ->orderBy('created_at', 'desc');
 
         // Filtrage par visibilité + status pour les non-admin
         if (! $user->isModeratorOrAdmin()) {
-            // Citoyen = published public + published citoyen + ses propres drafts
             $query->where(function ($q) use ($user) {
                 $q->where(function ($q2) {
                     $q2->where('status', 'published')
@@ -46,61 +45,79 @@ class SubjectController extends Controller
                 });
             });
         } else {
-            // Admin/Mod = tout sauf archived (tous les sujets y compris les brouillons des autres)
             $query->where(function ($q) {
                 $q->where('status', 'published')
                   ->orWhere('status', 'draft');
             });
         }
 
-        if ($user && $user->isModeratorOrAdmin()) {
-            $selectedTheme = request('theme');
-            if ($selectedTheme) {
-                $query->where('theme', $selectedTheme);
+        $activeCategory = null;
+        $selectedThemeSlug = request('theme');
+        if ($selectedThemeSlug) {
+            $activeCategory = \App\Models\Category::where('slug', $selectedThemeSlug)->first();
+            if ($activeCategory) {
+                $query->where('category_id', $activeCategory->id);
+            } else {
+                // fallback legacy text theme
+                $query->where('theme', $selectedThemeSlug);
             }
         }
 
-        $subjects = $query->paginate(20)->withQueryString();
+        $subjects = $query->paginate(24)->withQueryString();
 
-        $existingThemes = Subject::where('status', '!=', 'archived')
-            ->distinct()
-            ->orderBy('theme')
-            ->pluck('theme');
-
-        $themes = collect($this->defaultThemes)
-            ->merge($existingThemes)
-            ->uniqueStrict()
-            ->sort()
-            ->values();
+        $categories = \App\Models\Category::withCount(['subjects' => function ($q) {
+            $q->where('status', '!=', 'archived');
+        }])->orderBy('id')->get();
 
         return view('subjects.index', [
             'subjects' => $subjects,
-            'themes' => $themes,
-            'selectedTheme' => $selectedTheme ?? null,
+            'categories' => $categories,
+            'activeCategory' => $activeCategory,
+            'selectedTheme' => $selectedThemeSlug,
         ]);
     }
 
     public function create()
     {
-        return view('subjects.create', [
-            'themes' => collect($this->defaultThemes)->sort()->values(),
-        ]);
+        $categories = \App\Models\Category::with('subCategories')->orderBy('id')->get();
+        $categoriesJson = $categories->map(function($c) {
+            return [
+                'id' => $c->id,
+                'name' => $c->name,
+                'subs' => $c->subCategories->map(function($s) {
+                    return ['id' => $s->id, 'name' => $s->name];
+                })->toArray(),
+            ];
+        })->toJson();
+
+        return view('subjects.create', compact('categories', 'categoriesJson'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'theme' => 'required|string|max:120',
-            'theme_other' => 'nullable|string|max:120|required_if:theme,__new__',
+            'category_id' => 'required|integer|exists:categories,id',
+            'sub_category_id' => 'required|integer|exists:sub_categories,id',
             'title' => 'required|string|max:255',
             'body' => 'required|string|max:50000',
         ]);
 
-        $theme = $this->resolveTheme($validated['theme'], $validated['theme_other'] ?? null);
+        $category = \App\Models\Category::find($validated['category_id']);
+        $subCategory = \App\Models\SubCategory::where('id', $validated['sub_category_id'])
+            ->where('category_id', $validated['category_id'])
+            ->first();
+
+        if (! $subCategory) {
+            return back()
+                ->withInput()
+                ->withErrors(['sub_category_id' => 'Le sous-thème choisi n\'appartient pas au thème sélectionné.']);
+        }
 
         $subject = Subject::create([
             'user_id' => auth()->id(),
-            'theme' => $theme,
+            'theme' => $category->name,
+            'category_id' => $validated['category_id'],
+            'sub_category_id' => $validated['sub_category_id'],
             'title' => $validated['title'],
             'slug' => $this->uniqueSlug($validated['title']),
             'body' => $validated['body'],
@@ -113,7 +130,7 @@ class SubjectController extends Controller
             entityType: 'subject',
             entityId: $subject->id,
             description: "Création du sujet « {$subject->title} »",
-            metadata: ['theme' => $theme, 'slug' => $subject->slug]
+            metadata: ['theme' => $category->name, 'slug' => $subject->slug]
         );
 
         return redirect()
@@ -134,9 +151,21 @@ class SubjectController extends Controller
     {
         Gate::authorize('update', $subject);
 
+        $categories = \App\Models\Category::with('subCategories')->orderBy('id')->get();
+        $categoriesJson = $categories->map(function($c) {
+            return [
+                'id' => $c->id,
+                'name' => $c->name,
+                'subs' => $c->subCategories->map(function($s) {
+                    return ['id' => $s->id, 'name' => $s->name];
+                })->toArray(),
+            ];
+        })->toJson();
+
         return view('subjects.edit', [
             'subject' => $subject,
-            'themes' => collect($this->defaultThemes)->sort()->values(),
+            'categories' => $categories,
+            'categoriesJson' => $categoriesJson,
         ]);
     }
 

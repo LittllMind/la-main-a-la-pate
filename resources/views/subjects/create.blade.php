@@ -5,29 +5,35 @@
 @section('content')<div class="max-w-3xl mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-slate-900 mb-6">Nouveau sujet</h1>
 
-    <form method="POST" action="{{ route('subjects.store') }}" class="bg-white rounded-lg border border-slate-200 p-6">
+    <form method="POST" action="{{ route('subjects.store') }}" class="bg-white rounded-lg border border-slate-200 p-6" id="subject-form">
         @csrf
 
-        <div class="mb-5">
-            <label for="theme" class="block text-sm font-medium text-slate-700 mb-1">Thème</label>
-            <select id="theme" name="theme" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" data-theme-toggle>
-                <option value="__new__" {{ old('theme') === '__new__' ? 'selected' : '' }}>+ Autre thème</option>
-                @foreach($themes as $theme)
-                    <option value="{{ $theme }}" {{ old('theme') === $theme ? 'selected' : '' }}>{{ $theme }}</option>
-                @endforeach
-            </select>
-            @error('theme')
-                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-            @enderror
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div>
+                <label for="category_id" class="block text-sm font-medium text-slate-700 mb-1">Thème</label>
+                <select id="category_id" name="category_id" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" data-category-select>
+                    <option value="">-- Choisir un thème --</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+                @error('category_id')
+                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label for="sub_category_id" class="block text-sm font-medium text-slate-700 mb-1">Sous-thème</label>
+                <select id="sub_category_id" name="sub_category_id" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">
+                    <option value="">-- Choisir d'abord un thème --</option>
+                </select>
+                @error('sub_category_id')
+                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
         </div>
 
-        <div class="mb-5 {{ old('theme') !== '__new__' ? 'hidden' : '' }}" id="theme-other-wrapper">
-            <label for="theme_other" class="block text-sm font-medium text-slate-700 mb-1">Nom du nouveau thème</label>
-            <input id="theme_other" name="theme_other" type="text" value="{{ old('theme_other') }}" maxlength="120" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">
-            @error('theme_other')
-                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-            @enderror
-        </div>
+        {{-- legacy hidden theme pour compatibilité --}}
+        <input type="hidden" name="theme" id="theme_legacy" value="{{ old('theme') }}">
 
         <div class="mb-5">
             <label for="title" class="block text-sm font-medium text-slate-700 mb-1">Titre</label>
@@ -43,13 +49,13 @@
                 <span class="text-xs text-slate-500">Rédaction au format Markdown — simple et clair</span>
             </div>
 
-            <div class="border border-slate-300 rounded-md p-2 mb-2 flex flex-wrap gap-2 bg-slate-50" aria-label="Mises en forme courantes">
+            <div class="border border-slate-300 rounded-md p-2 mb-2 flex flex-wrap gap-2 bg-slate-50" aria-label="Mises en formes courantes">
                 <button type="button" data-insert="## " data-tip="Titre principal : ## Mon titre" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Titre <span class="text-slate-400">#</span></button>
                 <button type="button" data-insert="### " data-tip="Sous-titre : ### Mon sous-titre" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Sous-titre <span class="text-slate-400">#</span></button>
                 <button type="button" data-insert="**texte**" data-tip="Texte en gras : **mon mot**" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Gras <span class="text-slate-400">**</span></button>
                 <button type="button" data-insert="*texte*" data-tip="Texte en italique : *mon mot*" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Italique <span class="text-slate-400">*</span></button>
                 <button type="button" data-insert="\n- élément\n" data-tip="Liste à puces : - élément" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste <span class="text-slate-400">-</span></button>
-                <button type="button" data-insert="\n\u003e " data-tip="Citation : \u003e une phrase" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation <span class="text-slate-400">\u003e</span></button>
+                <button type="button" data-insert="\n> " data-tip="Citation : > une phrase" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation <span class="text-slate-400">></span></button>
                 <button type="button" data-insert="\n| Colonne 1 | Colonne 2 |\n| --- | --- |\n| a | b |\n" data-tip="Tableau : utilise des | et des -" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Tableau <span class="text-slate-400">|</span></button>
                 <button type="button" data-insert="[texte](https://)" data-tip="Lien : [texte](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien <span class="text-slate-400">[...](...)</span></button>
                 <button type="button" data-insert="\n![légende](https://)\n" data-tip="Image : ![légende](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image URL <span class="text-slate-400">![...](...)</span></button>
@@ -106,4 +112,36 @@ Ajoutez des images dans la galerie du sujet, puis cliquez 'Copier markdown' pour
         </div>
     </form>
 </div>
+
+<script>
+(function(){
+    const categories = {!! $categoriesJson !!};
+    const catSelect = document.getElementById('category_id');
+    const subSelect = document.getElementById('sub_category_id');
+    const themeInput = document.getElementById('theme_legacy');
+
+    function populateSubs(catId, selectedSubId) {
+        subSelect.innerHTML = '<option value="">-- Choisir un sous-thème --</option>';
+        if (!catId) return;
+        const cat = categories.find(c => c.id == catId);
+        if (!cat) return;
+        cat.subs.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            if (selectedSubId && s.id == selectedSubId) opt.selected = true;
+            subSelect.appendChild(opt);
+        });
+        themeInput.value = cat.name;
+    }
+
+    catSelect.addEventListener('change', function() {
+        populateSubs(this.value, null);
+    });
+
+    @if(old('category_id'))
+        populateSubs({{ old('category_id') }}, {{ old('sub_category_id', 'null') }});
+    @endif
+})();
+</script>
 @endsection

@@ -5,30 +5,45 @@
 @section('content')<div class="max-w-3xl mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-slate-900 mb-6">Modifier le sujet</h1>
 
+    <div class="flex items-center gap-3 mb-4">
+        <a href="{{ route('subjects.documents.index', $subject->slug) }}" class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded text-sm font-medium hover:bg-slate-200 transition">
+            📎 Pièces jointes ({{ $subject->documents->count() }})
+        </a>
+        <a href="{{ route('subjects.pdf.show', $subject->slug) }}" target="_blank" class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded text-sm font-medium hover:bg-slate-200 transition">
+            📄 Voir en PDF
+        </a>
+    </div>
+
     <form method="POST" action="{{ route('subjects.update', $subject->slug) }}" class="bg-white rounded-lg border border-slate-200 p-6">
         @csrf
         @method('PUT')
 
-        <div class="mb-5">
-            <label for="theme" class="block text-sm font-medium text-slate-700 mb-1">Thème</label>
-            <select id="theme" name="theme" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" data-theme-toggle>
-                <option value="__new__" {{ old('theme', $subject->theme) === '__new__' ? 'selected' : '' }}>+ Autre thème</option>
-                @foreach($themes as $theme)
-                    <option value="{{ $theme }}" {{ old('theme', $subject->theme) === $theme ? 'selected' : '' }}>{{ $theme }}</option>
-                @endforeach
-            </select>
-            @error('theme')
-                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-            @enderror
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div>
+                <label for="category_id" class="block text-sm font-medium text-slate-700 mb-1">Thème</label>
+                <select id="category_id" name="category_id" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" data-category-select>
+                    <option value="">-- Choisir un thème --</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ old('category_id', $subject->category_id) == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+                @error('category_id')
+                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label for="sub_category_id" class="block text-sm font-medium text-slate-700 mb-1">Sous-thème</label>
+                <select id="sub_category_id" name="sub_category_id" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">
+                    <option value="">-- Choisir d'abord un thème --</option>
+                </select>
+                @error('sub_category_id')
+                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
         </div>
 
-        <div class="mb-5 {{ old('theme', $subject->theme) !== '__new__' ? 'hidden' : '' }}" id="theme-other-wrapper">
-            <label for="theme_other" class="block text-sm font-medium text-slate-700 mb-1">Nom du nouveau thème</label>
-            <input id="theme_other" name="theme_other" type="text" value="{{ old('theme_other') }}" maxlength="120" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">
-            @error('theme_other')
-                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-            @enderror
-        </div>
+        {{-- legacy hidden theme pour compatibilité --}}
+        <input type="hidden" name="theme" id="theme_legacy" value="{{ old('theme', $subject->theme) }}">
 
         <div class="mb-5">
             <label for="title" class="block text-sm font-medium text-slate-700 mb-1">Titre</label>
@@ -206,4 +221,37 @@
         @endif
     </div>
 </div>
+
+<script>
+(function(){
+    const categories = {!! $categoriesJson !!};
+    const catSelect = document.getElementById('category_id');
+    const subSelect = document.getElementById('sub_category_id');
+    const themeInput = document.getElementById('theme_legacy');
+
+    function populateSubs(catId, selectedSubId) {
+        subSelect.innerHTML = '<option value="">-- Choisir un sous-thème --</option>';
+        if (!catId) return;
+        const cat = categories.find(c => c.id == catId);
+        if (!cat) return;
+        cat.subs.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            if (selectedSubId && s.id == selectedSubId) opt.selected = true;
+            subSelect.appendChild(opt);
+        });
+        themeInput.value = cat.name;
+    }
+
+    catSelect.addEventListener('change', function() {
+        populateSubs(this.value, null);
+    });
+
+    // Init avec valeur existante du sujet
+    @if($subject->category_id)
+        populateSubs({{ $subject->category_id }}, {{ $subject->sub_category_id ?? 'null' }});
+    @endif
+})();
+</script>
 @endsection
