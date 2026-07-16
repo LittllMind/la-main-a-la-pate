@@ -16,8 +16,8 @@
 
         <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mb-4">{{ $post->title }}</h1>
 
-        <div class="prose prose-slate max-w-none text-slate-700 leading-relaxed">
-            {!! nl2br(e($post->content)) !!}
+        <div class="prose prose-slate max-w-none text-slate-700 leading-relaxed break-words">
+            {!! Str::markdown($post->content) !!}
         </div>
     </article>
 </div>

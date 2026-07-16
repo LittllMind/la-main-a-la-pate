@@ -16,23 +16,24 @@
         @endcan
     </div>
 
-    @php
-        $user = auth()->user();
-    @endphp
-    @if($user && $user->isModeratorOrAdmin() && $themes->count() > 0)
-        <form method="GET" action="{{ route('subjects.index') }}" class="mb-6 flex flex-wrap items-center gap-3">
-            <label for="theme-filter" class="text-sm font-medium text-slate-700">Filtrer par thème :</label>
-            <select id="theme-filter" name="theme" class="border border-slate-300 rounded-md px-3 py-2 text-sm">
-                <option value="">Tous les thèmes</option>
-                @foreach($themes as $theme)
-                    <option value="{{ $theme }}" {{ $selectedTheme === $theme ? 'selected' : '' }}>{{ $theme }}</option>
-                @endforeach
-            </select>
-            <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-900 transition">Filtrer</button>
-            @if($selectedTheme)
-                <a href="{{ route('subjects.index') }}" class="text-slate-500 text-sm hover:text-slate-800 transition">Réinitialiser</a>
-            @endif
-        </form>
+    {{-- Grille des thèmes --}}
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+        @foreach($categories as $category)
+            <a href="{{ $activeCategory && $activeCategory->id === $category->id ? route('subjects.index') : route('subjects.index', ['theme' => $category->slug]) }}"
+               class="rounded-lg border p-3 text-center hover:shadow-md transition flex flex-col items-center justify-center gap-1
+                      {{ $activeCategory && $activeCategory->id === $category->id ? 'border-slate-800 ring-2 ring-slate-800' : 'border-slate-200' }}"
+               style="background-color: {{ $category->color }}26">
+                <span class="text-sm font-semibold text-slate-800 leading-tight">{{ $category->name }}</span>
+                <span class="text-xs text-slate-600">{{ $category->subjects_count ?? 0 }} sujet{{ ($category->subjects_count ?? 0) > 1 ? 's' : '' }}</span>
+            </a>
+        @endforeach
+    </div>
+
+    @if($activeCategory)
+        <div class="mb-6 flex items-center gap-3">
+            <a href="{{ route('subjects.index') }}" class="text-sm text-slate-600 hover:text-slate-900 transition">← Tous les thèmes</a>
+            <span class="text-sm font-medium text-slate-800">{{ $activeCategory->name }}</span>
+        </div>
     @endif
 
     @if($subjects->count() === 0)
@@ -44,10 +45,14 @@
         <div class="grid grid-cols-1 gap-4">
             @foreach($subjects as $subject)
                 <article class="bg-white rounded-lg border border-slate-200 p-5 hover:border-slate-300 transition">
-                    <div class="flex items-center gap-2 text-xs mb-2">
+                    <div class="flex items-center gap-2 text-xs mb-2 flex-wrap">
                         @if($subject->subCategory)
-                            <span class="px-2 py-0.5 rounded-full text-slate-800 font-medium" style="background-color: {{ $subject->subCategory->color ?? '#e2e8f0' }}">
+                            <span class="px-2 py-0.5 rounded-full text-slate-800 font-medium" style="background-color: {{ $subject->subCategory->color ?? $subject->category->color ?? '#e2e8f0' }}40">
                                 {{ $subject->subCategory->name }}
+                            </span>
+                        @elseif($subject->category)
+                            <span class="px-2 py-0.5 rounded-full text-slate-800 font-medium" style="background-color: {{ $subject->category->color ?? '#e2e8f0' }}40">
+                                {{ $subject->theme }}
                             </span>
                         @elseif($subject->theme)
                             <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ $subject->theme }}</span>

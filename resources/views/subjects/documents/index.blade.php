@@ -15,7 +15,7 @@
     {{-- Upload form --}}
     @can('update', $subject)
     <div class="bg-white rounded-lg border border-slate-200 p-4 mb-6">
-        <h2 class="text-sm font-semibold text-slate-800 mb-3">Ajouter un document</h2>
+        <h2 class="text-sm font-semibold text-slate-800 mb-3">📎 Ajouter un document (fichier)</h2>
         <form method="POST" action="{{ route('subjects.documents.store', $subject->slug) }}" enctype="multipart/form-data" class="space-y-3">
             @csrf
             
@@ -27,10 +27,10 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                     <label class="block text-xs text-slate-500 mb-1">Titre</label>
-                    <input type="text" name="title" placeholder="Ex: Acte de décès" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm">
+                    <input type="text" name="title" placeholder="Ex: Acte de deces" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs text-slate-500 mb-1">Catégorie</label>
+                    <label class="block text-xs text-slate-500 mb-1">Categorie</label>
                     <select name="category" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm">
                         <option value="source">📄 Source originale</option>
                         <option value="ocr">📝 OCR / transcription</option>
@@ -47,6 +47,47 @@
             </div>
 
             <button type="submit" class="bg-emerald-700 text-white px-4 py-1.5 rounded text-sm hover:bg-emerald-800">📎 Attacher le document</button>
+        </form>
+    </div>
+
+    <!-- Markdown to PDF generator -->
+    <div class="bg-white rounded-lg border border-slate-200 p-4 mb-6">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-slate-800">📝 Generer un PDF depuis du texte Markdown</h2>
+            <span class="text-xs text-slate-500">Le contenu est converti en PDF et attache comme document</span>
+        </div>
+        <form method="POST" action="{{ route('subjects.documents.markdown-pdf', $subject->slug) }}" class="space-y-3">
+            @csrf
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Titre du document</label>
+                    <input type="text" name="title" placeholder="Ex: Courrier collectif au maire" required maxlength="255" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Categorie</label>
+                    <select name="category" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm">
+                        <option value="annexe">📎 Annexe</option>
+                        <option value="source">📄 Source originale</option>
+                        <option value="ocr">📝 OCR / transcription</option>
+                        <option value="autre">❓ Autre</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs text-slate-500 mb-1">Contenu Markdown</label>
+                <textarea name="markdown" rows="12" placeholder="# Titre
+
+Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserves dans le PDF." required maxlength="50000" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm font-mono"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-xs text-slate-500 mb-1">Description (optionnel)</label>
+                <input type="text" name="description" placeholder="Contexte..." maxlength="1000" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm">
+            </div>
+
+            <button type="submit" class="bg-emerald-700 text-white px-4 py-1.5 rounded text-sm hover:bg-emerald-800">📄 Generer et attacher le PDF</button>
         </form>
     </div>
     @endcan

@@ -47,6 +47,6 @@ class SubjectIndexThemeBadgeTest extends TestCase
         $response->assertOk();
         $response->assertSee('Monuments', false);
         // Assert le style inline background-color contient la couleur hex du sous-thème
-        $response->assertSee('background-color: #dc2626', false);
+        $response->assertSee('background-color: ' . $subCategory->color, false);
     }
 }

@@ -29,8 +29,8 @@ class AdminCredentialsTest extends TestCase
         $this->seed(\Database\Seeders\UserSeeder::class);
 
         $response = $this->post('/login', [
-            'email' => 'aurelien.tisserand18@gmail.com',
-            'password' => 'NewProduction18@L',
+            'login' => 'aurelien.tisserand18@gmail.com',
+            'password' => 'pass',
         ]);
 
         $response->assertRedirect('/dashboard');

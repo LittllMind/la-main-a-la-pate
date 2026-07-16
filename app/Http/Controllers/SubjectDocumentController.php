@@ -107,4 +107,62 @@ class SubjectDocumentController extends Controller
             'Content-Type' => $document->mime_type,
         ]);
     }
+
+    // Convertir un texte Markdown en PDF et l'attacher comme document
+    public function storeMarkdownPdf(Request $request, Subject $subject)
+    {
+        Gate::authorize('update', $subject);
+
+        $request->validate([
+            'title'       => 'required|string|max:255',
+            'markdown'    => 'required|string|max:50000',
+            'description' => 'nullable|string|max:1000',
+            'category'    => 'nullable|in:source,annexe,ocr,audio,autre',
+        ]);
+
+        $title    = $request->title;
+        $markdown = $request->markdown;
+
+        // Render markdown to HTML via Subject renderer
+        $html = $subject->renderBody();
+        // Actually we need to render the provided markdown, not the subject body
+        // Let's inline the conversion
+        $converter = new \League\CommonMark\GithubFlavoredMarkdownConverter([
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+        ]);
+        $html = (string) $converter->convert($markdown);
+
+        // Build a clean PDF view
+        $pdfHtml = view('subjects.pdf.markdown', [
+            'title'    => $title,
+            'htmlBody' => $html,
+            'subject'  => $subject,
+        ])->render();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($pdfHtml);
+        $pdfContent = $pdf->output();
+
+        $stored = Str::slug(pathinfo($title, PATHINFO_FILENAME)) . '-' . Str::random(6) . '.pdf';
+        $path   = "subjects/{$subject->id}/" . $stored;
+
+        Storage::disk('subject_documents')->put($path, $pdfContent);
+
+        $doc = SubjectDocument::create([
+            'subject_id'      => $subject->id,
+            'filename'        => $title . '.pdf',
+            'stored_filename' => $stored,
+            'path'            => $path,
+            'mime_type'       => 'application/pdf',
+            'size'            => strlen($pdfContent),
+            'title'           => $title,
+            'description'     => $request->description,
+            'category'        => $request->category ?: 'annexe',
+            'position'        => $subject->documents()->count() + 1,
+        ]);
+
+        return redirect()
+            ->route('subjects.documents.index', $subject->slug)
+            ->with('success', 'Document PDF genere : ' . $doc->title);
+    }
 }

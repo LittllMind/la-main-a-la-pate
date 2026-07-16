@@ -55,8 +55,7 @@ class DashboardViewTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('/sujets');
-        $response->assertSee('/hall');
-        $response->assertSee('/profile');
+        $response->assertSee('/profil');
     }
 
     public function test_dashboard_shows_admin_link_only_for_admins(): void

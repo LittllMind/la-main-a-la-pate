@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use App\Models\SubCategory;
 use App\Models\Subject;
 use App\Models\SubjectImage;
 use App\Models\User;
@@ -17,9 +19,12 @@ class SubjectMarkdownImageWorkflowTest extends TestCase
     public function test_subject_body_is_stored_as_markdown(): void
     {
         $user = User::factory()->create();
+        $category = Category::factory()->create();
+        $subCategory = SubCategory::factory()->create(['category_id' => $category->id]);
 
         $response = $this->actingAs($user)->post('/sujets', [
-            'theme' => 'Vie du village',
+            'category_id' => $category->id,
+            'sub_category_id' => $subCategory->id,
             'title' => 'Compte rendu',
             'body' => "# Titre\n\nUn paragraphe avec **gras**.",
         ]);
@@ -98,6 +103,8 @@ class SubjectMarkdownImageWorkflowTest extends TestCase
         Storage::fake('subject_images');
 
         $user = User::factory()->create(['role' => 'moderator']);
+        $category = Category::factory()->create(['name' => 'Infrastructures']);
+        $subCategory = SubCategory::factory()->create(['category_id' => $category->id, 'name' => 'Bâtiments communaux']);
 
         $zipPath = $this->fakeImportZip([
             'sujet.md' => "# PAC\n\n![plan](plan.jpg)\n",
@@ -106,7 +113,8 @@ class SubjectMarkdownImageWorkflowTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/sujets/importer', [
             'archive' => new UploadedFile($zipPath, 'import.zip', 'application/zip', null, true),
-            'theme' => 'Infrastructures',
+            'category_id' => $category->id,
+            'sub_category_id' => $subCategory->id,
             'title' => 'PAC Import',
             'status' => 'published',
         ]);
@@ -115,6 +123,8 @@ class SubjectMarkdownImageWorkflowTest extends TestCase
 
         $this->assertDatabaseHas('subjects', [
             'title' => 'PAC Import',
+            'category_id' => $category->id,
+            'sub_category_id' => $subCategory->id,
             'theme' => 'Infrastructures',
             'status' => 'published',
         ]);

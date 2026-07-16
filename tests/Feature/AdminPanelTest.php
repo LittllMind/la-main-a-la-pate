@@ -59,7 +59,6 @@ class AdminPanelTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('/sujets');
-        $response->assertSee('/hall');
         $response->assertDontSee('/communaute');
     }
 

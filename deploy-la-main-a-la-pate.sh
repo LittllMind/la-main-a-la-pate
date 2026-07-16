@@ -39,6 +39,8 @@ ssh -i "$SSH_KEY" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
    composer install --no-dev --optimize-autoloader && \
    php artisan optimize:clear && \
    php artisan migrate --force && \
+   php artisan view:clear && \
+   php artisan view:cache && \
    php artisan config:cache && \
    php artisan route:cache \
    || echo 'COMMANDS_FAILED'"

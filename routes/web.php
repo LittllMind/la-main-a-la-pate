@@ -40,7 +40,8 @@ Route::middleware(['auth'])->group(function () {
 |---------------------------------------------------------------------------
 */
 Route::get('/hall', [PostPublicController::class, 'index'])->middleware('auth')->name('hall');
-Route::get('/actu/{slug}', [PostPublicController::class, 'show'])->middleware('auth')->name('posts.show');
+// TEMPORAIREMENT OUVERT POUR REVISION VISUELLE DU POST
+Route::get('/actu/{slug}', [PostPublicController::class, 'show'])->name('posts.show');
 
 /*
 |---------------------------------------------------------------------------
@@ -74,6 +75,7 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function
     // Documents attachés au sujet (PDF, OCR, sources, audio...)
     Route::get('/{subject:slug}/documents', [SubjectDocumentController::class, 'index'])->name('documents.index');
     Route::post('/{subject:slug}/documents', [SubjectDocumentController::class, 'store'])->name('documents.store');
+    Route::post('/{subject:slug}/documents/markdown-pdf', [SubjectDocumentController::class, 'storeMarkdownPdf'])->name('documents.markdown-pdf');
     Route::patch('/{subject:slug}/documents/{document}', [SubjectDocumentController::class, 'update'])->name('documents.update');
     Route::delete('/{subject:slug}/documents/{document}', [SubjectDocumentController::class, 'destroy'])->name('documents.destroy');
     Route::get('/{subject:slug}/documents/{document}/telecharger', [SubjectDocumentController::class, 'download'])->name('documents.download');

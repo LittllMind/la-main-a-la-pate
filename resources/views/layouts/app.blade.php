@@ -21,16 +21,17 @@
                     La Main a la Pate
                 </a>
                 <div class="hidden sm:flex items-center gap-6 text-sm">
-                    <a href="/" class="text-slate-600 hover:text-slate-900">Actualites</a>
-                    <a href="{{ route('community.index') }}" class="text-slate-600 hover:text-slate-900">Communaute</a>
                     @auth
+                        <a href="/sujets" class="text-slate-600 hover:text-slate-900">Sujets</a>
                         <a href="/dashboard" class="text-slate-600 hover:text-slate-900">Tableau de bord</a>
+                        <a href="/profile" class="text-slate-600 hover:text-slate-900">Mon profil</a>
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
                             <button type="submit" class="text-slate-500 hover:text-red-600 text-sm">Deconnexion</button>
                         </form>
                     @else
-                        {{-- Connexion / S'inscrire masqués le temps de formalisation --}}
+                        <a href="/seraphotheque" class="text-slate-600 hover:text-slate-900">Seraphotheque</a>
+                        <a href="{{ route('login') }}" class="text-slate-600 hover:text-slate-900">Connexion</a>
                     @endauth
                 </div>
             </div>

@@ -65,19 +65,9 @@
         <div class="bg-white rounded-xl border border-slate-200 p-6">
             <h2 class="font-semibold text-slate-800 mb-4">Acces rapides</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <a href="/hall" class="flex items-center gap-3 p-4 rounded-lg border border-slate-100 hover:border-emerald-300 hover:bg-emerald-50 transition">
-                    <span class="text-2xl">📰</span>
-                    <span class="text-sm font-medium text-slate-700">Hall — Actualites</span>
-                </a>
-
                 <a href="/sujets" class="flex items-center gap-3 p-4 rounded-lg border border-slate-100 hover:border-emerald-300 hover:bg-emerald-50 transition">
                     <span class="text-2xl">📚</span>
                     <span class="text-sm font-medium text-slate-700">Sujets du village</span>
-                </a>
-
-                <a href="/profile" class="flex items-center gap-3 p-4 rounded-lg border border-slate-100 hover:border-emerald-300 hover:bg-emerald-50 transition">
-                    <span class="text-2xl">👤</span>
-                    <span class="text-sm font-medium text-slate-700">Mon profil</span>
                 </a>
 
                 @if($user->isAdmin())

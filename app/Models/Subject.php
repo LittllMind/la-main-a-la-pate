@@ -14,7 +14,7 @@ class Subject extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'theme', 'title', 'slug', 'body', 'status', 'locked_at', 'category_id', 'sub_category_id'];
+    protected $fillable = ['user_id', 'theme', 'title', 'slug', 'body', 'status', 'locked_at', 'category_id', 'sub_category_id', 'visibility', 'published_at'];
 
     protected $casts = [
         'locked_at' => 'datetime',

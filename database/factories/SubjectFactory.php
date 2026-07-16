@@ -18,7 +18,11 @@ class SubjectFactory extends Factory
 
         return [
             'user_id' => User::factory(),
-            'theme' => collect(['Séraphothèque', 'Urbanisme', 'Mémoire', 'Nature', 'Vie du village'])->random(),
+            'category_id' => fn () => \App\Models\Category::factory()->create()->id,
+            'sub_category_id' => fn (array $attributes) => \App\Models\SubCategory::factory()->create([
+                'category_id' => $attributes['category_id'],
+            ])->id,
+            'theme' => fn (array $attributes) => \App\Models\Category::find($attributes['category_id'])->name,
             'title' => $title,
             'slug' => function (array $attributes) use ($slugBase) {
                 $counter = 1;
@@ -30,6 +34,16 @@ class SubjectFactory extends Factory
             },
             'body' => '<p>' . $this->faker->paragraph() . '</p>',
             'status' => 'published',
+            'visibility' => 'citoyen',
+            'published_at' => now(),
         ];
+    }
+
+    public function draft(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'draft',
+            'published_at' => null,
+        ]);
     }
 }

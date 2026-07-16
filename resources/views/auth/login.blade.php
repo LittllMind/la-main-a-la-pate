@@ -18,7 +18,6 @@
                 <x-input-label for="login" :value="__('Identifiant')" />
                 <x-text-input id="login" class="block mt-1 w-full border-slate-300 focus:border-slate-900 focus:ring-slate-900" type="text" name="login" :value="old('login')" required autofocus autocomplete="username" />
                 <x-input-error :messages="$errors->get('login')" class="mt-2" />
-                <p class="text-xs text-slate-400 mt-1">Exemple : roland, alain, patrice</p>
             </div>
 
             <!-- Password -->

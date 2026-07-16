@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
+use App\Models\SubCategory;
 use App\Models\Subject;
 use App\Models\SubjectImage;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -13,6 +14,7 @@ use Illuminate\Support\Str;
 class SubjectImportController extends Controller
 {
     private const DISK = 'subject_images';
+
     public function create()
     {
         Gate::authorize('create', Subject::class);
@@ -26,18 +28,20 @@ class SubjectImportController extends Controller
 
         $validated = $request->validate([
             'archive' => 'required|file|mimes:zip|max:51200',
-            'theme' => 'required|string|max:120',
-            'theme_other' => 'nullable|string|max:120',
+            'category_id' => 'required|integer|exists:categories,id',
+            'sub_category_id' => 'required|integer|exists:sub_categories,id',
             'title' => 'required|string|max:255',
             'status' => 'required|in:draft,published',
         ]);
 
-        $theme = $this->resolveTheme($validated['theme'], $validated['theme_other'] ?? null);
+        $category = Category::findOrFail($validated['category_id']);
+        $subCategory = SubCategory::findOrFail($validated['sub_category_id']);
+        $theme = $category->name;
         $title = $validated['title'];
         $slug = $this->uniqueSlug($title);
 
         $archive = $request->file('archive');
-        $extractPath = Storage::disk('local')->makeDirectory("imports/{$slug}");
+        Storage::disk('local')->makeDirectory("imports/{$slug}");
         $tempDir = Storage::disk('local')->path("imports/{$slug}");
 
         $zip = new \ZipArchive();
@@ -51,11 +55,15 @@ class SubjectImportController extends Controller
 
         $subject = Subject::create([
             'user_id' => auth()->id(),
+            'category_id' => $category->id,
+            'sub_category_id' => $subCategory->id,
             'theme' => $theme,
             'title' => $title,
             'slug' => $slug,
             'body' => $markdown,
             'status' => $validated['status'],
+            'visibility' => 'citoyen',
+            'published_at' => $validated['status'] === 'published' ? now() : null,
         ]);
 
         $markdown = $this->importImages($subject, $markdown, $baseDir);
@@ -65,7 +73,7 @@ class SubjectImportController extends Controller
 
         return redirect()
             ->route('subjects.show', $subject->slug)
-            ->with('success', 'Sujet importe avec ses images.');
+            ->with('success', 'Sujet importé avec ses images.');
     }
 
     private function findMdFile(string $dir): ?string
@@ -122,24 +130,6 @@ class SubjectImportController extends Controller
         }, $markdown);
 
         return $markdown;
-    }
-
-    private function resolveTheme(string $theme, ?string $other): string
-    {
-        if ($theme !== '__new__') {
-            return $theme;
-        }
-
-        $theme = trim($other ?? '');
-        if ($theme === '') {
-            return '';
-        }
-
-        $theme = mb_strtolower($theme);
-        $first = mb_strtoupper(mb_substr($theme, 0, 1));
-        $rest = mb_substr($theme, 1);
-
-        return $first . $rest;
     }
 
     private function uniqueSlug(string $title): string

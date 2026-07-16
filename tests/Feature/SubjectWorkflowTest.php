@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use App\Models\SubCategory;
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,10 +15,13 @@ class SubjectWorkflowTest extends TestCase
 
     public function test_authenticated_citizen_can_create_a_subject(): void
     {
+        $category = Category::factory()->create();
+        $subCategory = SubCategory::factory()->create(['category_id' => $category->id]);
         $user = User::factory()->create(['role' => 'citoyen']);
 
         $response = $this->actingAs($user)->post('/sujets', [
-            'theme' => 'Vie du village',
+            'category_id' => $category->id,
+            'sub_category_id' => $subCategory->id,
             'title' => 'Réouverture de la boutique',
             'body' => '<p>Document de travail sur la réouverture.</p>',
         ]);
@@ -24,7 +29,7 @@ class SubjectWorkflowTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('subjects', [
             'title' => 'Réouverture de la boutique',
-            'theme' => 'Vie du village',
+            'theme' => $category->name,
             'status' => 'draft',
             'user_id' => $user->id,
         ]);
@@ -32,8 +37,12 @@ class SubjectWorkflowTest extends TestCase
 
     public function test_guests_cannot_create_subjects(): void
     {
+        $category = Category::factory()->create();
+        $subCategory = SubCategory::factory()->create(['category_id' => $category->id]);
+
         $response = $this->post('/sujets', [
-            'theme' => 'Nature',
+            'category_id' => $category->id,
+            'sub_category_id' => $subCategory->id,
             'title' => 'Test',
             'body' => 'Test',
         ]);
@@ -48,6 +57,8 @@ class SubjectWorkflowTest extends TestCase
 
         $this->actingAs($user)->put("/sujets/{$subject->slug}", [
             'theme' => $subject->theme,
+            'category_id' => $subject->category_id,
+            'sub_category_id' => $subject->sub_category_id,
             'title' => 'Titre mis à jour',
             'body' => '<p>Nouveau contenu.</p>',
         ]);
@@ -71,6 +82,8 @@ class SubjectWorkflowTest extends TestCase
 
         $response = $this->actingAs($other)->put("/sujets/{$subject->slug}", [
             'theme' => $subject->theme,
+            'category_id' => $subject->category_id,
+            'sub_category_id' => $subject->sub_category_id,
             'title' => 'Hack',
             'body' => 'Hack',
         ]);

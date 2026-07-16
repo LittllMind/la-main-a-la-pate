@@ -32,22 +32,23 @@
                     La Main a la Pate
                 </a>
                 <div class="hidden sm:flex items-center gap-6 text-sm">
-                    @auth
-                        <a href="/sujets" class="text-slate-600 hover:text-slate-900 transition">Sujets</a>
-                        <a href="/dashboard" class="text-slate-600 hover:text-slate-900 transition">Tableau de bord</a>
-                        <a href="/profile" class="text-slate-600 hover:text-slate-900 transition">Mon profil</a>
+                @auth
+                    <a href="/sujets" class="text-slate-600 hover:text-slate-900 transition">Sujets</a>
+                    <a href="/dashboard" class="text-slate-600 hover:text-slate-900 transition">Tableau de bord</a>
+                    <a href="/profile" class="text-slate-600 hover:text-slate-900 transition">Mon profil</a>
 
-                        @admin
-                            <a href="{{ route('admin.panel') }}" class="text-slate-600 hover:text-slate-900 transition">admin</a>
-                        @endadmin
+                    @admin
+                        <a href="{{ route('admin.panel') }}" class="text-slate-600 hover:text-slate-900 transition">admin</a>
+                    @endadmin
 
-                        <form method="POST" action="{{ route('logout') }}" class="inline">
-                            @csrf
-                            <button type="submit" class="text-slate-500 hover:text-red-600 text-sm transition">Deconnexion</button>
-                        </form>
-                    @else
-                        {{-- A propos / Contact / Connexion / S'inscrire masqués le temps de formalisation --}}
-                    @endauth
+                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="text-slate-500 hover:text-red-600 text-sm transition">Deconnexion</button>
+                    </form>
+                @else
+                    <a href="/seraphotheque" class="text-slate-600 hover:text-slate-900 transition">Seraphotheque</a>
+                    <a href="{{ route('login') }}" class="text-slate-600 hover:text-slate-900 transition">Connexion</a>
+                @endauth
                 </div>
                 <button id="mobile-menu-btn" class="sm:hidden text-slate-600">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
@@ -68,7 +69,9 @@
                         <button type="submit" class="text-slate-500 hover:text-red-600 py-1">Deconnexion</button>
                     </form>
                 @else
-                    {{-- A propos / Contact / Connexion / S'inscrire masqués le temps de formalisation --}}
+                    <!-- A propos / Contact / Connexion / S'inscrire masqués le temps de formalisation -->
+                    <a href="/seraphotheque" class="block text-slate-600 hover:text-slate-900 py-1">Seraphotheque</a>
+                    <a href="{{ route('login') }}" class="block text-slate-600 hover:text-slate-900 py-1">Connexion</a>
                 @endauth
             </div>
         </div>

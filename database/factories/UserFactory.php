@@ -11,9 +11,11 @@ class UserFactory extends Factory
 
     public function definition(): array
     {
+        $username = $this->faker->unique()->userName();
         return [
+            'username' => $username,
             'name' => $this->faker->name(),
-            'pseudonyme' => $this->faker->userName(),
+            'pseudonyme' => $username,
             'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => 'password',

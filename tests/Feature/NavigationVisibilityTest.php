@@ -21,16 +21,15 @@ class NavigationVisibilityTest extends TestCase
         $response->assertDontSee('Tableau de bord');
     }
 
-    public function test_authenticated_users_see_hall_and_subjects(): void
+    public function test_authenticated_users_see_sujets_and_dashboard(): void
     {
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get('/seraphotheque');
 
         $response->assertStatus(200);
-        $response->assertSee('Hall');
         $response->assertSee('Sujets');
-        $response->assertSee('Seraphotheque');
+        $response->assertSee('Tableau de bord');
         $response->assertDontSee('Communaute');
     }
 
