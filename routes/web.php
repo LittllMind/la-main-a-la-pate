@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LandingSectionController;
 use App\Http\Controllers\PostPublicController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SiteMapController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\SubjectCollaboratorController;
 use App\Http\Controllers\SubjectDocumentController;
@@ -32,6 +33,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/contact', [ContactController::class, 'contactSubmit'])->name('contact.submit');
     Route::get('/mentions-legales', [ContactController::class, 'legal'])->name('legal');
     Route::get('/confidentialite', [ContactController::class, 'privacy'])->name('privacy');
+    Route::get('/plan-du-site', [SiteMapController::class, 'index'])->name('site.map');
 });
 
 /*

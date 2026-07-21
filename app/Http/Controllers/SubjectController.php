@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Subject;
 use App\Models\SubjectComment;
+use App\Models\SubjectPublicationVote;
 use App\Models\SubjectVersion;
 use App\Models\SubjectUserLastSeenVersion;
 use Illuminate\Http\Request;
@@ -253,6 +254,15 @@ class SubjectController extends Controller
             'user_id' => auth()->id(),
             'body' => $validated['body'],
         ]);
+
+        ActivityLog::log(
+            event: 'comment',
+            user: auth()->user(),
+            entityType: 'subject',
+            entityId: $subject->id,
+            description: "Commentaire sur le sujet « {$subject->title} »",
+            metadata: ['comment_excerpt' => Str::limit($validated['body'], 100)]
+        );
 
         return redirect()
             ->route('subjects.show', $subject->slug . '#comments')

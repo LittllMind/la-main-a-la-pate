@@ -62,7 +62,7 @@
         </div>
 
         {{-- Acces rapides --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-6 mb-8">
             <h2 class="font-semibold text-slate-800 mb-4">Acces rapides</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <a href="/sujets" class="flex items-center gap-3 p-4 rounded-lg border border-slate-100 hover:border-emerald-300 hover:bg-emerald-50 transition">
@@ -76,6 +76,36 @@
                         <span class="text-sm font-medium text-slate-700">Administration</span>
                     </a>
                 @endif
+            </div>
+        </div>
+
+        {{-- Activité récente --}}
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h2 class="font-semibold text-slate-800">Activité récente</h2>
+                @if($user->isAdmin())
+                    <a href="{{ route('admin.activity') }}" class="text-sm text-emerald-600 hover:underline">Voir tout</a>
+                @endif
+            </div>
+            <div class="divide-y divide-slate-100">
+                @forelse($activity as $log)
+                    <div class="px-6 py-4 flex items-start gap-3">
+                        <span class="inline-block w-2 h-2 rounded-full mt-1.5" style="background-color: {{ $log->user->color ?: '#64748b' }}"></span>
+                        <div class="flex-1">
+                            <p class="text-sm text-slate-700">
+                                {{ $log->description }}
+                            </p>
+                            <p class="text-xs text-slate-500 mt-1">
+                                par <span class="font-medium">{{ $log->user->name }}</span>
+                                — {{ $log->created_at->format('d/m/Y H:i') }}
+                            </p>
+                        </div>
+                    </div>
+                @empty
+                    <div class="px-6 py-8 text-center text-sm text-slate-500">
+                        Aucune activité enregistrée pour l'instant.
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>

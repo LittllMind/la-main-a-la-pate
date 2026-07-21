@@ -22,6 +22,8 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        return view('dashboard', compact('user', 'subjects', 'comments'));
+        $activity = \App\Models\ActivityLog::recent(20);
+
+        return view('dashboard', compact('user', 'subjects', 'comments', 'activity'));
     }
 }
