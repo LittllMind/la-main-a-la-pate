@@ -73,6 +73,36 @@ class Subject extends Model
         return $this->hasMany(SubjectPublicationVote::class);
     }
 
+
+    public function lastSeenVersionBy(User $user): ?int
+    {
+        return \DB::table('subject_user_last_seen_versions')
+            ->where('user_id', $user->id)
+            ->where('subject_id', $this->id)
+            ->value('version_id');
+    }
+
+    public function latestVersionId(): ?int
+    {
+        return $this->versions()->orderBy('created_at', 'desc')->orderBy('id', 'desc')->value('id');
+    }
+
+    public function hasNewVersionFor(User $user): bool
+    {
+        if ($this->user_id === $user->id) {
+            return false;
+        }
+
+        $lastSeen = $this->lastSeenVersionBy($user);
+        $latest = $this->latestVersionId();
+
+        if ($latest === null) {
+            return false;
+        }
+
+        return $lastSeen !== $latest;
+    }
+
     public function isCollaborator(User $user): bool
     {
         return $this->collaborators()->where('user_id', $user->id)->exists();

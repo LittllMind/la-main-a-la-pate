@@ -36,7 +36,7 @@ class SubjectDocumentController extends Controller
         $file = $request->file('file');
         $original = $file->getClientOriginalName();
         $stored = Str::slug(pathinfo($original, PATHINFO_FILENAME)) . '-' . Str::random(6) . '.' . $file->getClientOriginalExtension();
-        $path   = "subjects/{$subject->id}/" . $stored;
+        $path = "subject_documents/{$subject->id}/" . $stored;
 
         Storage::disk('subject_documents')->put($path, file_get_contents($file->getRealPath()));
 
@@ -144,7 +144,7 @@ class SubjectDocumentController extends Controller
         $pdfContent = $pdf->output();
 
         $stored = Str::slug(pathinfo($title, PATHINFO_FILENAME)) . '-' . Str::random(6) . '.pdf';
-        $path   = "subjects/{$subject->id}/" . $stored;
+        $path = "subject_documents/{$subject->id}/" . $stored;
 
         Storage::disk('subject_documents')->put($path, $pdfContent);
 

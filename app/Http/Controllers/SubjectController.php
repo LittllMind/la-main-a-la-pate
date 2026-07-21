@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Subject;
 use App\Models\SubjectComment;
 use App\Models\SubjectVersion;
+use App\Models\SubjectUserLastSeenVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -142,8 +143,20 @@ class SubjectController extends Controller
     {
         Gate::authorize('view', $subject);
 
+        $subject = $subject->load(['user', 'comments.user', 'versions.user', 'documents']);
+
+        if (auth()->check()) {
+            $latestVersionId = $subject->versions()->orderBy('created_at', 'desc')->value('id');
+            if ($latestVersionId) {
+                SubjectUserLastSeenVersion::updateOrCreate(
+                    ['user_id' => auth()->id(), 'subject_id' => $subject->id],
+                    ['version_id' => $latestVersionId, 'seen_at' => now()]
+                );
+            }
+        }
+
         return view('subjects.show', [
-            'subject' => $subject->load(['user', 'comments.user', 'versions.user', 'documents']),
+            'subject' => $subject,
         ]);
     }
 

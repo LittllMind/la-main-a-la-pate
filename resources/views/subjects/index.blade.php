@@ -60,6 +60,9 @@
                         @if($subject->status === 'draft')
                             <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Brouillon</span>
                         @endif
+                        @if(auth()->check() && $subject->hasNewVersionFor(auth()->user()))
+                            <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-semibold">Mis à jour</span>
+                        @endif
                         <span class="text-slate-400">{{ $subject->created_at->format('d/m/Y') }}</span>
                     </div>
                     <h2 class="text-lg font-semibold text-slate-900 mb-2">
