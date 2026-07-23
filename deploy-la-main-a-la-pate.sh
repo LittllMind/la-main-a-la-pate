@@ -28,12 +28,15 @@ rsync -avz --delete \
   --exclude 'storage/framework/sessions/*' \
   --exclude 'storage/framework/views/*' \
   --exclude 'storage/logs/*' \
+  --exclude 'storage/app/documents' \
+  --exclude 'storage/app/public/subject_documents' \
+  --exclude 'storage/app/public/subjects' \
   --exclude 'database/database.sqlite' \
   --exclude 'public_html' \
   -e "ssh -i $SSH_KEY -p $SSH_PORT" \
   "$LOCAL_DIR/" "$SSH_USER@$SSH_HOST:$REMOTE_DIR/"
 
-echo "==> Composer + cache"
+echo "==> Protect documents directory: ensure public/storage points to nothing sensitive"
 ssh -i "$SSH_KEY" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
   "cd $REMOTE_DIR && \
    composer install --no-dev --optimize-autoloader && \
@@ -42,7 +45,9 @@ ssh -i "$SSH_KEY" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
    php artisan view:clear && \
    php artisan view:cache && \
    php artisan config:cache && \
-   php artisan route:cache \
+   php artisan route:cache && \
+   [ -L public/storage ] && rm public/storage && echo 'Removed public/storage symlink'; \
+   true \
    || echo 'COMMANDS_FAILED'"
 
 echo "==> Deploy La Main a la Pate done"

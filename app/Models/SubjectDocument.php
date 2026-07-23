@@ -16,6 +16,7 @@ class SubjectDocument extends Model
         'filename',
         'stored_filename',
         'path',
+        'disk',
         'mime_type',
         'size',
         'title',
@@ -37,6 +38,11 @@ class SubjectDocument extends Model
     public function url(): string
     {
         return route('subjects.documents.download', [$this->subject->slug, $this->id]);
+    }
+
+    public function isSecure(): bool
+    {
+        return $this->disk !== 'subject_documents';
     }
 
     public function icon(): string
@@ -73,12 +79,8 @@ class SubjectDocument extends Model
 
     public function previewUrl(): ?string
     {
-        if ($this->extension() === 'pdf') {
-            return $this->url();
-        }
-        if (in_array($this->extension(), ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-            return Storage::disk('subject_documents')->url($this->path);
-        }
+        // Tous les documents attachés sont désormais privés/chiffrés,
+        // aucune URL directe publique n'est exposée.
         return null;
     }
 }

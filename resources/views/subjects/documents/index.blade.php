@@ -20,7 +20,7 @@
             @csrf
             
             <div class="flex items-center gap-3">
-                <input type="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.mp3,.wav,.ogg,.zip" required
+                <input type="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.mp3,.wav,.ogg,.zip,.md" required
                        class="text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:bg-emerald-700 file:text-white hover:file:bg-emerald-800">
             </div>
 
@@ -104,6 +104,9 @@ Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserv
                         <span class="text-sm font-medium text-slate-900 truncate">{{ $doc->title }}</span>
                         <span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{{ $doc->extension() }}</span>
                         <span class="text-xs text-slate-400">{{ $doc->humanSize() }}</span>
+                        @if($doc->isSecure())
+                            <span class="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700" title="Stocké de manière privée et chiffrée">🔒 Sécurisé</span>
+                        @endif
                     </div>
                     @if($doc->description)
                         <p class="text-xs text-slate-500 mb-1">{{ $doc->description }}</p>

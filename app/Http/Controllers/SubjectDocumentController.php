@@ -4,13 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Subject;
 use App\Models\SubjectDocument;
+use App\Services\DocumentStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class SubjectDocumentController extends Controller
 {
+    private DocumentStorageService $storage;
+
+    public function __construct(DocumentStorageService $storage)
+    {
+        $this->storage = $storage;
+    }
+
     // Liste des documents d'un sujet
     public function index(Subject $subject)
     {
@@ -53,7 +60,7 @@ class SubjectDocumentController extends Controller
         if ($this->isImageFile($file)) {
             $request->validate(['file' => 'image']);
 
-            $filename = \Illuminate\Support\Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . \Illuminate\Support\Str::random(4) . '.' . $file->getClientOriginalExtension();
+            $filename = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . Str::random(4) . '.' . $file->getClientOriginalExtension();
             $path = "subjects/{$subject->id}/{$filename}";
 
             \Illuminate\Support\Facades\Storage::disk('subject_images')->put($path, file_get_contents($file->getRealPath()));
@@ -74,18 +81,21 @@ class SubjectDocumentController extends Controller
                 ->with('success', 'Image ajoutée à la galerie.');
         }
 
-        // Non-image documents keep existing behavior
         $original = $file->getClientOriginalName();
-        $stored = \Illuminate\Support\Str::slug(pathinfo($original, PATHINFO_FILENAME)) . '-' . \Illuminate\Support\Str::random(6) . '.' . $file->getClientOriginalExtension();
-        $path = "subject_documents/{$subject->id}/" . $stored;
+        $storedRelativePath = $this->storage->storeEncrypted(
+            $subject->id,
+            $file->getRealPath(),
+            $original
+        );
 
-        Storage::disk('subject_documents')->put($path, file_get_contents($file->getRealPath()));
+        $stored = basename($storedRelativePath);
 
         $doc = SubjectDocument::create([
             'subject_id'      => $subject->id,
             'filename'        => $original,
             'stored_filename' => $stored,
-            'path'            => $path,
+            'path'            => $storedRelativePath,
+            'disk'            => 'documents',
             'mime_type'       => $file->getMimeType(),
             'size'            => $file->getSize(),
             'title'           => $request->title ?: $original,
@@ -123,7 +133,7 @@ class SubjectDocumentController extends Controller
     {
         Gate::authorize('update', $subject);
 
-        Storage::disk('subject_documents')->delete($document->path);
+        $this->storage->delete($document->path);
         $document->delete();
 
         return redirect()
@@ -131,19 +141,18 @@ class SubjectDocumentController extends Controller
             ->with('success', 'Document supprime.');
     }
 
-    // Telechargement d'un document (stream securise)
     public function download(Subject $subject, SubjectDocument $document)
     {
         Gate::authorize('view', $subject);
 
-        if (! Storage::disk('subject_documents')->exists($document->path)) {
+        if (! $this->storage->exists($document->path)) {
             abort(404);
         }
 
         return response()->streamDownload(function () use ($document) {
-            $stream = Storage::disk('subject_documents')->readStream($document->path);
-            fpassthru($stream);
-            fclose($stream);
+            $plain = $this->storage->decrypt($document->path);
+            echo $plain;
+            sodium_memzero($plain);
         }, $document->filename, [
             'Content-Type' => $document->mime_type,
         ]);
@@ -184,16 +193,20 @@ class SubjectDocumentController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($pdfHtml);
         $pdfContent = $pdf->output();
 
-        $stored = Str::slug(pathinfo($title, PATHINFO_FILENAME)) . '-' . Str::random(6) . '.pdf';
-        $path = "subject_documents/{$subject->id}/" . $stored;
+        $tmpPath = tempnam(sys_get_temp_dir(), 'lmalp_pdf_');
+        file_put_contents($tmpPath, $pdfContent);
 
-        Storage::disk('subject_documents')->put($path, $pdfContent);
+        $storedRelativePath = $this->storage->storeEncrypted($subject->id, $tmpPath, $title . '.pdf');
+        unlink($tmpPath);
+
+        $stored = basename($storedRelativePath);
 
         $doc = SubjectDocument::create([
             'subject_id'      => $subject->id,
             'filename'        => $title . '.pdf',
             'stored_filename' => $stored,
-            'path'            => $path,
+            'path'            => $storedRelativePath,
+            'disk'            => 'documents',
             'mime_type'       => 'application/pdf',
             'size'            => strlen($pdfContent),
             'title'           => $title,

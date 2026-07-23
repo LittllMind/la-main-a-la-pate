@@ -13,23 +13,23 @@ class SubjectDocumentDownloadTest extends TestCase
 {
     public function test_document_download_returns_pdf_for_existing_file()
     {
-        Storage::fake('subject_documents');
+        Storage::fake('documents');
 
         $user = User::factory()->create(['email_verified_at' => now()]);
         $subject = Subject::factory()->create(['user_id' => $user->id, 'status' => 'published']);
 
-        $pdf = UploadedFile::fake()->create('source.pdf', 100, 'application/pdf');
-        $stored = 'source-' . \Illuminate\Support\Str::random(6) . '.pdf';
-        $path = "subject_documents/{$subject->id}/" . $stored;
-        Storage::disk('subject_documents')->put($path, file_get_contents($pdf->getRealPath()));
+        $service = app(\App\Services\DocumentStorageService::class);
+        $pdf = UploadedFile::fake()->createWithContent('source.pdf', str_repeat('x', 1000));
+        $path = $service->storeEncrypted($subject->id, $pdf->getRealPath(), 'source.pdf');
 
         $document = SubjectDocument::create([
             'subject_id' => $subject->id,
             'filename' => 'source.pdf',
-            'stored_filename' => $stored,
+            'stored_filename' => basename($path),
             'path' => $path,
+            'disk' => 'documents',
             'mime_type' => 'application/pdf',
-            'size' => 100 * 1024,
+            'size' => 1000,
             'title' => 'Source PDF',
             'category' => 'source',
         ]);
