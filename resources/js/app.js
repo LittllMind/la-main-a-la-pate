@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import './bootstrap';
 
 import Alpine from 'alpinejs';
+import './document-tree';
 window.Alpine = Alpine;
 Alpine.start();
 

@@ -19,6 +19,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Inter', system-ui, sans-serif; }
+        [x-cloak] { display: none !important; }
     </style>
     @stack('head')
 </head>
@@ -34,6 +35,7 @@
                 <div class="hidden sm:flex items-center gap-6 text-sm">
                 @auth
                     <a href="/sujets" class="text-slate-600 hover:text-slate-900 transition">Sujets</a>
+                    <a href="/documents/arbre" class="text-slate-600 hover:text-slate-900 transition">Documents</a>
                     <a href="/dashboard" class="text-slate-600 hover:text-slate-900 transition">Tableau de bord</a>
                     <a href="/profile" class="text-slate-600 hover:text-slate-900 transition">Mon profil</a>
 
@@ -59,6 +61,7 @@
             <div id="mobile-menu" class="hidden sm:hidden pb-4 space-y-2 text-sm">
                 @auth
                     <a href="/sujets" class="block text-slate-600 hover:text-slate-900 py-1">Sujets</a>
+                    <a href="/documents/arbre" class="block text-slate-600 hover:text-slate-900 py-1">Documents</a>
                     <a href="/dashboard" class="block text-slate-600 hover:text-slate-900 py-1">Tableau de bord</a>
                     <a href="/profile" class="block text-slate-600 hover:text-slate-900 py-1">Mon profil</a>
                     @admin
@@ -101,6 +104,7 @@
                     <ul class="space-y-1 text-xs">
                         @auth
                             <li><a href="/sujets" class="hover:text-white transition">Sujets</a></li>
+                            <li><a href="/documents/arbre" class="hover:text-white transition">Documents</a></li>
                         @endauth
                     </ul>
                 </div>
@@ -118,6 +122,7 @@
         </div>
     </footer>
 
+    @stack('scripts')
     <script>
         document.getElementById('mobile-menu-btn').addEventListener('click', function() {
             document.getElementById('mobile-menu').classList.toggle('hidden');

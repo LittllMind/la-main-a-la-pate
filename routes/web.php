@@ -91,6 +91,16 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function
 
 /*
 |---------------------------------------------------------------------------
+| ARBRE DOCUMENTAIRE (membres authentifies)
+|---------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->prefix('documents')->name('documents.')->group(function () {
+    Route::get('/arbre', [\App\Http\Controllers\DocumentTreeController::class, 'index'])->name('tree.index');
+    Route::get('/arbre-data', [\App\Http\Controllers\DocumentTreeController::class, 'data'])->name('tree.data');
+});
+
+/*
+|---------------------------------------------------------------------------
 | ROUTES AUTHENTIFICATION (Breeze)
 |---------------------------------------------------------------------------
 */
