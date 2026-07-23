@@ -30,20 +30,38 @@
     </article>
 
     @if($subject->images->count() > 0)
-        <section class="bg-white rounded-lg border border-slate-200 p-6 mb-8">
-            <h2 class="text-lg font-bold text-slate-900 mb-4">Galerie</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                @foreach($subject->images as $image)
-                    <figure class="subject-figure rounded-lg border border-slate-200 overflow-hidden">
-                        <a href="{{ $image->url() }}" target="_blank" rel="noopener noreferrer">
-                            <img src="{{ $image->url() }}" alt="{{ $image->alt }}" class="subject-gallery-image">
-                        </a>
-                        @if($image->alt)
-                            <figcaption class="text-xs text-slate-500 p-2 truncate">{{ $image->alt }}</figcaption>
-                        @endif
-                    </figure>
-                @endforeach
+        <section class="mb-8">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold text-slate-900">Galerie</h2>
+                @can('update', $subject)
+                    <a href="{{ route('subjects.images.index', $subject->slug) }}" class="text-sm text-emerald-700 hover:text-emerald-900">Gérer les images</a>
+                @endcan
             </div>
+            <div class="relative group" data-carousel>
+                <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-3" data-carousel-track>
+                    @foreach($subject->images->sortBy('position') as $image)
+                        <figure class="snap-start shrink-0 w-[85vw] sm:w-[60vw] md:w-[45vw] lg:w-[35vw] rounded-lg border border-slate-200 overflow-hidden bg-white">
+                            <a href="{{ $image->url() }}" target="_blank" rel="noopener noreferrer" class="block">
+                                <img src="{{ $image->url() }}" alt="{{ $image->alt }}" loading="lazy" class="w-full h-56 sm:h-64 object-cover block">
+                            </a>
+                            @if($image->alt)
+                                <figcaption class="text-xs text-slate-500 p-3 truncate">{{ $image->alt }}</figcaption>
+                            @endif
+                        </figure>
+                    @endforeach
+                </div>
+                @if($subject->images->count() > 1)
+                    <button type="button" data-carousel-prev class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 border border-slate-200 shadow-sm text-slate-700 hover:bg-white hidden sm:flex items-center justify-center opacity-0 group-hover:opacity-100 transition" aria-label="Image précédente">
+                        ‹
+                    </button>
+                    <button type="button" data-carousel-next class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 border border-slate-200 shadow-sm text-slate-700 hover:bg-white hidden sm:flex items-center justify-center opacity-0 group-hover:opacity-100 transition" aria-label="Image suivante">
+                        ›
+                    </button>
+                @endif
+            </div>
+            @if($subject->images->count() > 1)
+                <p class="text-xs text-slate-400 mt-1 sm:hidden">Glisser pour parcourir les {{ $subject->images->count() }} images</p>
+            @endif
         </section>
     @endif
 
@@ -150,5 +168,26 @@
 .subject-figure img { border-radius: 0.5rem; border: 1px solid #e2e8f0; }
 .subject-gallery-image { width: 100%; height: 10rem; object-fit: cover; display: block; }
 .subject-figure figcaption { font-size: 0.875rem; color: #64748b; margin-top: 0.5rem; }
+
+[data-carousel-track]::-webkit-scrollbar { height: 6px; }
+[data-carousel-track]::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+[data-carousel-track]::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const carousels = document.querySelectorAll('[data-carousel]');
+        carousels.forEach(function (carousel) {
+            const track = carousel.querySelector('[data-carousel-track]');
+            const prev = carousel.querySelector('[data-carousel-prev]');
+            const next = carousel.querySelector('[data-carousel-next]');
+            if (!track) return;
+
+            const scrollAmount = track.clientWidth * 0.8;
+
+            if (prev) prev.addEventListener('click', function () { track.scrollBy({ left: -scrollAmount, behavior: 'smooth' }); });
+            if (next) next.addEventListener('click', function () { track.scrollBy({ left: scrollAmount, behavior: 'smooth' }); });
+        });
+    });
+</script>
 @endsection

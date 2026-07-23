@@ -27,7 +27,7 @@ class SubjectImageController extends Controller
         Gate::authorize('update', $subject);
 
         $request->validate([
-            'image' => 'required|image|max:10240',
+            'image' => 'required|image|max:51200',
             'alt' => 'nullable|string|max:255',
         ]);
 

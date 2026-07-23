@@ -21,7 +21,21 @@ class SubjectDocumentController extends Controller
         ]);
     }
 
-    // Upload d'un document
+    /**
+     * Determine if a file is an image and should be stored as gallery image, not document.
+     */
+    private function isImageFile(\Illuminate\Http\UploadedFile $file): bool
+    {
+        return in_array($file->getMimeType(), [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/bmp',
+            'image/svg+xml',
+        ], true);
+    }
+
     public function store(Request $request, Subject $subject)
     {
         Gate::authorize('update', $subject);
@@ -34,8 +48,35 @@ class SubjectDocumentController extends Controller
         ]);
 
         $file = $request->file('file');
+
+        // Images go to gallery, not documents
+        if ($this->isImageFile($file)) {
+            $request->validate(['file' => 'image']);
+
+            $filename = \Illuminate\Support\Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '-' . \Illuminate\Support\Str::random(4) . '.' . $file->getClientOriginalExtension();
+            $path = "subjects/{$subject->id}/{$filename}";
+
+            \Illuminate\Support\Facades\Storage::disk('subject_images')->put($path, file_get_contents($file->getRealPath()));
+
+            $maxPosition = \App\Models\SubjectImage::where('subject_id', $subject->id)->max('position') ?? 0;
+
+            \App\Models\SubjectImage::create([
+                'subject_id' => $subject->id,
+                'filename'   => $filename,
+                'path'       => $path,
+                'mime_type'  => $file->getMimeType(),
+                'alt'        => $request->title ?: $file->getClientOriginalName(),
+                'position'   => $maxPosition + 1,
+            ]);
+
+            return redirect()
+                ->route('subjects.show', $subject->slug)
+                ->with('success', 'Image ajoutée à la galerie.');
+        }
+
+        // Non-image documents keep existing behavior
         $original = $file->getClientOriginalName();
-        $stored = Str::slug(pathinfo($original, PATHINFO_FILENAME)) . '-' . Str::random(6) . '.' . $file->getClientOriginalExtension();
+        $stored = \Illuminate\Support\Str::slug(pathinfo($original, PATHINFO_FILENAME)) . '-' . \Illuminate\Support\Str::random(6) . '.' . $file->getClientOriginalExtension();
         $path = "subject_documents/{$subject->id}/" . $stored;
 
         Storage::disk('subject_documents')->put($path, file_get_contents($file->getRealPath()));
@@ -55,7 +96,7 @@ class SubjectDocumentController extends Controller
 
         return redirect()
             ->route('subjects.documents.index', $subject->slug)
-            ->with('success', 'Document ajoute : ' . $doc->title);
+            ->with('success', 'Document ajouté : ' . $doc->title);
     }
 
     // Mise a jour des metadonnees
