@@ -50,6 +50,11 @@ Route::get('/actu/{slug}', [PostPublicController::class, 'show'])->name('posts.s
 | ESPACE SUJETS (membres authentifies)
 |---------------------------------------------------------------------------
 */
+Route::middleware(['auth'])->prefix('sujets')->name('subjects.tree.')->group(function () {
+    Route::get('/arbre', [\App\Http\Controllers\DocumentTreeController::class, 'subjectsIndex'])->name('index');
+    Route::get('/arbre-data', [\App\Http\Controllers\DocumentTreeController::class, 'subjectsData'])->name('data');
+});
+
 Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function () {
     Route::get('/', [SubjectController::class, 'index'])->name('index');
     Route::get('/creer', [SubjectController::class, 'create'])->name('create');
@@ -95,8 +100,13 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function
 |---------------------------------------------------------------------------
 */
 Route::middleware(['auth'])->prefix('documents')->name('documents.')->group(function () {
-    Route::get('/arbre', [\App\Http\Controllers\DocumentTreeController::class, 'index'])->name('tree.index');
-    Route::get('/arbre-data', [\App\Http\Controllers\DocumentTreeController::class, 'data'])->name('tree.data');
+    Route::get('/arbre', [\App\Http\Controllers\DocumentTreeController::class, 'documentsIndex'])->name('tree.documents');
+    Route::get('/arbre-data', [\App\Http\Controllers\DocumentTreeController::class, 'documentsData'])->name('tree.documents.data');
+});
+
+Route::middleware(['auth'])->prefix('sujets')->name('subjects.tree.')->group(function () {
+    Route::get('/arbre', [\App\Http\Controllers\DocumentTreeController::class, 'subjectsIndex'])->name('index');
+    Route::get('/arbre-data', [\App\Http\Controllers\DocumentTreeController::class, 'subjectsData'])->name('data');
 });
 
 /*

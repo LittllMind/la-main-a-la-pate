@@ -36,6 +36,7 @@
                 @auth
                     <a href="/sujets" class="text-slate-600 hover:text-slate-900 transition">Sujets</a>
                     <a href="/documents/arbre" class="text-slate-600 hover:text-slate-900 transition">Documents</a>
+                    <a href="/sujets/arbre" class="text-slate-600 hover:text-slate-900 transition">Arbre sujets</a>
                     <a href="/dashboard" class="text-slate-600 hover:text-slate-900 transition">Tableau de bord</a>
                     <a href="/profile" class="text-slate-600 hover:text-slate-900 transition">Mon profil</a>
 
@@ -62,6 +63,7 @@
                 @auth
                     <a href="/sujets" class="block text-slate-600 hover:text-slate-900 py-1">Sujets</a>
                     <a href="/documents/arbre" class="block text-slate-600 hover:text-slate-900 py-1">Documents</a>
+                    <a href="/sujets/arbre" class="block text-slate-600 hover:text-slate-900 py-1">Arbre sujets</a>
                     <a href="/dashboard" class="block text-slate-600 hover:text-slate-900 py-1">Tableau de bord</a>
                     <a href="/profile" class="block text-slate-600 hover:text-slate-900 py-1">Mon profil</a>
                     @admin
@@ -105,6 +107,7 @@
                         @auth
                             <li><a href="/sujets" class="hover:text-white transition">Sujets</a></li>
                             <li><a href="/documents/arbre" class="hover:text-white transition">Documents</a></li>
+                            <li><a href="/sujets/arbre" class="hover:text-white transition">Arbre sujets</a></li>
                         @endauth
                     </ul>
                 </div>

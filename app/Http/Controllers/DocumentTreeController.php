@@ -9,18 +9,49 @@ use Illuminate\Support\Facades\Gate;
 
 class DocumentTreeController extends Controller
 {
-    /**
-     * Page d'arborescence documentaire.
-     */
-    public function index()
+    /* --------------------------------------------------------------------- */
+    /* ARBRE DOCUMENTS                                                       */
+    /* --------------------------------------------------------------------- */
+
+    public function documentsIndex()
     {
-        return view('documents.tree');
+        return view('documents.tree', [
+            'mode'   => 'documents',
+            'apiUrl' => route('documents.tree.documents.data'),
+        ]);
     }
 
-    /**
-     * Données JSON pour l'arborescence, filtrées selon les droits de l'utilisateur courant.
-     */
-    public function data(): JsonResponse
+    public function documentsData(): JsonResponse
+    {
+        return response()->json(
+            $this->treeData(includeDocuments: true)
+        );
+    }
+
+    /* --------------------------------------------------------------------- */
+    /* ARBRE SUJETS                                                          */
+    /* --------------------------------------------------------------------- */
+
+    public function subjectsIndex()
+    {
+        return view('documents.tree', [
+            'mode'   => 'subjects',
+            'apiUrl' => route('subjects.tree.data'),
+        ]);
+    }
+
+    public function subjectsData(): JsonResponse
+    {
+        return response()->json(
+            $this->treeData(includeDocuments: false)
+        );
+    }
+
+    /* --------------------------------------------------------------------- */
+    /* DONNÉES COMMUNES                                                    */
+    /* --------------------------------------------------------------------- */
+
+    private function treeData(bool $includeDocuments): array
     {
         $categories = Category::with([
             'subCategories' => fn ($q) => $q->orderBy('name'),
@@ -28,19 +59,25 @@ class DocumentTreeController extends Controller
             'subCategories.subjects.documents' => fn ($q) => $q->orderBy('position')->orderBy('created_at'),
         ])->orderBy('display_order')->orderBy('name')->get();
 
-        $tree = $categories->map(function (Category $category) {
-            $subs = $category->subCategories->map(function ($sub) {
-                $subjects = $sub->subjects->filter(fn ($s) => Gate::check('view', $s))->map(function ($subject) {
-                    return [
-                        'id'          => $subject->id,
-                        'slug'        => $subject->slug,
-                        'title'       => $subject->title,
-                        'status'      => $subject->status,
-                        'visibility'  => $subject->visibility,
-                        'can_update'  => Gate::check('update', $subject),
-                        'word_count'  => $this->wordCount($subject->body),
-                        'documents'   => $subject->documents->map(fn ($doc) => $this->mapDocument($doc))->values(),
+        return $categories->map(function (Category $category) use ($includeDocuments) {
+            $subs = $category->subCategories->map(function ($sub) use ($includeDocuments) {
+                $subjects = $sub->subjects->filter(fn ($s) => Gate::check('view', $s))->map(function ($subject) use ($includeDocuments) {
+                    $data = [
+                        'id'         => $subject->id,
+                        'slug'       => $subject->slug,
+                        'title'      => $subject->title,
+                        'status'     => $subject->status,
+                        'visibility' => $subject->visibility,
+                        'can_update' => Gate::check('update', $subject),
+                        'word_count' => $this->wordCount($subject->body),
+                        'doc_count'  => $subject->documents->count(),
                     ];
+
+                    if ($includeDocuments) {
+                        $data['documents'] = $subject->documents->map(fn ($doc) => $this->mapDocument($doc))->values();
+                    }
+
+                    return $data;
                 })->values();
 
                 if ($subjects->isEmpty()) {
@@ -48,10 +85,10 @@ class DocumentTreeController extends Controller
                 }
 
                 return [
-                    'id'        => $sub->id,
-                    'name'      => $sub->name,
-                    'slug'      => $sub->slug,
-                    'subjects'  => $subjects,
+                    'id'       => $sub->id,
+                    'name'     => $sub->name,
+                    'slug'     => $sub->slug,
+                    'subjects' => $subjects,
                 ];
             })->filter()->values();
 
@@ -66,9 +103,7 @@ class DocumentTreeController extends Controller
                 'icon'          => $category->icon,
                 'subCategories' => $subs,
             ];
-        })->filter()->values();
-
-        return response()->json($tree);
+        })->filter()->values()->toArray();
     }
 
     private function mapDocument(\App\Models\SubjectDocument $doc): array

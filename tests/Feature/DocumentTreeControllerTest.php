@@ -14,7 +14,7 @@ use Tests\TestCase;
 
 class DocumentTreeControllerTest extends TestCase
 {
-    public function test_authenticated_user_sees_accessible_subjects_in_tree()
+    public function test_authenticated_user_sees_accessible_subjects_in_documents_tree()
     {
         Storage::fake('documents');
 
@@ -43,20 +43,43 @@ class DocumentTreeControllerTest extends TestCase
             'category'        => 'source',
         ]);
 
-        $response = $this->actingAs($user)->getJson(route('documents.tree.data'));
+        $response = $this->actingAs($user)->getJson(route('documents.tree.documents.data'));
         $response->assertOk();
 
         $data = $response->json();
         $this->assertCount(1, $data);
         $this->assertEquals($category->name, $data[0]['name']);
         $this->assertCount(1, $data[0]['subCategories']);
-        $this->assertCount(1, $data[0]['subCategories'][0]['subjects']);
+        $this->assertArrayHasKey('documents', $data[0]['subCategories'][0]['subjects'][0]);
         $this->assertCount(1, $data[0]['subCategories'][0]['subjects'][0]['documents']);
+    }
+
+    public function test_authenticated_user_sees_accessible_subjects_in_subjects_tree()
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $category = Category::factory()->create();
+        $sub = SubCategory::factory()->create(['category_id' => $category->id]);
+        Subject::factory()->create([
+            'category_id'     => $category->id,
+            'sub_category_id' => $sub->id,
+            'status'          => 'published',
+            'visibility'      => 'citoyen',
+        ]);
+
+        $response = $this->actingAs($user)->getJson(route('subjects.tree.data'));
+        $response->assertOk();
+
+        $data = $response->json();
+        $this->assertCount(1, $data);
+        $this->assertEquals($category->name, $data[0]['name']);
+        $this->assertCount(1, $data[0]['subCategories']);
+        $this->assertArrayNotHasKey('documents', $data[0]['subCategories'][0]['subjects'][0]);
+        $this->assertArrayHasKey('doc_count', $data[0]['subCategories'][0]['subjects'][0]);
     }
 
     public function test_guest_cannot_access_tree_data()
     {
-        $this->getJson(route('documents.tree.data'))
+        $this->getJson(route('documents.tree.documents.data'))
             ->assertUnauthorized();
     }
 
@@ -74,7 +97,7 @@ class DocumentTreeControllerTest extends TestCase
 
         $otherUser = User::factory()->create(['email_verified_at' => now()]);
 
-        $response = $this->actingAs($otherUser)->getJson(route('documents.tree.data'));
+        $response = $this->actingAs($otherUser)->getJson(route('documents.tree.documents.data'));
         $this->assertEmpty($response->json());
     }
 }

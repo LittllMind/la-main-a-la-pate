@@ -60,6 +60,10 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        countSubjects(category) {
+            return category.subCategories.reduce((sum, sub) => sum + sub.subjects.length, 0);
+        },
+
         countDocuments(category) {
             return category.subCategories.reduce((sum, sub) => {
                 return sum + sub.subjects.reduce((s, subject) => s + subject.documents.length, 0);
@@ -73,7 +77,7 @@ document.addEventListener('alpine:init', () => {
                     const filteredSubjects = sub.subjects.filter(subject => {
                         const statusOk = this.statusFilter === 'all' || subject.status === this.statusFilter;
                         const subjectText = (subject.title + ' ' + subject.slug).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                        const docMatch = subject.documents.some(doc => {
+                        const docMatch = (subject.documents || []).some(doc => {
                             const t = (doc.title + ' ' + doc.filename + ' ' + doc.category).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                             return t.includes(q);
                         });
