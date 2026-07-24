@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Route;
 |---------------------------------------------------------------------------
 */
 Route::get('/', [ContactController::class, 'seraphotheque'])->name('home');
+Route::get('/', \App\Http\Controllers\HomeController::class)->name('home');
 Route::get('/seraphotheque', [ContactController::class, 'seraphotheque'])->name('seraphotheque');
 
 Route::middleware(['auth'])->group(function () {

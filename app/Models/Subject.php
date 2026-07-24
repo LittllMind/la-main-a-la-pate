@@ -18,6 +18,7 @@ class Subject extends Model
 
     protected $casts = [
         'locked_at' => 'datetime',
+        'last_activity_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -43,6 +44,28 @@ class Subject extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(SubjectComment::class)->orderBy('created_at', 'asc');
+    }
+    
+    public function scopeSubjectLastActivity($query)
+    {
+        $versionSub = SubjectVersion::query()
+            ->selectRaw('MAX(created_at)')
+            ->whereColumn('subject_versions.subject_id', 'subjects.id');
+
+        $commentSub = SubjectComment::query()
+            ->selectRaw('MAX(created_at)')
+            ->whereColumn('subject_comments.subject_id', 'subjects.id');
+
+        $versionSql = $versionSub->toSql();
+        $commentSql = $commentSub->toSql();
+
+        return $query
+            ->select('subjects.*')
+            ->selectRaw("GREATEST(
+                COALESCE(subjects.updated_at, subjects.created_at),
+                COALESCE(($versionSql), subjects.created_at),
+                COALESCE(($commentSql), subjects.created_at)
+            ) as last_activity_at", array_merge($versionSub->getBindings(), $commentSub->getBindings()));
     }
 
     public function images(): HasMany

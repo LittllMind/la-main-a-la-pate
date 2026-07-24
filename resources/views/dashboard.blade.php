@@ -13,26 +13,41 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {{-- Mes sujets --}}
+            {{-- Derniers sujets actualises --}}
             <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                    <h2 class="font-semibold text-slate-800">Mes sujets</h2>
-                    <a href="/sujets" class="text-sm text-emerald-600 hover:underline">Voir tout</a>
+                    <h2 class="font-semibold text-slate-800">Derniers sujets actualises</h2>
+                    <a href="{{ route('subjects.index') }}" class="text-sm text-emerald-600 hover:underline">Voir tout</a>
                 </div>
                 <div class="divide-y divide-slate-100">
-                    @forelse($subjects as $subject)
+                    @forelse($recentSubjects as $subject)
                         <a href="{{ route('subjects.show', $subject) }}" class="block px-6 py-4 hover:bg-slate-50 transition">
-                            <div class="flex items-center justify-between">
-                                <span class="font-medium text-slate-900">{{ $subject->title }}</span>
-                                <span class="text-xs text-slate-500">{{ $subject->status === 'published' ? 'Publie' : 'Brouillon' }}</span>
+                            <div class="flex items-start justify-between gap-3">
+                                <span class="font-medium text-slate-900 line-clamp-1">{{ $subject->title }}</span>
+                                <span class="text-xs shrink-0 px-2 py-0.5 rounded-full {{ $subject->status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
+                                    {{ $subject->status === 'published' ? 'Publie' : 'Brouillon' }}
+                                </span>
                             </div>
-                            <div class="text-xs text-slate-500 mt-1">{{ $subject->theme }}</div>
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center gap-2 text-xs text-slate-500">
+                                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-xs font-semibold shrink-0"
+                                          style="background-color: {{ $subject->user->color ?: '#64748b' }}">
+                                        {{ strtoupper(substr($subject->user->name, 0, 1)) }}
+                                    </span>
+                                    <span class="truncate max-w-[12rem]">{{ $subject->user->name }}</span>
+                                    @if($subject->category)
+                                        <span class="text-slate-300">|</span>
+                                        <span class="truncate max-w-[10rem]">{{ $subject->category->name }}</span>
+                                    @endif
+                                </div>
+                                <span class="text-xs text-slate-500 shrink-0">{{ $subject->last_activity_at->diffForHumans() }}</span>
+                            </div>
                         </a>
                     @empty
                         <div class="px-6 py-8 text-center text-sm text-slate-500">
-                            Vous n'avez pas encore cree de sujet.
+                            Aucun sujet n'a ete recomment mis a jour.
                             <br>
-                            <a href="{{ route('subjects.create') }}" class="text-emerald-600 hover:underline mt-2 inline-block">Creer mon premier sujet</a>
+                            <a href="{{ route('subjects.create') }}" class="text-emerald-600 hover:underline mt-2 inline-block">Creer le premier sujet</a>
                         </div>
                     @endforelse
                 </div>

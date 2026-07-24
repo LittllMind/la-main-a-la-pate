@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Subject;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -11,8 +13,11 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        $subjects = $user->subjects()
-            ->latest()
+        $recentSubjects = Subject::query()
+            ->subjectLastActivity()
+            ->orderByDesc('last_activity_at')
+            ->orderByDesc('subjects.id')
+            ->with(['user', 'category', 'subCategory'])
             ->limit(5)
             ->get();
 
@@ -24,6 +29,6 @@ class DashboardController extends Controller
 
         $activity = \App\Models\ActivityLog::recent(20);
 
-        return view('dashboard', compact('user', 'subjects', 'comments', 'activity'));
+        return view('dashboard', compact('user', 'recentSubjects', 'comments', 'activity'));
     }
 }
