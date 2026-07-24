@@ -25,62 +25,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6">
-            <div class="flex justify-between h-14 items-center">
-                <a href="/" class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-                    La Main a la Pate
-                </a>
-                <div class="hidden sm:flex items-center gap-6 text-sm">
-                @auth
-                    <a href="/sujets" class="text-slate-600 hover:text-slate-900 transition">Sujets</a>
-                    <a href="/documents/arbre" class="text-slate-600 hover:text-slate-900 transition">Documents</a>
-                    <a href="/sujets/arbre" class="text-slate-600 hover:text-slate-900 transition">Arbre sujets</a>
-                    <a href="/dashboard" class="text-slate-600 hover:text-slate-900 transition">Tableau de bord</a>
-                    <a href="/profile" class="text-slate-600 hover:text-slate-900 transition">Mon profil</a>
-
-                    @admin
-                        <a href="{{ route('admin.panel') }}" class="text-slate-600 hover:text-slate-900 transition">admin</a>
-                    @endadmin
-
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
-                        @csrf
-                        <button type="submit" class="text-slate-500 hover:text-red-600 text-sm transition">Deconnexion</button>
-                    </form>
-                @else
-                    <a href="/seraphotheque" class="text-slate-600 hover:text-slate-900 transition">Seraphotheque</a>
-                    <a href="{{ route('login') }}" class="text-slate-600 hover:text-slate-900 transition">Connexion</a>
-                @endauth
-                </div>
-                <button id="mobile-menu-btn" class="sm:hidden text-slate-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                    </svg>
-                </button>
-            </div>
-            <div id="mobile-menu" class="hidden sm:hidden pb-4 space-y-2 text-sm">
-                @auth
-                    <a href="/sujets" class="block text-slate-600 hover:text-slate-900 py-1">Sujets</a>
-                    <a href="/documents/arbre" class="block text-slate-600 hover:text-slate-900 py-1">Documents</a>
-                    <a href="/sujets/arbre" class="block text-slate-600 hover:text-slate-900 py-1">Arbre sujets</a>
-                    <a href="/dashboard" class="block text-slate-600 hover:text-slate-900 py-1">Tableau de bord</a>
-                    <a href="/profile" class="block text-slate-600 hover:text-slate-900 py-1">Mon profil</a>
-                    @admin
-                        <a href="{{ route('admin.panel') }}" class="block text-slate-600 hover:text-slate-900 py-1">admin</a>
-                    @endadmin
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="text-slate-500 hover:text-red-600 py-1">Deconnexion</button>
-                    </form>
-                @else
-                    <!-- A propos / Contact / Connexion / S'inscrire masqués le temps de formalisation -->
-                    <a href="/seraphotheque" class="block text-slate-600 hover:text-slate-900 py-1">Seraphotheque</a>
-                    <a href="{{ route('login') }}" class="block text-slate-600 hover:text-slate-900 py-1">Connexion</a>
-                @endauth
-            </div>
-        </div>
-    </nav>
+    @include('layouts.navbar')
 
     @if(session('success'))
         <div class="max-w-5xl mx-auto px-4 mt-4">
@@ -105,17 +50,16 @@
                     <h4 class="text-white font-semibold mb-2">Liens</h4>
                     <ul class="space-y-1 text-xs">
                         @auth
-                            <li><a href="/sujets" class="hover:text-white transition">Sujets</a></li>
-                            <li><a href="/documents/arbre" class="hover:text-white transition">Documents</a></li>
-                            <li><a href="/sujets/arbre" class="hover:text-white transition">Arbre sujets</a></li>
+                            <li><a href="{{ route('subjects.tree.index') }}" class="hover:text-white transition">Arbre Sujets</a></li>
+                            <li><a href="{{ route('documents.tree.documents') }}" class="hover:text-white transition">Documents</a></li>
                         @endauth
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-white font-semibold mb-2">Legal</h4>
                     <ul class="space-y-1 text-xs">
-                        <li><a href="/mentions-legales" class="hover:text-white transition">Mentions legales</a></li>
-                        <li><a href="/confidentialite" class="hover:text-white transition">Politique de confidentialite</a></li>
+                        <li><a href="{{ route('legal') }}" class="hover:text-white transition">Mentions legales</a></li>
+                        <li><a href="{{ route('privacy') }}" class="hover:text-white transition">Politique de confidentialite</a></li>
                     </ul>
                 </div>
             </div>
@@ -126,10 +70,5 @@
     </footer>
 
     @stack('scripts')
-    <script>
-        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
-            document.getElementById('mobile-menu').classList.toggle('hidden');
-        });
-    </script>
 </body>
 </html>

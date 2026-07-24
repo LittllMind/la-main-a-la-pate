@@ -16,31 +16,44 @@ class NavigationVisibilityTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Seraphotheque');
-        $response->assertDontSee('Hall');
-        $response->assertDontSee('Communaute');
         $response->assertDontSee('Tableau de bord');
     }
 
-    public function test_authenticated_users_see_sujets_and_dashboard(): void
+    public function test_authenticated_users_see_core_mobile_first_navigation(): void
     {
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get('/seraphotheque');
 
         $response->assertStatus(200);
-        $response->assertSee('Sujets');
+        $response->assertSee('Arbre Sujets');
+        $response->assertSee('Documents');
         $response->assertSee('Tableau de bord');
-        $response->assertDontSee('Communaute');
+
+        $this->assertStringNotContainsString('">Sujets</a>', $response->getContent());
     }
 
-    public function test_admin_users_see_dashboard_link_and_admin_entry(): void
+    public function test_mobile_menu_contains_profile_admin_and_logout(): void
     {
-        $user = User::factory()->admin()->create();
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->get('/seraphotheque');
+
+        $response->assertStatus(200);
+        $response->assertSee('Mon profil');
+        $response->assertSee('Administration');
+        $response->assertSee('Deconnexion');
+    }
+
+    public function test_mobile_menu_does_not_show_admin_for_non_admin(): void
+    {
+        $user = User::factory()->create(['role' => 'citoyen']);
 
         $response = $this->actingAs($user)->get('/seraphotheque');
 
         $response->assertStatus(200);
-        $response->assertSee('Tableau de bord');
-        $response->assertSee('admin');
+        $response->assertSee('Mon profil');
+        $response->assertSee('Deconnexion');
+        $response->assertDontSee('Administration');
     }
 }

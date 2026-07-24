@@ -14,29 +14,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6">
-            <div class="flex justify-between h-14 items-center">
-                <a href="/" class="text-lg font-bold text-slate-900 tracking-tight">
-                    La Main a la Pate
-                </a>
-                <div class="hidden sm:flex items-center gap-6 text-sm">
-                    @auth
-                        <a href="/sujets" class="text-slate-600 hover:text-slate-900">Sujets</a>
-                        <a href="/dashboard" class="text-slate-600 hover:text-slate-900">Tableau de bord</a>
-                        <a href="/profile" class="text-slate-600 hover:text-slate-900">Mon profil</a>
-                        <form method="POST" action="{{ route('logout') }}" class="inline">
-                            @csrf
-                            <button type="submit" class="text-slate-500 hover:text-red-600 text-sm">Deconnexion</button>
-                        </form>
-                    @else
-                        <a href="/seraphotheque" class="text-slate-600 hover:text-slate-900">Seraphotheque</a>
-                        <a href="{{ route('login') }}" class="text-slate-600 hover:text-slate-900">Connexion</a>
-                    @endauth
-                </div>
-            </div>
-        </div>
-    </nav>
+    @include('layouts.navbar')
 
     @if(session('success'))
         <div class="max-w-5xl mx-auto px-4 mt-4">
@@ -46,7 +24,7 @@
         </div>
     @endif
 
-    <main class="flex-grow">
+    <main class="flex-grow w-full">
         {{ $slot ?? '' }}
         @yield('content')
     </main>
@@ -56,5 +34,7 @@
             &copy; {{ date('Y') }} La Main a la Pate — Le Rozier
         </div>
     </footer>
+
+    @stack('scripts')
 </body>
 </html>
