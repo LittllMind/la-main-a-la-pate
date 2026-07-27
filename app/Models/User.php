@@ -86,4 +86,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(SubjectComment::class);
     }
+
+    public function shortcuts()
+    {
+        return $this->hasMany(UserShortcut::class)->orderBy('position');
+    }
 }

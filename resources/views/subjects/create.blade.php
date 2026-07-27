@@ -14,7 +14,7 @@
                 <select id="category_id" name="category_id" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" data-category-select>
                     <option value="">-- Choisir un thème --</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                        <option value="{{ $category->id }}" {{ old('category_id', request('category_id')) == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                     @endforeach
                 </select>
                 @error('category_id')
@@ -139,8 +139,8 @@ Ajoutez des images dans la galerie du sujet, puis cliquez 'Copier markdown' pour
         populateSubs(this.value, null);
     });
 
-    @if(old('category_id'))
-        populateSubs({{ old('category_id') }}, {{ old('sub_category_id', 'null') }});
+    @if(old('category_id', request('category_id')))
+        populateSubs({{ old('category_id', request('category_id')) }}, {{ old('sub_category_id', request('sub_category_id', 'null')) }});
     @endif
 })();
 </script>

@@ -78,20 +78,50 @@
 
         {{-- Acces rapides --}}
         <div class="bg-white rounded-xl border border-slate-200 p-6 mb-8">
-            <h2 class="font-semibold text-slate-800 mb-4">Acces rapides</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <a href="/sujets" class="flex items-center gap-3 p-4 rounded-lg border border-slate-100 hover:border-emerald-300 hover:bg-emerald-50 transition">
-                    <span class="text-2xl">📚</span>
-                    <span class="text-sm font-medium text-slate-700">Sujets du village</span>
-                </a>
-
-                @if($user->isAdmin())
-                    <a href="{{ route('admin.panel') }}" class="flex items-center gap-3 p-4 rounded-lg border border-slate-100 hover:border-emerald-300 hover:bg-emerald-50 transition">
-                        <span class="text-2xl">🛠️</span>
-                        <span class="text-sm font-medium text-slate-700">Administration</span>
-                    </a>
-                @endif
+            <h2 class="font-semibold text-slate-800 mb-4">Mes raccourcis</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+                @forelse($user->shortcuts as $shortcut)
+                    <div class="relative group flex items-center gap-3 p-4 rounded-lg border border-slate-100 hover:border-emerald-300 hover:bg-emerald-50 transition">
+                        <a href="{{ $shortcut->url }}" class="flex items-center gap-3 flex-1 min-w-0">
+                            <span class="text-2xl shrink-0">{{ $shortcut->icon }}</span>
+                            <span class="text-sm font-medium text-slate-700 truncate">{{ $shortcut->label }}</span>
+                        </a>
+                        <form method="POST" action="{{ route('shortcuts.destroy', $shortcut) }}" class="opacity-0 group-hover:opacity-100 transition shrink-0">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-slate-400 hover:text-red-600 p-1" aria-label="Supprimer">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                @empty
+                    <div class="col-span-full text-sm text-slate-500">Aucun raccourci personnalise.</div>
+                @endforelse
             </div>
+
+            <form method="POST" action="{{ route('shortcuts.store') }}" class="flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4">
+                @csrf
+                <div class="flex-1 min-w-[8rem]">
+                    <label for="shortcut-label" class="block text-xs font-medium text-slate-600 mb-1">Nom</label>
+                    <input type="text" id="shortcut-label" name="label" maxlength="50" required placeholder="Ex: Budget 2026"
+                           class="w-full rounded-md border-slate-200 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                </div>
+                <div class="flex-[2] min-w-[12rem]">
+                    <label for="shortcut-url" class="block text-xs font-medium text-slate-600 mb-1">Lien</label>
+                    <input type="text" id="shortcut-url" name="url" maxlength="255" required placeholder="/sujets/... ou https://..."
+                           class="w-full rounded-md border-slate-200 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                </div>
+                <div class="w-20">
+                    <label for="shortcut-icon" class="block text-xs font-medium text-slate-600 mb-1">Icone</label>
+                    <input type="text" id="shortcut-icon" name="icon" maxlength="20" placeholder="🔗"
+                           class="w-full rounded-md border-slate-200 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                </div>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition">
+                    Ajouter
+                </button>
+            </form>
         </div>
 
         {{-- Activité récente --}}

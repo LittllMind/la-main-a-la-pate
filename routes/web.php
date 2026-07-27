@@ -117,10 +117,12 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.tree.')->group(fun
 */
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/raccourcis', [\App\Http\Controllers\UserShortcutController::class, 'store'])->name('shortcuts.store');
+    Route::delete('/raccourcis/{shortcut}', [\App\Http\Controllers\UserShortcutController::class, 'destroy'])->name('shortcuts.destroy');
 });
 
 /*

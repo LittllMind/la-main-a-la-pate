@@ -59,14 +59,20 @@
                 <div x-show="isCategoryOpen(category.id)" class="px-4 py-3 space-y-3" x-cloak>
                     <template x-for="sub in category.subCategories" :key="sub.id">
                         <div class="border-l-2 border-slate-200 pl-4">
-                            <button type="button" @click="toggleSub(sub.id)"
-                                    class="w-full flex items-center gap-2 text-left py-1">
-                                <span class="text-sm font-medium text-slate-700" x-text="sub.name"></span>
-                                <span class="ml-auto text-xs text-slate-400" x-text="sub.subjects.length + ' sujet' + (sub.subjects.length > 1 ? 's' : '')"></span>
-                                <svg :class="isSubOpen(sub.id) ? 'rotate-90' : ''" class="w-3 h-3 text-slate-400 transition ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </button>
+                            <div class="flex items-center justify-between py-1">
+                                <button type="button" @click="toggleSub(sub.id)"
+                                        class="flex items-center gap-2 text-left">
+                                    <span class="text-sm font-medium text-slate-700" x-text="sub.name"></span>
+                                    <span class="text-xs text-slate-400" x-text="sub.subjects.length + ' sujet' + (sub.subjects.length > 1 ? 's' : '')"></span>
+                                    <svg :class="isSubOpen(sub.id) ? 'rotate-90' : ''" class="w-3 h-3 text-slate-400 transition ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                                <a :href="'/sujets/creer?category_id=' + category.id + '&sub_category_id=' + sub.id"
+                                   class="text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition shrink-0">
+                                    + Sujet
+                                </a>
+                            </div>
 
                             <div x-show="isSubOpen(sub.id)" class="mt-2 space-y-2" x-cloak>
                                 <template x-for="subject in sub.subjects" :key="subject.id">
