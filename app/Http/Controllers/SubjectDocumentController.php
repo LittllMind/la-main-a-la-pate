@@ -104,6 +104,15 @@ class SubjectDocumentController extends Controller
             'position'        => $subject->documents()->count() + 1,
         ]);
 
+        \App\Models\ActivityLog::log(
+            event: 'create',
+            user: auth()->user(),
+            entityType: 'subject_document',
+            entityId: $doc->id,
+            description: "Document attaché au sujet « {$subject->title} » : {$doc->title}",
+            metadata: ['subject_id' => $subject->id, 'category' => $doc->category, 'size' => $doc->size]
+        );
+
         return redirect()
             ->route('subjects.documents.index', $subject->slug)
             ->with('success', 'Document ajouté : ' . $doc->title);
@@ -135,6 +144,15 @@ class SubjectDocumentController extends Controller
 
         $this->storage->delete($document->path);
         $document->delete();
+
+        \App\Models\ActivityLog::log(
+            event: 'delete',
+            user: auth()->user(),
+            entityType: 'subject_document',
+            entityId: $document->id,
+            description: "Document supprimé du sujet « {$subject->title} »",
+            metadata: ['subject_id' => $subject->id]
+        );
 
         return redirect()
             ->route('subjects.documents.index', $subject->slug)
@@ -214,6 +232,15 @@ class SubjectDocumentController extends Controller
             'category'        => $request->category ?: 'annexe',
             'position'        => $subject->documents()->count() + 1,
         ]);
+
+        \App\Models\ActivityLog::log(
+            event: 'create',
+            user: auth()->user(),
+            entityType: 'subject_document',
+            entityId: $doc->id,
+            description: "PDF généré et attaché au sujet « {$subject->title} » : {$doc->title}",
+            metadata: ['subject_id' => $subject->id, 'source' => 'markdown-pdf', 'size' => $doc->size]
+        );
 
         return redirect()
             ->route('subjects.documents.index', $subject->slug)

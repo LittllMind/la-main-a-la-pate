@@ -42,7 +42,7 @@ class SubjectDocument extends Model
 
     public function isSecure(): bool
     {
-        return $this->disk !== 'subject_documents';
+        return $this->disk === 'documents';
     }
 
     public function icon(): string
