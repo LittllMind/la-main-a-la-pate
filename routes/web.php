@@ -179,4 +179,7 @@ Route::middleware(['auth'])->group(function () {
 
 require __DIR__.'/auth.php';
 
+Route::get('/recherche', \App\Http\Controllers\SearchController::class)->name('search');
+
 Route::redirect('/register', '/login')->name('register');
+
