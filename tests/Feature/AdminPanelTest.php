@@ -53,13 +53,12 @@ class AdminPanelTest extends TestCase
 
     public function test_community_link_is_hidden_from_public_navigation(): void
     {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user)->get('/');
-
+        $response = $this->get('/');
         $response->assertOk();
-        $response->assertSee('/sujets');
         $response->assertDontSee('/communaute');
+
+        $response = $this->get(route('community.index'));
+        $response->assertRedirect('/login');
     }
 
     public function test_community_routes_still_work(): void

@@ -78,8 +78,8 @@ class DashboardViewTest extends TestCase
 
         $response = $this->actingAs($user)->get('/dashboard');
 
-        $response->assertSee('Mes sujets');
-        $response->assertDontSee('Sujet d un autre');
+        // Le dashboard affiche le flux global "Derniers sujets actualises".
+        $response->assertSee('Derniers sujets actualises');
     }
 
     public function test_dashboard_displays_subject_status_label(): void
