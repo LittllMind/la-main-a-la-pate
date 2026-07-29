@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\Route;
 | ROUTES PUBLIQUES (sans inscription)
 |---------------------------------------------------------------------------
 */
-Route::get('/', [ContactController::class, 'seraphotheque'])->name('home');
 Route::get('/', \App\Http\Controllers\HomeController::class)->name('home');
 Route::get('/seraphotheque', [ContactController::class, 'seraphotheque'])->name('seraphotheque');
 
@@ -105,15 +104,10 @@ Route::middleware(['auth'])->prefix('documents')->name('documents.')->group(func
     Route::get('/arbre-data', [\App\Http\Controllers\DocumentTreeController::class, 'documentsData'])->name('tree.documents.data');
 });
 
-Route::middleware(['auth'])->prefix('sujets')->name('subjects.tree.')->group(function () {
-    Route::get('/arbre', [\App\Http\Controllers\DocumentTreeController::class, 'subjectsIndex'])->name('index');
-    Route::get('/arbre-data', [\App\Http\Controllers\DocumentTreeController::class, 'subjectsData'])->name('data');
-});
-
 /*
-|---------------------------------------------------------------------------
-| ROUTES AUTHENTIFICATION (Breeze)
-|---------------------------------------------------------------------------
+||---------------------------------------------------------------------------
+|| ROUTES AUTHENTIFICATION (Breeze)
+||---------------------------------------------------------------------------
 */
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
