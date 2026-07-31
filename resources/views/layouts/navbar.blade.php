@@ -63,6 +63,30 @@
                         @endforeach
                     </div>
 
+                    {{-- Desktop logout --}}
+                    <div class="hidden lg:flex items-center gap-2">
+                        <a href="{{ route('profile.edit') }}"
+                           class="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+                            <span class="inline-block w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-semibold"
+                                  style="background-color: {{ auth()->user()->color ?: '#64748b' }}">
+                                {{ substr(auth()->user()->name, 0, 1) }}
+                            </span>
+                            <span class="max-w-[8rem] truncate">{{ auth()->user()->name }}</span>
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}" class="inline">
+                            @csrf
+                            <button type="submit"
+                                    class="flex items-center gap-1 px-3 py-2 rounded-md text-sm text-red-600 hover:bg-red-50 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                </svg>
+                                Deconnexion
+                            </button>
+                        </form>
+                    </div>
+
                     {{-- Mobile hamburger --}}
                     <button id="mobile-menu-btn" class="p-2 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 lg:hidden" aria-label="Menu">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
