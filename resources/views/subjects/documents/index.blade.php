@@ -39,6 +39,17 @@
                         <option value="autre">❓ Autre</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Visibilité</label>
+                    <select name="visibility" class="w-full border border-slate-300 rounded px-2 py-1.5 text-sm">
+                        @foreach(\App\Models\VisibilityLevel::cases() as $level)
+                            <option value="{{ $level->value }}" {{ $level->value === 'working' ? 'selected' : '' }}>
+                                {{ $level->label() }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Par défaut : interne uniquement.</p>
+                </div>
             </div>
 
             <div>
@@ -117,12 +128,25 @@ Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserv
                         <a href="{{ route('subjects.documents.download', [$subject->slug, $doc->id]) }}" class="text-emerald-700 hover:underline font-medium">⬇ Télécharger</a>
                         
                         @can('update', $subject)
-                        <span class="text-slate-300">|</span>
-                        <form method="POST" action="{{ route('subjects.documents.destroy', [$subject->slug, $doc->id]) }}" class="inline" onsubmit="return confirm('Supprimer ce document ?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:underline">Supprimer</button>
-                        </form>
+                            <form method="POST" action="{{ route('subjects.documents.update', [$subject->slug, $doc->id]) }}" class="inline mt-2">
+                                @csrf
+                                @method('PATCH')
+                                <div class="flex flex-wrap items-center gap-2 text-xs">
+                                    <select name="visibility" class="border border-slate-300 rounded px-2 py-1 text-sm">
+                                        @foreach(\App\Models\VisibilityLevel::cases() as $level)
+                                            <option value="{{ $level->value }}" {{ $doc->visibility?->value === $level->value ? 'selected' : '' }}>
+                                                {{ $level->label() }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="text-emerald-700 hover:underline">Mettre à jour</button>
+                                </div>
+                            </form>
+                            <form method="POST" action="{{ route('subjects.documents.destroy', [$subject->slug, $doc->id]) }}" class="inline" onsubmit="return confirm('Supprimer ce document ?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-600 hover:underline text-xs">Supprimer</button>
+                            </form>
                         @endcan
                     </div>
                 </div>

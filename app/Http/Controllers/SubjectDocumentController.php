@@ -54,7 +54,11 @@ class SubjectDocumentController extends Controller
             'title'       => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
             'category'    => 'nullable|in:source,annexe,ocr,audio,autre',
+            'visibility'  => 'nullable|in:working,citizen,public',
         ]);
+
+        $visibility = \App\Models\VisibilityLevel::tryFrom($request->input('visibility'))
+            ?? \App\Models\VisibilityLevel::Working;
 
         $file = $request->file('file');
 
@@ -104,7 +108,7 @@ class SubjectDocumentController extends Controller
             'description'     => $request->description,
             'category'        => $request->category ?: 'source',
             'position'        => $subject->documents()->count() + 1,
-            'visibility'      => \App\Models\VisibilityLevel::Working->value,
+            'visibility'      => $visibility->value,
         ]);
 
         \App\Models\ActivityLog::log(
@@ -131,9 +135,10 @@ class SubjectDocumentController extends Controller
             'description' => 'nullable|string|max:1000',
             'category'    => 'nullable|in:source,annexe,ocr,audio,autre',
             'position'    => 'nullable|integer|min:0',
+            'visibility'  => 'nullable|in:working,citizen,public',
         ]);
 
-        $document->update($request->only(['title', 'description', 'category', 'position']));
+        $document->update($request->only(['title', 'description', 'category', 'position', 'visibility']));
 
         return redirect()
             ->route('subjects.documents.index', $subject->slug)
