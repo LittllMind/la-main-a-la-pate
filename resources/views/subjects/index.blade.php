@@ -60,6 +60,15 @@
                         @if($subject->status === 'draft')
                             <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Brouillon</span>
                         @endif
+
+                        @if(auth()->check() && auth()->user()->isModeratorOrAdmin())
+                            @php
+                                $citizenColor = \App\Models\Subject::statusColor($subject->citizen_status);
+                                $publicColor = \App\Models\Subject::statusColor($subject->public_status);
+                            @endphp
+                            <span class="px-2 py-0.5 rounded-full bg-{{ $citizenColor }}-100 text-{{ $citizenColor }}-700 border border-{{ $citizenColor }}-200" title="Version citoyenne">Citoyen : {{ \App\Models\Subject::statusLabel($subject->citizen_status) }}</span>
+                            <span class="px-2 py-0.5 rounded-full bg-{{ $publicColor }}-100 text-{{ $publicColor }}-700 border border-{{ $publicColor }}-200" title="Version publique">Public : {{ \App\Models\Subject::statusLabel($subject->public_status) }}</span>
+                        @endif
                         @if(auth()->check() && $subject->hasNewVersionFor(auth()->user()))
                             <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-semibold">Mis à jour</span>
                         @endif
@@ -68,7 +77,7 @@
                     <h2 class="text-lg font-semibold text-slate-900 mb-2">
                         <a href="{{ route('subjects.show', $subject->slug) }}" class="hover:underline">{{ $subject->title }}</a>
                     </h2>
-                    <p class="text-slate-600 text-sm line-clamp-2">{{ strip_tags($subject->body) }}</p>
+                    <p class="text-slate-600 text-sm line-clamp-2">{{ $subject->summaryFor(auth()->user()) }}</p>
                     <div class="mt-3 flex items-center gap-2 text-xs text-slate-500">
                         <span class="inline-block w-2 h-2 rounded-full" style="background-color: {{ $subject->user->color ?: '#64748b' }}"></span>
                         {{ $subject->user->name }}

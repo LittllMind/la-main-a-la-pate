@@ -20,16 +20,33 @@ class SearchController extends Controller
             return redirect()->route('home');
         }
 
-        $subjects = Subject::whereFullText(['title', 'body'], $q)
+        $user = auth()->user();
+
+        $subjectQuery = Subject::visibleTo($user)
             ->select(['id', 'title', 'slug', 'status', 'created_at', 'user_id'])
             ->with('user:id,name')
-            ->limit(20)
-            ->get();
+            ->limit(20);
 
-        $documents = SubjectDocument::whereFullText(['filename', 'description'], $q)
+        if ($user !== null && $user->isModeratorOrAdmin()) {
+            $subjectQuery->whereFullText(['title', 'body'], $q);
+        } else {
+            // L'index FULLTEXT ne couvre que (title, body).
+            // Pour les guests et les citoyens, on recherche d'abord par titre
+            // pour ne pas casser l'index ni exposer de contenu interne.
+            $subjectQuery->where('title', 'like', '%' . addcslashes($q, '%_\\') . '%');
+        }
+
+        $subjects = $subjectQuery->get();
+
+        $documentQuery = SubjectDocument::whereFullText(['filename', 'description'], $q)
             ->with(['subject:id,title,slug'])
-            ->limit(20)
-            ->get();
+            ->whereHas('subject', function ($sq) use ($user) {
+                $sq->visibleTo($user);
+            })
+            ->visibleTo($user)
+            ->limit(20);
+
+        $documents = $documentQuery->get();
 
         if ($request->wantsJson()) {
             return response()->json([

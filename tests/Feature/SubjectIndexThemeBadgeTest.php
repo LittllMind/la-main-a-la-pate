@@ -49,4 +49,26 @@ class SubjectIndexThemeBadgeTest extends TestCase
         // Assert le style inline background-color contient la couleur hex du sous-thème
         $response->assertSee('background-color: ' . $subCategory->color, false);
     }
+
+    public function test_subject_index_displays_version_status_badges_for_admins(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'email_verified_at' => now(),
+        ]);
+
+        Subject::factory()->create([
+            'user_id' => $admin->id,
+            'citizen_status' => 'published',
+            'public_status'  => 'hidden',
+            'citizen_body'   => 'Contenu citoyen',
+            'public_body'    => 'Contenu public',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('subjects.index'))
+            ->assertOk()
+            ->assertSee('Citoyen : Publié')
+            ->assertSee('Public : Masqué');
+    }
 }

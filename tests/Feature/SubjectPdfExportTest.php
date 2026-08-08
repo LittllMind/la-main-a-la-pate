@@ -47,11 +47,23 @@ class SubjectPdfExportTest extends TestCase
     public function test_admin_can_export_multiple_subjects_pdf()
     {
         $admin = User::factory()->create(['email_verified_at' => now(), 'role' => 'admin']);
-        $subjectA = Subject::factory()->create(['user_id' => $admin->id]);
-        $subjectB = Subject::factory()->create(['user_id' => $admin->id]);
+        $subjectA = Subject::factory()->create([
+            'user_id' => $admin->id,
+            'citizen_body' => 'Body A',
+            'public_body' => 'Body A public',
+            'citizen_status' => 'published',
+            'public_status' => 'published',
+        ]);
+        $subjectB = Subject::factory()->create([
+            'user_id' => $admin->id,
+            'citizen_body' => 'Body B',
+            'public_body' => 'Body B public',
+            'citizen_status' => 'published',
+            'public_status' => 'published',
+        ]);
 
         $response = $this->actingAs($admin)
-            ->get(route('subjects.pdf.index', ['subjects' => [$subjectA->slug, $subjectB->slug]]));
+            ->get('/sujets/export-pdf?subjects[]=' . $subjectA->slug . '&subjects[]=' . $subjectB->slug);
 
         $response->assertOk()
             ->assertHeader('Content-Type', 'application/pdf');

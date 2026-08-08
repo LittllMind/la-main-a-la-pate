@@ -15,7 +15,7 @@ class SubjectPdfController extends Controller
 
         $pdf = Pdf::loadView('subjects.pdf.show', [
             'subject' => $subject,
-            'body' => $subject->renderBody(),
+            'body' => $subject->bodyFor(auth()->user()) ?? '',
         ]);
 
         return $pdf->stream("{$subject->slug}.pdf");
@@ -27,7 +27,7 @@ class SubjectPdfController extends Controller
 
         $pdf = Pdf::loadView('subjects.pdf.show', [
             'subject' => $subject,
-            'body' => $subject->renderBody(),
+            'body' => $subject->bodyFor(auth()->user()) ?? '',
         ]);
 
         return $pdf->download("{$subject->slug}.pdf");
@@ -37,7 +37,8 @@ class SubjectPdfController extends Controller
     {
         Gate::authorize('viewAny', Subject::class);
 
-        $query = Subject::orderBy('title');
+        $user = auth()->user();
+        $query = Subject::visibleTo($user)->orderBy('title');
         $slugs = $request->input('subjects');
 
         if ($slugs) {

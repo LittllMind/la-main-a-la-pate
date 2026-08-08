@@ -23,11 +23,13 @@ class SubjectDocument extends Model
         'description',
         'category',
         'position',
+        'visibility',
     ];
 
     protected $casts = [
         'position' => 'integer',
         'size'     => 'integer',
+        'visibility' => VisibilityLevel::class,
     ];
 
     public function subject(): BelongsTo
@@ -38,6 +40,30 @@ class SubjectDocument extends Model
     public function url(): string
     {
         return route('subjects.documents.download', [$this->subject->slug, $this->id]);
+    }
+
+    public function scopeVisibleTo($query, ?User $user)
+    {
+        return $query->where(function ($q) use ($user) {
+            if ($user === null) {
+                $q->where('visibility', VisibilityLevel::Public->value);
+                return;
+            }
+
+            if ($user->isModeratorOrAdmin()) {
+                return;
+            }
+
+            $q->whereIn('visibility', [
+                VisibilityLevel::Citizen->value,
+                VisibilityLevel::Public->value,
+            ]);
+        });
+    }
+
+    public function visibleTo(?User $user): bool
+    {
+        return $this->visibility?->visibleTo($user) ?? false;
     }
 
     public function isSecure(): bool

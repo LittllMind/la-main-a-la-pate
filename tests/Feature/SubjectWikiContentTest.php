@@ -27,6 +27,8 @@ class SubjectWikiContentTest extends TestCase
                 'sub_category_id' => $subCategory->id,
                 'title' => 'Document markdown',
                 'body' => $body,
+                'citizen_body' => $body,
+                'public_body' => $body,
             ])
             ->assertRedirect();
 

@@ -16,6 +16,8 @@ class SubjectFactory extends Factory
         $title = $this->faker->sentence(4);
         $slugBase = Str::slug($title);
 
+        $body = '<p>' . $this->faker->paragraph() . '</p>';
+
         return [
             'user_id' => User::factory(),
             'category_id' => fn () => \App\Models\Category::factory()->create()->id,
@@ -32,9 +34,15 @@ class SubjectFactory extends Factory
                 }
                 return $slug;
             },
-            'body' => '<p>' . $this->faker->paragraph() . '</p>',
+            'body' => $body,
+            'citizen_body' => $body,
+            'public_body' => $body,
             'status' => 'published',
             'visibility' => 'citoyen',
+            'citizen_status' => 'published',
+            'public_status' => 'published',
+            'citizen_published_at' => now(),
+            'public_published_at' => now(),
             'published_at' => now(),
         ];
     }

@@ -64,7 +64,7 @@ class SiteMapController extends Controller
             ],
         ];
 
-        if ($user->isAdmin()) {
+        if ($user !== null && $user->isAdmin()) {
             $sections[] = [
                 'label' => 'Administration',
                 'icon' => '🛠️',

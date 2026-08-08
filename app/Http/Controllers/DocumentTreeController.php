@@ -53,15 +53,17 @@ class DocumentTreeController extends Controller
 
     private function treeData(bool $includeDocuments): array
     {
+        $user = auth()->user();
+
         $categories = Category::with([
             'subCategories' => fn ($q) => $q->orderBy('name'),
-            'subCategories.subjects' => fn ($q) => $q->orderBy('title'),
-            'subCategories.subjects.documents' => fn ($q) => $q->orderBy('position')->orderBy('created_at'),
+            'subCategories.subjects' => fn ($q) => $q->visibleTo($user)->orderBy('title'),
+            'subCategories.subjects.documents' => fn ($q) => $q->visibleTo($user)->orderBy('position')->orderBy('created_at'),
         ])->orderBy('display_order')->orderBy('name')->get();
 
-        return $categories->map(function (Category $category) use ($includeDocuments) {
-            $subs = $category->subCategories->map(function ($sub) use ($includeDocuments) {
-                $subjects = $sub->subjects->filter(fn ($s) => Gate::check('view', $s))->map(function ($subject) use ($includeDocuments) {
+        return $categories->map(function (Category $category) use ($includeDocuments, $user) {
+            $subs = $category->subCategories->map(function ($sub) use ($includeDocuments, $user) {
+                $subjects = $sub->subjects->map(function ($subject) use ($includeDocuments, $user) {
                     $data = [
                         'id'         => $subject->id,
                         'slug'       => $subject->slug,
@@ -69,7 +71,7 @@ class DocumentTreeController extends Controller
                         'status'     => $subject->status,
                         'visibility' => $subject->visibility,
                         'can_update' => Gate::check('update', $subject),
-                        'word_count' => $this->wordCount($subject->body),
+                        'word_count' => $this->wordCount($subject->bodyFor($user)),
                         'doc_count'  => $subject->documents->count(),
                     ];
 

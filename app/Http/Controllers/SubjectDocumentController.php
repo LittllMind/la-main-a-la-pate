@@ -24,7 +24,9 @@ class SubjectDocumentController extends Controller
         Gate::authorize('view', $subject);
 
         return view('subjects.documents.index', [
-            'subject' => $subject->load('documents'),
+            'subject' => $subject->load([
+                'documents' => fn ($query) => $query->visibleTo(auth()->user()),
+            ]),
         ]);
     }
 
@@ -102,6 +104,7 @@ class SubjectDocumentController extends Controller
             'description'     => $request->description,
             'category'        => $request->category ?: 'source',
             'position'        => $subject->documents()->count() + 1,
+            'visibility'      => \App\Models\VisibilityLevel::Working->value,
         ]);
 
         \App\Models\ActivityLog::log(
@@ -162,6 +165,10 @@ class SubjectDocumentController extends Controller
     public function download(Subject $subject, SubjectDocument $document)
     {
         Gate::authorize('view', $subject);
+
+        if (! $document->visibleTo(auth()->user())) {
+            abort(404);
+        }
 
         if (! $this->storage->exists($document->path)) {
             abort(404);
@@ -231,6 +238,7 @@ class SubjectDocumentController extends Controller
             'description'     => $request->description,
             'category'        => $request->category ?: 'annexe',
             'position'        => $subject->documents()->count() + 1,
+            'visibility'      => \App\Models\VisibilityLevel::Working->value,
         ]);
 
         \App\Models\ActivityLog::log(

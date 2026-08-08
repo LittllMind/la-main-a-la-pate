@@ -13,6 +13,6 @@ class SiteMapAccessTest extends TestCase
     public function test_guest_is_redirected_from_site_map(): void
     {
         $response = $this->get(route('site.map'));
-        $response->assertRedirect(route('login'));
+        $response->assertOk(); // public now
     }
 }

@@ -32,6 +32,7 @@ class SubjectDocumentDownloadTest extends TestCase
             'size' => 1000,
             'title' => 'Source PDF',
             'category' => 'source',
+            'visibility' => \App\Models\VisibilityLevel::Citizen->value,
         ]);
 
         $this->actingAs($user)
@@ -56,6 +57,7 @@ class SubjectDocumentDownloadTest extends TestCase
             'size' => 0,
             'title' => 'Missing',
             'category' => 'source',
+            'visibility' => \App\Models\VisibilityLevel::Citizen->value,
         ]);
 
         $this->actingAs($user)

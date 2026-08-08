@@ -106,11 +106,14 @@
     </div>
 
     @foreach($subjects as $subject)
+        @php
+            $pdfBody = $subject->bodyFor(auth()->user()) ?? '';
+        @endphp
         <div class="subject">
             <h1>{{ $subject->title }}</h1>
             <div class="meta">Thème : {{ $subject->theme }} — Statut : {{ $subject->status === 'published' ? 'Publié' : 'Brouillon' }}</div>
 
-            {!! $subject->renderBody() !!}
+            {!! $pdfBody !!}
         </div>
     @endforeach
 </body>

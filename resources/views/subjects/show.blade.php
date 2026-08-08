@@ -107,11 +107,33 @@
             <a href="{{ route('subjects.edit', $subject->slug) }}" class="inline-block bg-slate-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-900 transition">Modifier le document</a>
             <a href="{{ route('subjects.images.index', $subject->slug) }}" class="inline-block bg-slate-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition">Galerie</a>
 
-            @if($subject->status === 'draft')
-                <form method="POST" action="{{ route('subjects.publish', $subject->slug) }}" class="inline">
+            @if($subject->citizen_status !== 'published' && filled($subject->citizen_body))
+                <form method="POST" action="{{ route('subjects.publish.citizen', $subject->slug) }}" class="inline">
                     @csrf
                     @method('PATCH')
-                    <button type="submit" class="inline-block bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">Publier</button>
+                    <button type="submit" class="inline-block bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">Publier aux citoyens</button>
+                </form>
+            @endif
+            @if($subject->citizen_status !== 'hidden')
+                <form method="POST" action="{{ route('subjects.hide.citizen', $subject->slug) }}" class="inline">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="inline-block bg-amber-100 text-amber-800 border border-amber-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-200 transition">Masquer aux citoyens</button>
+                </form>
+            @endif
+
+            @if($subject->public_status !== 'published' && filled($subject->public_body))
+                <form method="POST" action="{{ route('subjects.publish.public', $subject->slug) }}" class="inline">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="inline-block bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition" onclick="return confirm('Confirmer la publication publique ? Le contenu sera accessible aux visiteurs non connectés.')">Publier au public</button>
+                </form>
+            @endif
+            @if($subject->public_status !== 'hidden')
+                <form method="POST" action="{{ route('subjects.hide.public', $subject->slug) }}" class="inline">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="inline-block bg-amber-100 text-amber-800 border border-amber-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-200 transition">Masquer au public</button>
                 </form>
             @endif
 

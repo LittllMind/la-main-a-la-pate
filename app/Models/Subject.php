@@ -14,11 +14,13 @@ class Subject extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'theme', 'title', 'slug', 'body', 'status', 'locked_at', 'category_id', 'sub_category_id', 'visibility', 'published_at'];
+    protected $fillable = ['user_id', 'theme', 'title', 'slug', 'body', 'citizen_body', 'public_body', 'citizen_status', 'public_status', 'citizen_published_at', 'public_published_at', 'status', 'locked_at', 'category_id', 'sub_category_id', 'visibility', 'published_at'];
 
     protected $casts = [
         'locked_at' => 'datetime',
         'last_activity_at' => 'datetime',
+        'citizen_published_at' => 'datetime',
+        'public_published_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -66,6 +68,123 @@ class Subject extends Model
                 COALESCE(($versionSql), subjects.created_at),
                 COALESCE(($commentSql), subjects.created_at)
             ) as last_activity_at", array_merge($versionSub->getBindings(), $commentSub->getBindings()));
+    }
+
+    /**
+     * Filtre les sujets en fonction du niveau d'accès de l'utilisateur.
+     * Guest : sujets dont la version publique est publiée.
+     * Citoyen : sujets dont la version citoyenne est publiée OU version publique publiée.
+     * Admin/moderator/auteur/collaborateur : tous les sujets non archivés.
+     */
+    public function scopeVisibleTo($query, ?User $user)
+    {
+        if ($user === null) {
+            return $query->where('public_status', 'published')
+                ->whereNotNull('public_body');
+        }
+
+        if ($user->isModeratorOrAdmin()) {
+            return $query;
+        }
+
+        // Auteur ou collaborateur : accès complet au dossier non archivé
+        return $query->where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+                ->orWhereHas('collaborators', fn ($c) => $c->where('users.id', $user->id))
+                ->orWhere(function ($q2) {
+                    $q2->where('citizen_status', 'published')
+                        ->whereNotNull('citizen_body');
+                })
+                ->orWhere(function ($q2) {
+                    $q2->where('public_status', 'published')
+                        ->whereNotNull('public_body');
+                });
+        });
+    }
+
+    /**
+     * Retourne un résumé textuel sécurisé pour l'utilisateur donné.
+     */
+    public function summaryFor(?User $user): string
+    {
+        $body = $this->bodyFor($user) ?? '';
+
+        $text = strip_tags((new \League\CommonMark\GithubFlavoredMarkdownConverter([
+            'html_input' => 'strip',
+            'allow_unsafe_links' => false,
+        ]))->convert($body));
+
+        return \Illuminate\Support\Str::limit(html_entity_decode($text, ENT_QUOTES, 'UTF-8'), 200);
+    }
+
+    /**
+     * Libellé lisible d'un statut de publication.
+     */
+    public static function statusLabel(string $status): string
+    {
+        return match ($status) {
+            'published' => 'Publié',
+            'hidden'    => 'Masqué',
+            default     => 'Brouillon',
+        };
+    }
+
+    /**
+     * Couleur associée à un statut de publication (palette Tailwind).
+     */
+    public static function statusColor(string $status): string
+    {
+        return match ($status) {
+            'published' => 'emerald',
+            'hidden'    => 'amber',
+            default     => 'slate',
+        };
+    }
+
+    /**
+     * Retourne le corps à afficher selon le niveau d'accès.
+     * Pas de fallback silencieux depuis un niveau supérieur.
+     */
+    public function bodyFor(?User $user): ?string
+    {
+        if ($user !== null && ($user->isModeratorOrAdmin() || $user->id === $this->user_id || $this->isCollaborator($user))) {
+            return $this->body;
+        }
+
+        if ($user !== null) {
+            if ($this->citizen_status === 'published' && filled($this->citizen_body)) {
+                return $this->citizen_body;
+            }
+            if ($this->public_status === 'published' && filled($this->public_body)) {
+                return $this->public_body;
+            }
+            return null;
+        }
+
+        if ($this->public_status === 'published' && filled($this->public_body)) {
+            return $this->public_body;
+        }
+
+        return null;
+    }
+
+    public function canBeViewedBy(?User $user): bool
+    {
+        if ($this->bodyFor($user) !== null) {
+            return true;
+        }
+
+        if ($user === null) {
+            return false;
+        }
+
+        if ($this->status === 'archived' && ! $user->isAdmin()) {
+            return false;
+        }
+
+        return $user->isModeratorOrAdmin()
+            || $user->id === $this->user_id
+            || $this->isCollaborator($user);
     }
 
     public function images(): HasMany

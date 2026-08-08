@@ -44,6 +44,8 @@ class SubjectMarkdownImageWorkflowTest extends TestCase
             'user_id' => $user->id,
             'status' => 'published',
             'body' => "# Titre\n\nDu texte et un [lien](https://example.com).",
+            'citizen_body' => "# Titre\n\nDu texte et un [lien](https://example.com).",
+            'public_body' => "# Titre\n\nDu texte et un [lien](https://example.com).",
         ]);
 
         $this->actingAs($user)->get("/sujets/{$subject->slug}")

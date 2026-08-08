@@ -41,6 +41,7 @@ class DocumentTreeControllerTest extends TestCase
             'size'            => 500,
             'title'           => 'Doc',
             'category'        => 'source',
+            'visibility'      => \App\Models\VisibilityLevel::Citizen->value,
         ]);
 
         $response = $this->actingAs($user)->getJson(route('documents.tree.documents.data'));
@@ -88,11 +89,15 @@ class DocumentTreeControllerTest extends TestCase
         $category = Category::factory()->create();
         $sub = SubCategory::factory()->create(['category_id' => $category->id]);
         $owner = User::factory()->create();
-        Subject::factory()->create([
-            'user_id'         => $owner->id,
-            'category_id'     => $category->id,
+        $draft = Subject::factory()->for($owner)->create([
+            'user_id' => $owner->id,
+            'category_id' => $category->id,
             'sub_category_id' => $sub->id,
-            'status'          => 'draft',
+            'status' => 'draft',
+            'citizen_status' => 'draft',
+            'public_status' => 'draft',
+            'citizen_body' => null,
+            'public_body' => null,
         ]);
 
         $otherUser = User::factory()->create(['email_verified_at' => now()]);

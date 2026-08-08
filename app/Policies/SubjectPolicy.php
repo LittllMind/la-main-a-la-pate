@@ -9,37 +9,12 @@ class SubjectPolicy
 {
     public function view(?User $user, Subject $subject): bool
     {
-        // Les collaborateurs peuvent toujours voir le sujet (même en draft)
-        if ($user !== null && $subject->isCollaborator($user)) {
-            return true;
-        }
-
-        // Draft = auteur + admin/moderator uniquement
-        if ($subject->status === 'draft') {
-            return $this->canManage($user, $subject);
-        }
-
-        // Archived = admin uniquement
-        if ($subject->status === 'archived') {
-            return $user !== null && $user->isAdmin();
-        }
-
-        // Published : dépend de la visibilité
-        if ($subject->status === 'published') {
-            return match ($subject->visibility) {
-                'public'   => $user !== null,                  // connecté obligatoire
-                'citoyen'  => $user !== null,                  // connecté n'importe quel rôle
-                'admin'    => $user !== null && $user->isAdmin(),
-                default    => false,
-            };
-        }
-
-        return false;
+        return $subject->canBeViewedBy($user);
     }
 
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
-        return in_array($user->role, ['admin', 'moderator', 'citoyen', 'member']);
+        return true; // La scope VisibleTo filtre les résultats
     }
 
     public function create(User $user): bool

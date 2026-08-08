@@ -26,32 +26,10 @@ class SubjectController extends Controller
     {
         $user = auth()->user();
 
-        $query = Subject::with(['user', 'comments', 'collaborators', 'subCategory', 'category'])
+        $query = Subject::with(['user', 'subCategory', 'category'])
+            ->visibleTo($user)
             ->where('status', '!=', 'archived')
             ->orderBy('created_at', 'desc');
-
-        // Filtrage par visibilité + status pour les non-admin
-        if (! $user->isModeratorOrAdmin()) {
-            $query->where(function ($q) use ($user) {
-                $q->where(function ($q2) {
-                    $q2->where('status', 'published')
-                        ->whereIn('visibility', ['public', 'citoyen']);
-                })->orWhere(function ($q2) use ($user) {
-                    $q2->where('status', 'draft')
-                        ->where(function ($q3) use ($user) {
-                            $q3->where('user_id', $user->id)
-                                ->orWhereHas('collaborators', function ($q4) use ($user) {
-                                    $q4->where('users.id', $user->id);
-                                });
-                        });
-                });
-            });
-        } else {
-            $query->where(function ($q) {
-                $q->where('status', 'published')
-                  ->orWhere('status', 'draft');
-            });
-        }
 
         $activeCategory = null;
         $selectedThemeSlug = request('theme');
@@ -60,15 +38,14 @@ class SubjectController extends Controller
             if ($activeCategory) {
                 $query->where('category_id', $activeCategory->id);
             } else {
-                // fallback legacy text theme
                 $query->where('theme', $selectedThemeSlug);
             }
         }
 
         $subjects = $query->paginate(24)->withQueryString();
 
-        $categories = \App\Models\Category::withCount(['subjects' => function ($q) {
-            $q->where('status', '!=', 'archived');
+        $categories = \App\Models\Category::withCount(['subjects' => function ($q) use ($user) {
+            $q->where('status', '!=', 'archived')->visibleTo($user);
         }])->orderBy('id')->get();
 
         return view('subjects.index', [
@@ -142,15 +119,32 @@ class SubjectController extends Controller
 
     public function show(Subject $subject)
     {
-        Gate::authorize('view', $subject);
+        $user = auth()->user();
 
-        $subject = $subject->load(['user', 'comments.user', 'versions.user', 'documents']);
+        if (! $subject->canBeViewedBy($user)) {
+            abort(404);
+        }
 
-        if (auth()->check()) {
+        $body = $subject->bodyFor($user);
+
+        if ($body === null) {
+            abort(404);
+        }
+
+        $subject->body = $body;
+
+        $subject->load([
+            'user',
+            'comments.user',
+            'versions.user',
+            'documents' => fn ($query) => $query->visibleTo($user),
+        ]);
+
+        if ($user !== null) {
             $latestVersionId = $subject->versions()->orderBy('created_at', 'desc')->value('id');
             if ($latestVersionId) {
                 SubjectUserLastSeenVersion::updateOrCreate(
-                    ['user_id' => auth()->id(), 'subject_id' => $subject->id],
+                    ['user_id' => $user->id, 'subject_id' => $subject->id],
                     ['version_id' => $latestVersionId, 'seen_at' => now()]
                 );
             }
@@ -192,6 +186,8 @@ class SubjectController extends Controller
             'theme_other' => 'nullable|string|max:120',
             'title' => 'required|string|max:255',
             'body' => 'required|string|max:50000',
+            'citizen_body' => 'nullable|string|max:50000',
+            'public_body' => 'nullable|string|max:50000',
             'change_summary' => 'nullable|string|max:255',
         ]);
 
@@ -208,6 +204,8 @@ class SubjectController extends Controller
             'theme' => $theme,
             'title' => $validated['title'],
             'body' => $validated['body'],
+            'citizen_body' => $validated['citizen_body'] ?? null,
+            'public_body' => $validated['public_body'] ?? null,
         ]);
 
         ActivityLog::log(
@@ -296,6 +294,104 @@ class SubjectController extends Controller
         return redirect()
             ->route('subjects.show', $subject->slug)
             ->with('success', 'Sujet publie.');
+    }
+
+    public function publishPublic(Subject $subject)
+    {
+        Gate::authorize('update', $subject);
+
+        if (! filled($subject->public_body)) {
+            return redirect()
+                ->route('subjects.edit', $subject->slug)
+                ->with('error', 'La version publique ne peut pas être publiée sans contenu.');
+        }
+
+        $subject->update([
+            'public_status' => 'published',
+            'public_published_at' => now(),
+        ]);
+
+        ActivityLog::log(
+            event: 'publish_public',
+            user: auth()->user(),
+            entityType: 'subject',
+            entityId: $subject->id,
+            description: "Publication publique du sujet « {$subject->title} »",
+        );
+
+        return redirect()
+            ->route('subjects.edit', $subject->slug)
+            ->with('success', 'Version publique publiee.');
+    }
+
+    public function hidePublic(Subject $subject)
+    {
+        Gate::authorize('update', $subject);
+
+        $subject->update([
+            'public_status' => 'hidden',
+        ]);
+
+        ActivityLog::log(
+            event: 'hide_public',
+            user: auth()->user(),
+            entityType: 'subject',
+            entityId: $subject->id,
+            description: "Masquage public du sujet « {$subject->title} »",
+        );
+
+        return redirect()
+            ->route('subjects.edit', $subject->slug)
+            ->with('success', 'Version publique masquee.');
+    }
+
+    public function publishCitizen(Subject $subject)
+    {
+        Gate::authorize('update', $subject);
+
+        if (! filled($subject->citizen_body)) {
+            return redirect()
+                ->route('subjects.edit', $subject->slug)
+                ->with('error', 'La version citoyenne ne peut pas être publiée sans contenu.');
+        }
+
+        $subject->update([
+            'citizen_status' => 'published',
+            'citizen_published_at' => now(),
+        ]);
+
+        ActivityLog::log(
+            event: 'publish_citizen',
+            user: auth()->user(),
+            entityType: 'subject',
+            entityId: $subject->id,
+            description: "Publication citoyenne du sujet « {$subject->title} »",
+        );
+
+        return redirect()
+            ->route('subjects.edit', $subject->slug)
+            ->with('success', 'Version citoyenne publiee.');
+    }
+
+    public function hideCitizen(Subject $subject)
+    {
+        Gate::authorize('update', $subject);
+
+        $subject->update([
+            'citizen_status' => 'hidden',
+        ]);
+
+        ActivityLog::log(
+            event: 'hide_citizen',
+            user: auth()->user(),
+            entityType: 'subject',
+            entityId: $subject->id,
+            description: "Masquage citoyen du sujet « {$subject->title} »",
+        );
+
+        return redirect()
+            ->route('subjects.edit', $subject->slug)
+            ->with('success', 'Version citoyenne masquee.');
     }
 
     private function resolveTheme(string $theme, ?string $other): string

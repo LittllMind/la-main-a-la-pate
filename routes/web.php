@@ -29,12 +29,13 @@ Route::get('/seraphotheque', [ContactController::class, 'seraphotheque'])->name(
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/a-propos', [ContactController::class, 'about'])->name('about');
-    Route::get('/contact', [ContactController::class, 'contactForm'])->name('contact');
     Route::post('/contact', [ContactController::class, 'contactSubmit'])->name('contact.submit');
-    Route::get('/mentions-legales', [ContactController::class, 'legal'])->name('legal');
-    Route::get('/confidentialite', [ContactController::class, 'privacy'])->name('privacy');
-    Route::get('/plan-du-site', [SiteMapController::class, 'index'])->name('site.map');
 });
+
+Route::get('/mentions-legales', [ContactController::class, 'legal'])->name('legal');
+Route::get('/confidentialite', [ContactController::class, 'privacy'])->name('privacy');
+Route::get('/plan-du-site', [SiteMapController::class, 'index'])->name('site.map');
+Route::get('/contact', [ContactController::class, 'contactForm'])->name('contact');
 
 /*
 |---------------------------------------------------------------------------
@@ -50,22 +51,32 @@ Route::get('/actu/{slug}', [PostPublicController::class, 'show'])->name('posts.s
 | ESPACE SUJETS (membres authentifies)
 |---------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->prefix('sujets')->name('subjects.tree.')->group(function () {
+Route::middleware(['auth', 'verified'])->prefix('sujets')->name('subjects.tree.')->group(function () {
     Route::get('/arbre', [\App\Http\Controllers\DocumentTreeController::class, 'subjectsIndex'])->name('index');
     Route::get('/arbre-data', [\App\Http\Controllers\DocumentTreeController::class, 'subjectsData'])->name('data');
 });
 
-Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function () {
+Route::prefix('sujets')->name('subjects.')->group(function () {
     Route::get('/', [SubjectController::class, 'index'])->name('index');
     Route::get('/creer', [SubjectController::class, 'create'])->name('create');
-    Route::post('/', [SubjectController::class, 'store'])->name('store');
     Route::get('/importer', [SubjectImportController::class, 'create'])->name('import.create');
+    Route::get('/{subject:slug}', [SubjectController::class, 'show'])->name('show')->where('subject', '^(?!export-pdf$|arbre$|arbre-data$|creer$|importer$)[^/]+$');
+});
+
+Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function () {
+    Route::post('/', [SubjectController::class, 'store'])->name('store');
     Route::post('/importer', [SubjectImportController::class, 'store'])->name('import.store');
     Route::post('/{subject:slug}/commentaires', [SubjectController::class, 'storeComment'])->name('comments.store');
     Route::get('/{subject:slug}/modifier', [SubjectController::class, 'edit'])->name('edit');
     Route::put('/{subject:slug}', [SubjectController::class, 'update'])->name('update');
     Route::delete('/{subject:slug}', [SubjectController::class, 'destroy'])->name('destroy');
-    Route::patch('/{subject:slug}/publier', [SubjectController::class, 'publish'])->name('publish');
+    Route::patch('/{subject:slug}/publier', [SubjectController::class, 'publish'])->name('publish.old');
+
+    // Publication / masquage séparés par audience
+    Route::patch('/{subject:slug}/publier-public', [SubjectController::class, 'publishPublic'])->name('publish.public');
+    Route::patch('/{subject:slug}/masquer-public', [SubjectController::class, 'hidePublic'])->name('hide.public');
+    Route::patch('/{subject:slug}/publier-citoyen', [SubjectController::class, 'publishCitizen'])->name('publish.citizen');
+    Route::patch('/{subject:slug}/masquer-citoyen', [SubjectController::class, 'hideCitizen'])->name('hide.citizen');
 
     // Collaboration et votes de publication
     Route::post('/{subject:slug}/collaborateurs', [SubjectCollaboratorController::class, 'store'])->name('collaborators.store');
@@ -90,8 +101,6 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function
     Route::get('/export-pdf', [SubjectPdfController::class, 'index'])->name('pdf.index');
     Route::get('/{subject:slug}/pdf', [SubjectPdfController::class, 'show'])->name('pdf.show');
     Route::get('/{subject:slug}/pdf-telecharger', [SubjectPdfController::class, 'download'])->name('pdf.download');
-
-    Route::get('/{subject:slug}', [SubjectController::class, 'show'])->name('show');
 });
 
 /*

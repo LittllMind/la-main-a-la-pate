@@ -28,6 +28,7 @@ class SubjectDocumentSecureStorageTest extends TestCase
             'size'            => $contentSize,
             'title'           => 'Source PDF',
             'category'        => 'source',
+            'visibility'      => \App\Models\VisibilityLevel::Citizen->value,
         ]);
     }
 
