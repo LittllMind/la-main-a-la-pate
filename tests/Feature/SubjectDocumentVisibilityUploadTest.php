@@ -136,7 +136,35 @@ class SubjectDocumentVisibilityUploadTest extends TestCase
         $this->assertEquals(0, SubjectDocument::where('subject_id', $subject->id)->count());
     }
 
-    public function test_uploaded_document_visibility_is_effective_for_guest_and_citizen_and_admin()
+    public function test_uploaded_document_visibility_is_effective_for_admin()
+    {
+        Storage::fake('documents');
+
+        $admin = User::factory()->create(['role' => 'admin', 'email_verified_at' => now()]);
+        $subject = Subject::factory()->create([
+            'user_id' => $admin->id,
+            'public_status' => 'published',
+            'public_body' => 'Version publique.',
+            'citizen_status' => 'published',
+            'citizen_body' => 'Version citoyenne.',
+        ]);
+
+        SubjectDocument::factory()->for($subject)->public()
+            ->create(['title' => 'PUBLIC_DOC_MARKER_7x9a', 'stored_filename' => 'public.enc', 'path' => 'subjects/1/public.enc']);
+        SubjectDocument::factory()->for($subject)->citizen()
+            ->create(['title' => 'CITIZEN_DOC_MARKER_3k2m', 'stored_filename' => 'citizen.enc', 'path' => 'subjects/1/citizen.enc']);
+        SubjectDocument::factory()->for($subject)->working()
+            ->create(['title' => 'WORKING_DOC_MARKER_5p1q', 'stored_filename' => 'working.enc', 'path' => 'subjects/1/working.enc']);
+
+        $this->actingAs($admin)
+            ->get(route('subjects.show', $subject->slug))
+            ->assertOk()
+            ->assertSee('PUBLIC_DOC_MARKER_7x9a')
+            ->assertSee('CITIZEN_DOC_MARKER_3k2m')
+            ->assertSee('WORKING_DOC_MARKER_5p1q');
+    }
+
+    public function test_uploaded_document_visibility_is_effective_for_citizen()
     {
         Storage::fake('documents');
 
@@ -150,44 +178,50 @@ class SubjectDocumentVisibilityUploadTest extends TestCase
             'citizen_body' => 'Version citoyenne.',
         ]);
 
-        $publicDoc = SubjectDocument::factory()
-            ->for($subject)
-            ->public()
-            ->create(['title' => 'Doc public', 'stored_filename' => 'public.enc', 'path' => 'subjects/1/public.enc']);
-
-        $citizenDoc = SubjectDocument::factory()
-            ->for($subject)
-            ->citizen()
-            ->create(['title' => 'Doc citizen', 'stored_filename' => 'citizen.enc', 'path' => 'subjects/1/citizen.enc']);
-
-        $workingDoc = SubjectDocument::factory()
-            ->for($subject)
-            ->working()
-            ->create(['title' => 'Doc working', 'stored_filename' => 'working.enc', 'path' => 'subjects/1/working.enc']);
-
-        Storage::disk('documents')->put($publicDoc->path, 'public content');
-        Storage::disk('documents')->put($citizenDoc->path, 'citizen content');
-        Storage::disk('documents')->put($workingDoc->path, 'working content');
-
-        $this->actingAs($admin)
-            ->get(route('subjects.show', $subject->slug))
-            ->assertOk()
-            ->assertSee('Doc public')
-            ->assertSee('Doc citizen')
-            ->assertSee('Doc working');
+        SubjectDocument::factory()->for($subject)->public()
+            ->create(['title' => 'PUBLIC_DOC_MARKER_7x9a', 'stored_filename' => 'public.enc', 'path' => 'subjects/1/public.enc']);
+        SubjectDocument::factory()->for($subject)->citizen()
+            ->create(['title' => 'CITIZEN_DOC_MARKER_3k2m', 'stored_filename' => 'citizen.enc', 'path' => 'subjects/1/citizen.enc']);
+        SubjectDocument::factory()->for($subject)->working()
+            ->create(['title' => 'WORKING_DOC_MARKER_5p1q', 'stored_filename' => 'working.enc', 'path' => 'subjects/1/working.enc']);
 
         $this->actingAs($citizen)
             ->get(route('subjects.show', $subject->slug))
             ->assertOk()
-            ->assertSee('Doc public')
-            ->assertSee('Doc citizen')
-            ->assertDontSee('Doc working');
+            ->assertSee('PUBLIC_DOC_MARKER_7x9a')
+            ->assertSee('CITIZEN_DOC_MARKER_3k2m')
+            ->assertDontSee('WORKING_DOC_MARKER_5p1q');
+    }
+
+    public function test_uploaded_document_visibility_is_effective_for_guest()
+    {
+        Storage::fake('documents');
+
+        $admin = User::factory()->create(['role' => 'admin', 'email_verified_at' => now()]);
+        $subject = Subject::factory()->create([
+            'user_id' => $admin->id,
+            'public_status' => 'published',
+            'public_body' => 'Version publique.',
+            'citizen_status' => 'published',
+            'citizen_body' => 'Version citoyenne.',
+        ]);
+
+        SubjectDocument::factory()->for($subject)->public()
+            ->create(['title' => 'PUBLIC_DOC_MARKER_7x9a', 'stored_filename' => 'public.enc', 'path' => 'subjects/1/public.enc']);
+        SubjectDocument::factory()->for($subject)->citizen()
+            ->create(['title' => 'CITIZEN_DOC_MARKER_3k2m', 'stored_filename' => 'citizen.enc', 'path' => 'subjects/1/citizen.enc']);
+        SubjectDocument::factory()->for($subject)->working()
+            ->create(['title' => 'WORKING_DOC_MARKER_5p1q', 'stored_filename' => 'working.enc', 'path' => 'subjects/1/working.enc']);
+
+        auth()->logout();
+
+        $this->assertGuest();
 
         $this->get(route('subjects.show', $subject->slug))
             ->assertOk()
-            ->assertSee('Doc public')
-            ->assertDontSee('Doc title="Doc citizen"')
-            ->assertDontSee('Doc working');
+            ->assertSee('PUBLIC_DOC_MARKER_7x9a')
+            ->assertDontSee('CITIZEN_DOC_MARKER_3k2m')
+            ->assertDontSee('WORKING_DOC_MARKER_5p1q');
     }
 
     public function test_document_update_can_change_visibility()

@@ -8,6 +8,7 @@ use App\Services\DocumentStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Enum;
 
 class SubjectDocumentController extends Controller
 {
@@ -54,7 +55,7 @@ class SubjectDocumentController extends Controller
             'title'       => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
             'category'    => 'nullable|in:source,annexe,ocr,audio,autre',
-            'visibility'  => 'nullable|in:working,citizen,public',
+            'visibility'  => ['nullable', new Enum(\App\Models\VisibilityLevel::class)],
         ]);
 
         $visibility = \App\Models\VisibilityLevel::tryFrom($request->input('visibility'))
@@ -135,7 +136,7 @@ class SubjectDocumentController extends Controller
             'description' => 'nullable|string|max:1000',
             'category'    => 'nullable|in:source,annexe,ocr,audio,autre',
             'position'    => 'nullable|integer|min:0',
-            'visibility'  => 'nullable|in:working,citizen,public',
+            'visibility'  => ['nullable', new Enum(\App\Models\VisibilityLevel::class)],
         ]);
 
         $document->update($request->only(['title', 'description', 'category', 'position', 'visibility']));
