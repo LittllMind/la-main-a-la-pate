@@ -58,6 +58,72 @@
             </div>
 
             <button type="submit" class="bg-emerald-700 text-white px-4 py-1.5 rounded text-sm hover:bg-emerald-800">📎 Attacher le document</button>
+
+            @can('update', $subject)
+            <details class="mt-3 border border-slate-200 rounded-md">
+                <summary class="px-3 py-2 bg-slate-50 text-xs font-medium cursor-pointer">Métadonnées documentaires</summary>
+                <div class="p-3 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Date du document</label>
+                            <input type="date" name="document_date" class="w-full border border-slate-300 rounded px-2 py-1 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Nature</label>
+                            <input type="text" name="document_type" list="document-type-suggestions" placeholder="Ex: sommation" maxlength="80" class="w-full border border-slate-300 rounded px-2 py-1 text-sm">
+                            <datalist id="document-type-suggestions">
+                                <option value="convention"></option>
+                                <option value="sommation"></option>
+                                <option value="mail"></option>
+                                <option value="délibération"></option>
+                                <option value="AOT"></option>
+                                <option value="profession de foi"></option>
+                                <option value="CR Conseil municipal"></option>
+                            </datalist>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Auteur / organisme</label>
+                            <input type="text" name="author" placeholder="Ex: Commune du Rozier" maxlength="255" class="w-full border border-slate-300 rounded px-2 py-1 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Destinataire</label>
+                            <input type="text" name="recipient" placeholder="Ex: La Séraphothèque" maxlength="255" class="w-full border border-slate-300 rounded px-2 py-1 text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Origine / source de la copie (interne)</label>
+                            <input type="text" name="source_reference" placeholder="Archive LEX / chemin interne" maxlength="2000" class="w-full border border-slate-300 rounded px-2 py-1 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-1">Type de représentation</label>
+                            <select name="representation_type" class="w-full border border-slate-300 rounded px-2 py-1 text-sm">
+                                <option value="">--</option>
+                                @foreach(\App\Models\RepresentationType::cases() as $type)
+                                    <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" name="redacted" id="redacted" value="1" class="rounded border-slate-300">
+                        <label for="redacted" class="text-xs text-slate-700">Document expurgé (cette copie)</label>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] text-slate-500 mb-1">Ce qu'il établit</label>
+                        <textarea name="establishes" rows="2" maxlength="5000" placeholder="Faits strictement démontrés par ce document." class="w-full border border-slate-300 rounded px-2 py-1 text-sm"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] text-slate-500 mb-1">Ce qu'il n'établit pas</label>
+                        <textarea name="limitations" rows="2" maxlength="5000" placeholder="Limites et précautions d'interprétation." class="w-full border border-slate-300 rounded px-2 py-1 text-sm"></textarea>
+                    </div>
+                </div>
+            </details>
+            @endcan
         </form>
     </div>
 
@@ -111,16 +177,53 @@ Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserv
                 <div class="text-2xl flex-shrink-0">{{ $doc->icon() }}</div>
                 
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <span class="text-sm font-medium text-slate-900 truncate">{{ $doc->title }}</span>
                         <span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{{ $doc->extension() }}</span>
                         <span class="text-xs text-slate-400">{{ $doc->humanSize() }}</span>
+                        @if($doc->visibility)
+                            <span class="text-xs px-1.5 py-0.5 rounded bg-{{ $doc->visibility->color() }}-100 text-{{ $doc->visibility->color() }}-700 border border-{{ $doc->visibility->color() }}-200">
+                                {{ $doc->visibility->label() }}
+                            </span>
+                        @endif
+                        @if($doc->representation_type)
+                            <span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600" title="Type de représentation">{{ $doc->representation_type->label() }}</span>
+                        @endif
+                        @if($doc->redacted)
+                            <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Version expurgée</span>
+                        @endif
                         @if($doc->isSecure())
                             <span class="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700" title="Stocké de manière privée et chiffrée">🔒 Sécurisé</span>
                         @endif
                     </div>
+                    @if($doc->document_date || $doc->document_type || $doc->author || $doc->recipient)
+                        <div class="text-xs text-slate-500 mb-1 flex flex-wrap gap-x-3 gap-y-1">
+                            @if($doc->document_date)
+                                <span>Date : {{ $doc->document_date->format('d/m/Y') }}</span>
+                            @endif
+                            @if($doc->document_type)
+                                <span>Nature : {{ $doc->document_type }}</span>
+                            @endif
+                            @if($doc->author)
+                                <span>Auteur : {{ $doc->author }}</span>
+                            @endif
+                            @if($doc->recipient)
+                                <span>Destinataire : {{ $doc->recipient }}</span>
+                            @endif
+                        </div>
+                    @endif
                     @if($doc->description)
                         <p class="text-xs text-slate-500 mb-1">{{ $doc->description }}</p>
+                    @endif
+                    @if($doc->establishes || $doc->limitations)
+                        <div class="text-xs text-slate-600 mb-1 space-y-1">
+                            @if($doc->establishes)
+                                <p><span class="font-medium">Établit :</span> {{ $doc->establishes }}</p>
+                            @endif
+                            @if($doc->limitations)
+                                <p><span class="font-medium">N'établit pas :</span> {{ $doc->limitations }}</p>
+                            @endif
+                        </div>
                     @endif
                     <div class="flex items-center gap-3 text-xs">
                         <span class="text-slate-400">Ajouté le {{ $doc->created_at->format('d/m/Y') }}</span>

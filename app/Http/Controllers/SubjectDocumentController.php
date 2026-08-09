@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\RepresentationType;
 use App\Models\Subject;
 use App\Models\SubjectDocument;
 use App\Services\DocumentStorageService;
@@ -51,15 +52,36 @@ class SubjectDocumentController extends Controller
         Gate::authorize('update', $subject);
 
         $request->validate([
-            'file'        => 'required|file|max:51200', // 50 Mo max
+            'file'        => 'required|file|max:51200',
             'title'       => 'nullable|string|max:255',
             'description' => 'nullable|string|max:1000',
             'category'    => 'nullable|in:source,annexe,ocr,audio,autre',
             'visibility'  => ['nullable', new Enum(\App\Models\VisibilityLevel::class)],
+            'document_date' => 'nullable|date',
+            'document_type' => 'nullable|string|max:80',
+            'author' => 'nullable|string|max:255',
+            'recipient' => 'nullable|string|max:255',
+            'source_reference' => 'nullable|string|max:2000',
+            'representation_type' => ['nullable', new Enum(RepresentationType::class)],
+            'redacted' => 'nullable|boolean',
+            'establishes' => 'nullable|string|max:5000',
+            'limitations' => 'nullable|string|max:5000',
         ]);
 
         $visibility = \App\Models\VisibilityLevel::tryFrom($request->input('visibility'))
             ?? \App\Models\VisibilityLevel::Working;
+
+        $metadata = [
+            'document_date' => $request->document_date,
+            'document_type' => $request->document_type,
+            'author' => $request->author,
+            'recipient' => $request->recipient,
+            'source_reference' => $request->source_reference,
+            'representation_type' => $request->representation_type,
+            'redacted' => $request->boolean('redacted'),
+            'establishes' => $request->establishes,
+            'limitations' => $request->limitations,
+        ];
 
         $file = $request->file('file');
 
@@ -110,7 +132,7 @@ class SubjectDocumentController extends Controller
             'category'        => $request->category ?: 'source',
             'position'        => $subject->documents()->count() + 1,
             'visibility'      => $visibility->value,
-        ]);
+        ] + $metadata);
 
         \App\Models\ActivityLog::log(
             event: 'create',
@@ -137,9 +159,25 @@ class SubjectDocumentController extends Controller
             'category'    => 'nullable|in:source,annexe,ocr,audio,autre',
             'position'    => 'nullable|integer|min:0',
             'visibility'  => ['nullable', new Enum(\App\Models\VisibilityLevel::class)],
+            'document_date' => 'nullable|date',
+            'document_type' => 'nullable|string|max:80',
+            'author' => 'nullable|string|max:255',
+            'recipient' => 'nullable|string|max:255',
+            'source_reference' => 'nullable|string|max:2000',
+            'representation_type' => ['nullable', new Enum(RepresentationType::class)],
+            'redacted' => 'nullable|boolean',
+            'establishes' => 'nullable|string|max:5000',
+            'limitations' => 'nullable|string|max:5000',
         ]);
 
-        $document->update($request->only(['title', 'description', 'category', 'position', 'visibility']));
+        $updateData = $request->only([
+            'title', 'description', 'category', 'position', 'visibility',
+            'document_date', 'document_type', 'author', 'recipient', 'source_reference',
+            'representation_type', 'establishes', 'limitations',
+        ]);
+        $updateData['redacted'] = $request->boolean('redacted');
+
+        $document->update($updateData);
 
         return redirect()
             ->route('subjects.documents.index', $subject->slug)
@@ -245,6 +283,15 @@ class SubjectDocumentController extends Controller
             'category'        => $request->category ?: 'annexe',
             'position'        => $subject->documents()->count() + 1,
             'visibility'      => \App\Models\VisibilityLevel::Working->value,
+            'document_date' => $request->document_date,
+            'document_type' => $request->document_type,
+            'author' => $request->author,
+            'recipient' => $request->recipient,
+            'source_reference' => $request->source_reference,
+            'representation_type' => $request->representation_type,
+            'redacted' => $request->boolean('redacted'),
+            'establishes' => $request->establishes,
+            'limitations' => $request->limitations,
         ]);
 
         \App\Models\ActivityLog::log(

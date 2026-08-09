@@ -21,6 +21,15 @@ class SubjectDocument extends Model
         'size',
         'title',
         'description',
+        'document_date',
+        'document_type',
+        'author',
+        'recipient',
+        'source_reference',
+        'representation_type',
+        'redacted',
+        'establishes',
+        'limitations',
         'category',
         'position',
         'visibility',
@@ -30,6 +39,9 @@ class SubjectDocument extends Model
         'position' => 'integer',
         'size'     => 'integer',
         'visibility' => VisibilityLevel::class,
+        'redacted' => 'boolean',
+        'document_date' => 'date',
+        'representation_type' => RepresentationType::class,
     ];
 
     public function subject(): BelongsTo
@@ -101,6 +113,11 @@ class SubjectDocument extends Model
     public function isPreviewable(): bool
     {
         return in_array($this->extension(), ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp']);
+    }
+
+    public function redactedBadge(): ?string
+    {
+        return $this->redacted ? 'Version expurgée' : null;
     }
 
     public function previewUrl(): ?string

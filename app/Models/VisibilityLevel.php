@@ -40,4 +40,13 @@ enum VisibilityLevel: string
             self::Working => "Visible de l'équipe uniquement",
         };
     }
+
+    public function color(): string
+    {
+        return match ($this) {
+            self::Public => 'emerald',
+            self::Citizen => 'blue',
+            self::Working => 'slate',
+        };
+    }
 }

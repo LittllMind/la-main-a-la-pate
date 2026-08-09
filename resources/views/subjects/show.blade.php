@@ -84,9 +84,38 @@
                                     {{ $doc->title ?: $doc->filename }}
                                 </a>
                                 <span class="text-xs text-slate-400 whitespace-nowrap">{{ $doc->humanSize() }}</span>
+                                @if($doc->redacted)
+                                    <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200" data-redacted-badge>Version expurgée</span>
+                                @endif
                             </div>
+                            @if($doc->document_date || $doc->document_type || $doc->author || $doc->recipient)
+                                <div class="text-xs text-slate-500 mb-1 flex flex-wrap gap-x-3 gap-y-1">
+                                    @if($doc->document_date)
+                                        <span>Date : {{ $doc->document_date->format('d/m/Y') }}</span>
+                                    @endif
+                                    @if($doc->document_type)
+                                        <span>Nature : {{ $doc->document_type }}</span>
+                                    @endif
+                                    @if($doc->author)
+                                        <span>Auteur : {{ $doc->author }}</span>
+                                    @endif
+                                    @if($doc->recipient)
+                                        <span>Destinataire : {{ $doc->recipient }}</span>
+                                    @endif
+                                </div>
+                            @endif
                             @if($doc->description)
                                 <p class="text-xs text-slate-600 mt-0.5">{{ $doc->description }}</p>
+                            @endif
+                            @if($doc->establishes || $doc->limitations)
+                                <div class="text-xs text-slate-600 mt-1 space-y-1">
+                                    @if($doc->establishes)
+                                        <p><span class="font-medium">Établit :</span> {{ $doc->establishes }}</p>
+                                    @endif
+                                    @if($doc->limitations)
+                                        <p><span class="font-medium">N'établit pas :</span> {{ $doc->limitations }}</p>
+                                    @endif
+                                </div>
                             @endif
                             <div class="flex items-center gap-2 mt-1">
                                 <span class="text-xs px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 uppercase tracking-wide">{{ $doc->category }}</span>
