@@ -142,6 +142,36 @@ class Subject extends Model
     }
 
     /**
+     * Retourne le corps prévisualisable à un niveau d'audience donné,
+     * indépendamment du statut de publication réel.
+     * Public : public_body s'il est rempli.
+     * Citoyen : citizen_body s'il est rempli, sinon public_body.
+     * Pas de concaténation ; pas de retour au body de travail.
+     */
+    public function bodyAtLevel(VisibilityLevel $level): ?string
+    {
+        return match ($level) {
+            VisibilityLevel::Public => filled($this->public_body) ? $this->public_body : null,
+            VisibilityLevel::Citizen => filled($this->citizen_body)
+                ? $this->citizen_body
+                : (filled($this->public_body) ? $this->public_body : null),
+            default => null,
+        };
+    }
+
+    /**
+     * Filtre les documents du sujet pour un niveau d'audience donné.
+     */
+    public function documentsAtLevel(VisibilityLevel $level): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->documents()->getQuery()->whereIn('visibility', match ($level) {
+            VisibilityLevel::Public => [VisibilityLevel::Public->value],
+            VisibilityLevel::Citizen => [VisibilityLevel::Public->value, VisibilityLevel::Citizen->value],
+            default => [VisibilityLevel::Working->value],
+        })->get();
+    }
+
+    /**
      * Retourne le corps à afficher selon le niveau d'accès.
      * Pas de fallback silencieux depuis un niveau supérieur.
      */

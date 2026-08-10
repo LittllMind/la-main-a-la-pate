@@ -67,6 +67,10 @@ Route::prefix('sujets')->name('subjects.')->group(function () {
     Route::get('/{subject:slug}/documents/{document}/telecharger', [SubjectDocumentController::class, 'download'])->name('documents.download');
 });
 
+Route::middleware(['auth', 'verified'])->prefix('sujets')->name('subjects.')->group(function () {
+    Route::get('/{subject:slug}/apercu/{audience}', [\App\Http\Controllers\SubjectPreviewController::class, 'show'])->name('preview');
+});
+
 Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function () {
     Route::post('/', [SubjectController::class, 'store'])->name('store');
     Route::post('/importer', [SubjectImportController::class, 'store'])->name('import.store');
