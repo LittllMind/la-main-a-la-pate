@@ -121,7 +121,7 @@ class SubjectVisibilityLeakTest extends TestCase
             ->assertRedirect('/login');
 
         $guest->get(route('subjects.documents.download', [$this->subject->slug, $this->publicDoc->id]))
-            ->assertRedirect('/login');
+            ->assertOk();
     }
 
     public function test_other_citizen_sees_citizen_and_public_but_not_working(): void

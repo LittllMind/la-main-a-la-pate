@@ -48,7 +48,7 @@ class SubjectDocumentSecureStorageTest extends TestCase
         $response->assertHeader('Content-Disposition');
     }
 
-    public function test_guest_is_redirected_to_login_for_document_download()
+    public function test_guest_without_subject_access_is_rejected_for_document_download()
     {
         Storage::fake('documents');
 
@@ -57,7 +57,7 @@ class SubjectDocumentSecureStorageTest extends TestCase
         $document = $this->storeEncryptedDocument($subject);
 
         $this->get(route('subjects.documents.download', [$subject->slug, $document->id]))
-            ->assertRedirect('/login');
+            ->assertNotFound();
     }
 
     public function test_document_upload_encrypts_file()
@@ -101,8 +101,8 @@ class SubjectDocumentSecureStorageTest extends TestCase
         // Aucune URL publique ne doit pointer vers le fichier clair
         $this->assertNull($document->previewUrl());
 
-        // La route application doit être protégée
+        // La route application est publique mais reste limitée au sujet/document visible
         $this->get(route('subjects.documents.download', [$subject->slug, $document->id]))
-            ->assertRedirect('/login');
+            ->assertNotFound();
     }
 }

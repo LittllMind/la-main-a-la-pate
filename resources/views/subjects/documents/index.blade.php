@@ -242,7 +242,7 @@ Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserv
                                             </option>
                                         @endforeach
                                     </select>
-                                    <button type="submit" class="text-emerald-700 hover:underline">Mettre à jour</button>
+                                    <button type="submit" class="text-emerald-700 hover:underline">Mettre à jour la visibilité</button>
                                 </div>
                             </form>
                             <form method="POST" action="{{ route('subjects.documents.destroy', [$subject->slug, $doc->id]) }}" class="inline" onsubmit="return confirm('Supprimer ce document ?')">
@@ -250,6 +250,7 @@ Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserv
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:underline text-xs">Supprimer</button>
                             </form>
+                            <a href="{{ route('subjects.documents.edit', [$subject->slug, $doc->id]) }}" class="text-blue-700 hover:underline text-xs">Modifier la fiche</a>
                         @endcan
                     </div>
                 </div>

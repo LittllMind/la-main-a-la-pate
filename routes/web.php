@@ -61,6 +61,10 @@ Route::prefix('sujets')->name('subjects.')->group(function () {
     Route::get('/creer', [SubjectController::class, 'create'])->name('create');
     Route::get('/importer', [SubjectImportController::class, 'create'])->name('import.create');
     Route::get('/{subject:slug}', [SubjectController::class, 'show'])->name('show')->where('subject', '^(?!export-pdf$|arbre$|arbre-data$|creer$|importer$)[^/]+$');
+
+    // Routes documents publiques (download autorisé selon audience)
+    Route::get('/{subject:slug}/documents', [SubjectDocumentController::class, 'index'])->name('documents.index');
+    Route::get('/{subject:slug}/documents/{document}/telecharger', [SubjectDocumentController::class, 'download'])->name('documents.download');
 });
 
 Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function () {
@@ -90,13 +94,12 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function
     Route::patch('/{subject:slug}/images/{image}', [SubjectImageController::class, 'update'])->name('images.update');
     Route::delete('/{subject:slug}/images/{image}', [SubjectImageController::class, 'destroy'])->name('images.destroy');
 
-    // Documents attachés au sujet (PDF, OCR, sources, audio...)
-    Route::get('/{subject:slug}/documents', [SubjectDocumentController::class, 'index'])->name('documents.index');
+    // Documents attachés au sujet (édition protégée)
+    Route::get('/{subject:slug}/documents/{document}/modifier', [SubjectDocumentController::class, 'edit'])->name('documents.edit');
     Route::post('/{subject:slug}/documents', [SubjectDocumentController::class, 'store'])->name('documents.store');
     Route::post('/{subject:slug}/documents/markdown-pdf', [SubjectDocumentController::class, 'storeMarkdownPdf'])->name('documents.markdown-pdf');
     Route::patch('/{subject:slug}/documents/{document}', [SubjectDocumentController::class, 'update'])->name('documents.update');
     Route::delete('/{subject:slug}/documents/{document}', [SubjectDocumentController::class, 'destroy'])->name('documents.destroy');
-    Route::get('/{subject:slug}/documents/{document}/telecharger', [SubjectDocumentController::class, 'download'])->name('documents.download');
 
     Route::get('/export-pdf', [SubjectPdfController::class, 'index'])->name('pdf.index');
     Route::get('/{subject:slug}/pdf', [SubjectPdfController::class, 'show'])->name('pdf.show');

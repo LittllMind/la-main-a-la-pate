@@ -148,6 +148,14 @@ class SubjectDocumentController extends Controller
             ->with('success', 'Document ajouté : ' . $doc->title);
     }
 
+    // Edition complete de la fiche documentaire
+    public function edit(Subject $subject, SubjectDocument $document)
+    {
+        Gate::authorize('update', $subject);
+
+        return view('subjects.documents.edit', compact('subject', 'document'));
+    }
+
     // Mise a jour des metadonnees
     public function update(Request $request, Subject $subject, SubjectDocument $document)
     {
