@@ -193,19 +193,32 @@ class SubjectController extends Controller
 
         $theme = $this->resolveTheme($validated['theme'], $validated['theme_other'] ?? null);
 
-        SubjectVersion::create([
-            'subject_id' => $subject->id,
-            'user_id' => auth()->id(),
-            'body' => $subject->body,
-            'change_summary' => $validated['change_summary'] ?? null,
-        ]);
+        $newBody = $validated['body'];
+        $newCitizenBody = $validated['citizen_body'] ?? null;
+        $newPublicBody = $validated['public_body'] ?? null;
+
+        // Snapshot des trois représentations uniquement si au moins l'une d'elles change.
+        $bodyChanged = $subject->body !== $newBody;
+        $citizenChanged = $subject->citizen_body !== $newCitizenBody;
+        $publicChanged = $subject->public_body !== $newPublicBody;
+
+        if ($bodyChanged || $citizenChanged || $publicChanged) {
+            SubjectVersion::create([
+                'subject_id' => $subject->id,
+                'user_id' => auth()->id(),
+                'body' => $subject->body,
+                'citizen_body' => $subject->citizen_body,
+                'public_body' => $subject->public_body,
+                'change_summary' => $validated['change_summary'] ?? null,
+            ]);
+        }
 
         $subject->update([
             'theme' => $theme,
             'title' => $validated['title'],
-            'body' => $validated['body'],
-            'citizen_body' => $validated['citizen_body'] ?? null,
-            'public_body' => $validated['public_body'] ?? null,
+            'body' => $newBody,
+            'citizen_body' => $newCitizenBody,
+            'public_body' => $newPublicBody,
         ]);
 
         ActivityLog::log(

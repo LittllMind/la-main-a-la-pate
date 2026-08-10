@@ -10,7 +10,7 @@ class SubjectVersion extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['subject_id', 'user_id', 'body', 'change_summary'];
+    protected $fillable = ['subject_id', 'user_id', 'body', 'citizen_body', 'public_body', 'change_summary'];
 
     public function user(): BelongsTo
     {
