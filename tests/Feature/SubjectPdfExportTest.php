@@ -41,7 +41,7 @@ class SubjectPdfExportTest extends TestCase
         $subject = Subject::factory()->create(['user_id' => $user->id, 'status' => 'published']);
 
         $this->get(route('subjects.pdf.show', $subject->slug))
-            ->assertRedirect('/login');
+            ->assertRedirect('/');
     }
 
     public function test_admin_can_export_multiple_subjects_pdf()

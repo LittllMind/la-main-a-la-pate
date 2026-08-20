@@ -47,7 +47,7 @@ class SubjectWorkflowTest extends TestCase
             'body' => 'Test',
         ]);
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/');
     }
 
     public function test_subject_owner_can_edit_document(): void

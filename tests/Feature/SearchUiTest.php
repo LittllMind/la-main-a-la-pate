@@ -24,7 +24,7 @@ class SearchUiTest extends TestCase
      */
     public function search_input_is_hidden_for_guests(): void
     {
-        $response = $this->get(route('home'));
+        $response = $this->get('/');
         $response->assertOk();
         $response->assertDontSee('/recherche');
     }

@@ -73,7 +73,7 @@ class SubjectDocumentEditFormTest extends TestCase
         $doc = $this->storeEncryptedDocument($subject, 'doc.pdf', 500, 'public');
 
         $this->get(route('subjects.documents.edit', [$subject->slug, $doc->id]))
-            ->assertRedirect('/login');
+            ->assertRedirect('/');
     }
 
     public function test_admin_can_update_all_document_metadata()
@@ -293,6 +293,6 @@ class SubjectDocumentEditFormTest extends TestCase
         auth()->logout();
         $this->assertGuest();
         $this->get(route('subjects.documents.edit', [$subject->slug, $doc->id]))
-            ->assertRedirect('/login');
+            ->assertRedirect('/');
     }
 }

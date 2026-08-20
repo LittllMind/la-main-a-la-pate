@@ -105,7 +105,7 @@ class SubjectPreviewTest extends TestCase
         $this->assertGuest();
 
         $this->get(route('subjects.preview', [$subject->slug, 'public']))
-            ->assertRedirect('/login');
+            ->assertRedirect('/');
     }
 
     public function test_citizen_without_edit_permission_cannot_access_preview()

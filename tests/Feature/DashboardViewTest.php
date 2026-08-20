@@ -16,7 +16,7 @@ class DashboardViewTest extends TestCase
     {
         $response = $this->get('/dashboard');
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/');
     }
 
     public function test_dashboard_displays_user_created_subjects(): void
