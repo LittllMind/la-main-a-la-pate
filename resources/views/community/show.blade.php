@@ -64,8 +64,7 @@
     </div>
     @else
     <div class="mt-8 text-center bg-slate-100 rounded-lg p-6">
-        <p class="text-slate-600 text-sm">Connectez-vous pour participer aux discussions.</p>
-        <a href="/login" class="inline-block mt-2 text-slate-900 font-medium underline">Se connecter</a>
+        <p class="text-slate-600 text-sm">La participation aux discussions est réservée aux membres connectés.</p>
     </div>
     @endauth
 </div>

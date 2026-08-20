@@ -131,7 +131,7 @@ class SubjectDocumentVisibilityUploadTest extends TestCase
             'category' => 'source',
             'visibility' => 'public',
         ])
-            ->assertRedirect('/login');
+            ->assertRedirect('/');
 
         $this->assertEquals(0, SubjectDocument::where('subject_id', $subject->id)->count());
     }

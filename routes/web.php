@@ -56,16 +56,21 @@ Route::middleware(['auth', 'verified'])->prefix('sujets')->name('subjects.tree.'
     Route::get('/arbre-data', [\App\Http\Controllers\DocumentTreeController::class, 'subjectsData'])->name('data');
 });
 
-Route::prefix('sujets')->name('subjects.')->group(function () {
+// Catalogue / création réservés aux membres authentifiés.
+Route::middleware(['auth', 'verified'])->prefix('sujets')->name('subjects.')->group(function () {
     Route::get('/', [SubjectController::class, 'index'])->name('index');
     Route::get('/creer', [SubjectController::class, 'create'])->name('create');
     Route::get('/importer', [SubjectImportController::class, 'create'])->name('import.create');
+});
+
+// Consultation directe d'un sujet public + documents selon audience : toujours accessible.
+Route::prefix('sujets')->name('subjects.')->group(function () {
     Route::get('/{subject:slug}', [SubjectController::class, 'show'])->name('show')->where('subject', '^(?!export-pdf$|arbre$|arbre-data$|creer$|importer$)[^/]+$');
 
     // Routes documents publiques (download autorisé selon audience)
-    Route::get('/{subject:slug}/documents', [SubjectDocumentController::class, 'index'])->name('documents.index');
     Route::get('/{subject:slug}/documents/{document}/telecharger', [SubjectDocumentController::class, 'download'])->name('documents.download');
 });
+
 
 Route::middleware(['auth', 'verified'])->prefix('sujets')->name('subjects.')->group(function () {
     Route::get('/{subject:slug}/apercu/{audience}', [\App\Http\Controllers\SubjectPreviewController::class, 'show'])->name('preview');
@@ -105,6 +110,7 @@ Route::middleware(['auth'])->prefix('sujets')->name('subjects.')->group(function
     Route::patch('/{subject:slug}/documents/{document}', [SubjectDocumentController::class, 'update'])->name('documents.update');
     Route::delete('/{subject:slug}/documents/{document}', [SubjectDocumentController::class, 'destroy'])->name('documents.destroy');
 
+    Route::get('/{subject:slug}/documents', [SubjectDocumentController::class, 'index'])->name('documents.index');
     Route::get('/export-pdf', [SubjectPdfController::class, 'index'])->name('pdf.index');
     Route::get('/{subject:slug}/pdf', [SubjectPdfController::class, 'show'])->name('pdf.show');
     Route::get('/{subject:slug}/pdf-telecharger', [SubjectPdfController::class, 'download'])->name('pdf.download');

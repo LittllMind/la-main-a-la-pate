@@ -46,8 +46,7 @@
     </div>
     @else
     <div class="text-center bg-slate-100 rounded-lg p-6">
-        <p class="text-slate-600 text-sm">Connectez-vous pour repondre.</p>
-        <a href="/login" class="inline-block mt-2 text-slate-900 font-medium underline">Se connecter</a>
+        <p class="text-slate-600 text-sm">La réponse aux discussions est réservée aux membres connectés.</p>
     </div>
     @endauth
 </div>

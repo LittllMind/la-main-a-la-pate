@@ -48,17 +48,21 @@ class AdminPanelTest extends TestCase
     {
         $response = $this->get(route('admin.panel'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/');
     }
 
     public function test_community_link_is_hidden_from_public_navigation(): void
     {
         $response = $this->get('/');
         $response->assertOk();
+        $response->assertSee('La Main à la Pâte');
+
+        $response = $this->get(route('subjects.index'));
+        $response->assertRedirect('/');
         $response->assertDontSee('/communaute');
 
         $response = $this->get(route('community.index'));
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/');
     }
 
     public function test_community_routes_still_work(): void

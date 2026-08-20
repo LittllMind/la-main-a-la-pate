@@ -129,8 +129,6 @@ class SubjectVisibilityLevelsTest extends TestCase
 
         $response = $this->get(route('subjects.index'));
 
-        $response->assertOk();
-        $response->assertSee('Sujet public');
-        $response->assertDontSee('Sujet interne');
+        $response->assertRedirect('/');
     }
 }

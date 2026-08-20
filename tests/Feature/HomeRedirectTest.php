@@ -10,12 +10,20 @@ class HomeRedirectTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_guests_land_on_public_home(): void
+    public function test_guests_land_on_neutral_public_root(): void
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
-        $response->assertSee('Seraphotheque');
+        $response->assertOk();
+        $response->assertSee('La Main à la Pâte');
+        $response->assertDontSee('Sujet');
+        $response->assertDontSee('Connexion');
+    }
+
+    public function test_guests_are_redirected_from_subjects_index_to_root(): void
+    {
+        $response = $this->get(route('subjects.index'));
+        $response->assertRedirect('/');
     }
 
     public function test_authenticated_users_are_redirected_from_root_to_dashboard(): void

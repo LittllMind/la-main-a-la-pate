@@ -15,7 +15,7 @@ class SubjectDraftPrivacyTest extends TestCase
     {
         $response = $this->get(route('subjects.index'));
 
-        $response->assertOk(); // public now
+        $response->assertRedirect('/');
     }
 
     public function test_other_citizen_cannot_see_someone_elses_draft_in_index(): void

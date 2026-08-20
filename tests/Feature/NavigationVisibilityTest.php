@@ -10,13 +10,15 @@ class NavigationVisibilityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guests_only_see_seraphotheque_brand_and_link(): void
+    public function test_guests_see_neutral_landing_without_internal_links(): void
     {
-        $response = $this->get('/seraphotheque');
+        $response = $this->get('/');
 
-        $response->assertStatus(200);
-        $response->assertSee('Seraphotheque');
+        $response->assertOk();
+        $response->assertSee('La Main à la Pâte');
         $response->assertDontSee('Tableau de bord');
+        $response->assertDontSee('Sujets');
+        $response->assertDontSee('Connexion');
     }
 
     public function test_authenticated_users_see_core_mobile_first_navigation(): void

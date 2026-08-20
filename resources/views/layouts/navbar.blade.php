@@ -94,8 +94,8 @@
                         </svg>
                     </button>
                 @else
-                    <a href="{{ route('seraphotheque') }}" class="text-sm text-slate-600 hover:text-slate-900 px-3 py-2">Seraphotheque</a>
-                    <a href="{{ route('login') }}" class="text-sm text-slate-600 hover:text-slate-900 px-3 py-2">Connexion</a>
+                    {{-- Guest : aucun lien vers catalogue, communauté, hall ou login. --}}
+                    <span class="text-sm text-slate-400 px-3 py-2">La Main à la Pâte</span>
                 @endauth
             </div>
         </div>

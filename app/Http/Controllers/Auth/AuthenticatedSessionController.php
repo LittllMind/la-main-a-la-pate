@@ -58,6 +58,10 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('status', 'Vous etes deconnecte.');
+        if ($request->has('redirect')) {
+            return redirect($request->input('redirect'))->with('status', 'Vous êtes déconnecté.');
+        }
+
+        return redirect('/')->with('status', 'Vous êtes déconnecté.');
     }
 }

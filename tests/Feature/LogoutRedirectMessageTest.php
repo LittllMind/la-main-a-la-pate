@@ -16,7 +16,7 @@ class LogoutRedirectMessageTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('logout'));
 
-        $response->assertRedirect('/login');
-        $response->assertSessionHas('status', 'Vous etes deconnecte.');
+        $response->assertRedirect('/');
+        $response->assertSessionHas('status', 'Vous êtes déconnecté.');
     }
 }

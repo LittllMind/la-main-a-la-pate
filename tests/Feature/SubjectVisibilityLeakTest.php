@@ -88,8 +88,7 @@ class SubjectVisibilityLeakTest extends TestCase
         $guest = $this;
 
         $guest->get(route('subjects.index'))
-            ->assertOk()
-            ->assertSee(self::PUBLIC_VISIBLE)
+            ->assertRedirect('/')
             ->assertDontSee(self::CITIZEN_SECRET)
             ->assertDontSee(self::WORKING_SECRET);
 
@@ -118,7 +117,7 @@ class SubjectVisibilityLeakTest extends TestCase
             ->assertDontSee(self::CITIZEN_SECRET);
 
         $guest->get(route('subjects.pdf.show', $this->subject->slug))
-            ->assertRedirect('/login');
+            ->assertRedirect('/');
 
         $guest->get(route('subjects.documents.download', [$this->subject->slug, $this->publicDoc->id]))
             ->assertOk();

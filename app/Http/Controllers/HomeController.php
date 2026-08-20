@@ -14,6 +14,7 @@ class HomeController extends Controller
             return redirect()->intended(route('dashboard'));
         }
 
-        return app(ContactController::class)->seraphotheque($request);
+        // Landing publique minimale et neutre : aucun catalogue, aucun Hall, aucun Login exposé.
+        return view('landing');
     }
 }
