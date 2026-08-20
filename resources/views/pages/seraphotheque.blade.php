@@ -207,6 +207,14 @@
         </a>
     </div>
 
+    {{-- CTA DOSSIER CIVIQUE --}}
+    <div class="mb-14 text-center">
+        <a href="{{ route('subjects.show', 'seraphotheque-situation-2026') }}"
+           class="inline-block bg-slate-900 text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-slate-800 transition">
+            Consulter le dossier civique documenté
+        </a>
+    </div>
+
     {{-- CTA Communauté — masqué pour le moment --}}
     @if(false)
     <div class="bg-slate-900 rounded-lg p-8 text-center text-white">
