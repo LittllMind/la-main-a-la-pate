@@ -41,14 +41,18 @@
 @endif
 
 {{-- Section Documents Sources --}}
-@if($subject->documents->count() > 0)
-    <section class="bg-white rounded-lg border border-slate-200 p-6 mb-8">
+@php
+    $currentUser = auth()->user();
+    $visibleDocs = $subject->documents->filter(fn($doc) => $doc->visibleTo($currentUser));
+@endphp
+@if($visibleDocs->count() > 0)
+    <section id="documents" class="bg-white rounded-lg border border-slate-200 p-6 mb-8">
         <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M6 14h12M3 6h18m-1 14l-4-4h-6l-4 4m-2 0h6"/></svg>
             Sources et documents
         </h2>
         <ul class="space-y-3">
-            @foreach($subject->documents as $doc)
+            @foreach($visibleDocs as $doc)
                 <li class="flex items-start gap-3 bg-slate-50 rounded-md border border-slate-200 p-3">
                     <span class="text-2xl select-none" title="Extension: {{ $doc->extension() }}">
                         {{ $doc->icon() }}
