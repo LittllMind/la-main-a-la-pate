@@ -322,13 +322,46 @@ class Subject extends Model
             $markdown = self::convertHtmlToMarkdown($markdown);
         }
 
-        // Utilise GFM pour les tableaux, task lists, etc.
+        // Preprocess Pandoc-style heading identifiers {#id} into stable markers
+        $ids = [];
+        $markdown = preg_replace_callback(
+            '/^(#{1,6}\\s+.*?)(?:\\s+\\{([^}]+)\\})\\s*$/m',
+            function ($matches) use (&$ids) {
+                $heading = $matches[1];
+                $attrs = trim($matches[2]);
+                $id = '';
+                if (preg_match('/#([a-zA-Z0-9_-]+)/', $attrs, $idMatch)) {
+                    $id = $idMatch[1];
+                }
+                if ($id) {
+                    $ids[] = $id;
+                    $marker = 'ANCHOR_' . $id;
+                    // Use inline code backticks — CommonMark renders this as <code>...</code>
+                    // which we swap back post-conversion
+                    return $heading . ' `' . $marker . '`';
+                }
+                return $heading;
+            },
+            $markdown
+        );
+
         $converter = new \League\CommonMark\GithubFlavoredMarkdownConverter([
             'html_input' => 'strip',
             'allow_unsafe_links' => false,
         ]);
 
-        return (string) $converter->convert($markdown);
+        $html = (string) $converter->convert($markdown);
+
+        // Swap inline-code ANCHOR markers back to real HTML span IDs
+        foreach ($ids as $id) {
+            $html = str_replace(
+                '<code>ANCHOR_' . $id . '</code>',
+                '<span id="' . $id . '"></span>',
+                $html
+            );
+        }
+
+        return $html;
     }
 
     public static function convertHtmlToMarkdown(string $html): string
