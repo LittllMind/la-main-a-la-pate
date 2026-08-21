@@ -183,6 +183,30 @@ class SeraphothequeIngestionTest extends TestCase
     }
 
     /** @test */
+    public function it_does_not_duplicate_documents_on_rerun(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $countAfterFirst = $subject->documents()->count();
+        $this->assertEquals(5, $countAfterFirst);
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject->refresh();
+        $countAfterSecond = $subject->documents()->count();
+        $this->assertEquals(5, $countAfterSecond, 'La relance identique ne doit pas dupliquer les documents.');
+    }
+
+    /** @test */
     public function it_fails_without_pack_path(): void
     {
         $this->seedEnvironment();
@@ -191,5 +215,199 @@ class SeraphothequeIngestionTest extends TestCase
 
         $this->assertEquals(1, $exitCode);
         $this->assertDatabaseMissing('subjects', ['slug' => 'seraphotheque-situation-2026']);
+    }
+
+    /** @test */
+    public function force_preserves_manual_documents_and_does_not_touch_other_subjects(): void
+    {
+        ['admin' => $admin, 'pack' => $pack, 'existing' => $existing] = $this->seedEnvironment();
+
+        // Ingestion initiale
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $otherSubject = $existing[0];
+
+        // Document manuel sur le même Subject
+        $manualDoc = \App\Models\SubjectDocument::create([
+            'subject_id' => $subject->id,
+            'filename' => 'manuel-document.pdf',
+            'stored_filename' => 'manuel-document.pdf',
+            'path' => 'test/manuel-document.pdf',
+            'disk' => 'documents',
+            'mime_type' => 'application/pdf',
+            'size' => 1234,
+            'title' => 'Document manuel hors pipeline',
+            'visibility' => \App\Models\VisibilityLevel::Working->value,
+            'source_reference' => 'manuel/hors-pipeline.pdf',
+        ]);
+
+        // Document sur un autre Subject
+        $otherDoc = \App\Models\SubjectDocument::create([
+            'subject_id' => $otherSubject->id,
+            'filename' => 'other-document.pdf',
+            'stored_filename' => 'other-document.pdf',
+            'path' => 'test/other-document.pdf',
+            'disk' => 'documents',
+            'mime_type' => 'application/pdf',
+            'size' => 5678,
+            'title' => 'Document autre sujet',
+            'visibility' => \App\Models\VisibilityLevel::Working->value,
+            'source_reference' => 'other/subject.pdf',
+        ]);
+
+        Storage::disk('documents')->put('test/manuel-document.pdf', 'fake content');
+        Storage::disk('documents')->put('test/other-document.pdf', 'fake other');
+
+        $this->assertDatabaseHas('subject_documents', ['id' => $manualDoc->id]);
+        $this->assertDatabaseHas('subject_documents', ['id' => $otherDoc->id]);
+
+        // --force
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+            '--force' => true,
+        ]);
+
+        // Assertions
+        $this->assertDatabaseHas('subject_documents', ['id' => $manualDoc->id]);
+        $this->assertDatabaseHas('subject_documents', ['id' => $otherDoc->id]);
+        $this->assertTrue(Storage::disk('documents')->exists('test/manuel-document.pdf'));
+        $this->assertTrue(Storage::disk('documents')->exists('test/other-document.pdf'));
+
+        $subject->refresh();
+        $pipelineRefs = $subject->documents->pluck('source_reference')->toArray();
+        $this->assertContains('archives-LEX/OPS-originaux-LEX/04-procedure/sommation-huissier.pdf', $pipelineRefs);
+        $this->assertContains('manuel/hors-pipeline.pdf', $pipelineRefs);
+    }
+
+    /** @test */
+    public function it_does_not_create_extra_files_on_identical_rerun(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $filesAfterFirst = Storage::disk('documents')->allFiles();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $filesAfterSecond = Storage::disk('documents')->allFiles();
+
+        $this->assertEquals(count($filesAfterFirst), count($filesAfterSecond), 'Une relance identique ne doit pas créer de fichiers supplémentaires.');
+    }
+
+    /** @test */
+    public function dry_run_does_not_create_database_records(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        $exitCode = Artisan::call('app:seraphotheque-ingestion', [
+            '--dry-run' => true,
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $this->assertEquals(0, $exitCode);
+        $this->assertDatabaseMissing('subjects', ['slug' => 'seraphotheque-situation-2026']);
+        $this->assertDatabaseMissing('subject_documents', ['title' => 'Sommation du 24 avril 2026 — originale']);
+        $this->assertCount(0, Storage::disk('documents')->allFiles(), 'Aucun fichier ne doit être écrit en dry-run.');
+    }
+
+    /** @test */
+    public function absent_asset_preserved_without_force(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        // Run 1 : tous les assets présents
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $this->assertDatabaseHas('subject_documents', [
+            'subject_id' => $subject->id,
+            'source_reference' => 'archives-LEX/LEX-26-042/recommande-AR.pdf',
+        ]);
+
+        // Retirer un asset du pack
+        @unlink($pack . '/archives-LEX/LEX-26-042/recommande-AR.pdf');
+
+        // Run 2 sans --force
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        // Le document doit persister
+        $this->assertDatabaseHas('subject_documents', [
+            'subject_id' => $subject->id,
+            'source_reference' => 'archives-LEX/LEX-26-042/recommande-AR.pdf',
+        ]);
+    }
+
+    /** @test */
+    public function absent_asset_removed_with_force(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        // Run 1 : tous les assets présents
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+
+        $this->assertDatabaseHas('subject_documents', [
+            'subject_id' => $subject->id,
+            'source_reference' => 'archives-LEX/LEX-26-042/recommande-AR.pdf',
+        ]);
+
+        // Retirer un asset du pack
+        @unlink($pack . '/archives-LEX/LEX-26-042/recommande-AR.pdf');
+
+        // Run 2 avec --force
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+            '--force' => true,
+        ]);
+
+        // Le document doit être supprimé
+        $this->assertDatabaseMissing('subject_documents', [
+            'subject_id' => $subject->id,
+            'source_reference' => 'archives-LEX/LEX-26-042/recommande-AR.pdf',
+        ]);
+    }
+
+    /** @test */
+    public function no_source_reference_contains_local_paths(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $refs = $subject->documents->pluck('source_reference');
+
+        foreach ($refs as $ref) {
+            $this->assertStringNotContainsString('/home/', $ref, 'La source_reference ne doit pas contenir de chemin absolu /home/.');
+            $this->assertStringNotContainsString('/tmp/', $ref, 'La source_reference ne doit pas contenir de chemin absolu /tmp/.');
+            $this->assertStringNotContainsString('storage/framework/testing', $ref, 'La source_reference ne doit pas contenir de chemin de test temporaire.');
+        }
     }
 }

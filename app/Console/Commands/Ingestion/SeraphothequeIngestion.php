@@ -54,11 +54,6 @@ class SeraphothequeIngestion extends Command
             return self::FAILURE;
         }
 
-        if (Subject::where('slug', 'seraphotheque-situation-2026')->exists() && ! $this->option('force')) {
-            $this->error('Subject seraphotheque-situation-2026 existe déjà. Utilisez --force pour réinitialiser.');
-            return self::FAILURE;
-        }
-
         if ($this->option('dry-run')) {
             $this->info('[DRY-RUN] Analyse du manifest uniquement.');
             $this->line('Subject: La Séraphothèque — Comprendre la situation');
@@ -88,15 +83,6 @@ class SeraphothequeIngestion extends Command
         );
 
         $this->info("Subject créé/mis à jour : ID {$subject->id}, slug {$subject->slug}");
-
-        if ($this->option('force')) {
-            foreach ($subject->documents as $doc) {
-                if ($this->storage->exists($doc->path)) {
-                    $this->storage->delete($doc->path);
-                }
-                $doc->delete();
-            }
-        }
 
         $documents = [
             [
@@ -161,6 +147,22 @@ class SeraphothequeIngestion extends Command
             ],
         ];
 
+        $knownRefs = collect($documents)->pluck('source_reference')->all();
+
+        if ($this->option('force')) {
+            $subject->documents()
+                ->whereIn('source_reference', $knownRefs)
+                ->get()
+                ->each(function ($doc) {
+                    if ($this->storage->exists($doc->path)) {
+                        $this->storage->delete($doc->path);
+                    }
+                    $doc->delete();
+                });
+        }
+
+        $position = 0;
+
         $createdCount = 0;
         foreach ($documents as $meta) {
             if (! $meta['source'] || ! file_exists($meta['source'])) {
@@ -168,33 +170,45 @@ class SeraphothequeIngestion extends Command
                 continue;
             }
 
-            $path = $this->storage->storeEncrypted(
-                $subject->id,
-                $meta['source'],
-                basename($meta['source'])
-            );
+            $existingDoc = SubjectDocument::where('subject_id', $subject->id)
+                ->where('source_reference', $meta['source_reference'])
+                ->first();
 
-            SubjectDocument::create([
-                'subject_id' => $subject->id,
-                'filename' => basename($meta['source']),
-                'stored_filename' => basename($path),
-                'path' => $path,
-                'disk' => 'documents',
-                'mime_type' => mime_content_type($meta['source']) ?: 'application/octet-stream',
-                'size' => filesize($meta['source']),
-                'title' => $meta['title'],
-                'document_date' => $meta['date'],
-                'document_type' => $meta['type'],
-                'author' => $meta['author'],
-                'recipient' => $meta['recipient'],
-                'source_reference' => $meta['source_reference'],
-                'representation_type' => $meta['rep'],
-                'redacted' => false,
-                'visibility' => VisibilityLevel::Working->value,
-                'establishes' => $meta['establishes'],
-                'limitations' => $meta['limitations'],
-                'position' => $subject->documents()->count() + 1,
-            ]);
+            if (! $existingDoc) {
+                $path = $this->storage->storeEncrypted(
+                    $subject->id,
+                    $meta['source'],
+                    basename($meta['source'])
+                );
+            } else {
+                $path = $existingDoc->path;
+            }
+
+            SubjectDocument::updateOrCreate(
+                [
+                    'subject_id' => $subject->id,
+                    'source_reference' => $meta['source_reference'],
+                ],
+                [
+                    'filename' => basename($meta['source']),
+                    'stored_filename' => basename($path),
+                    'path' => $path,
+                    'disk' => 'documents',
+                    'mime_type' => mime_content_type($meta['source']) ?: 'application/octet-stream',
+                    'size' => filesize($meta['source']),
+                    'title' => $meta['title'],
+                    'document_date' => $meta['date'],
+                    'document_type' => $meta['type'],
+                    'author' => $meta['author'],
+                    'recipient' => $meta['recipient'],
+                    'representation_type' => $meta['rep'],
+                    'redacted' => false,
+                    'visibility' => VisibilityLevel::Working->value,
+                    'establishes' => $meta['establishes'],
+                    'limitations' => $meta['limitations'],
+                    'position' => ++$position,
+                ]
+            );
 
             $createdCount++;
             $this->info("Document attaché : {$meta['title']}");
