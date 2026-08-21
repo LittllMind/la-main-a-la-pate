@@ -280,7 +280,7 @@ class SeraphothequeIngestionTest extends TestCase
 
         $subject->refresh();
         $pipelineRefs = $subject->documents->pluck('source_reference')->toArray();
-        $this->assertContains('archives-LEX/OPS-originaux-LEX/04-procedure/sommation-huissier.pdf', $pipelineRefs);
+        $this->assertContains('seraphotheque-pack:archives-LEX/OPS-originaux-LEX/04-procedure/sommation-huissier.pdf', $pipelineRefs);
         $this->assertContains('manuel/hors-pipeline.pdf', $pipelineRefs);
     }
 
@@ -337,7 +337,7 @@ class SeraphothequeIngestionTest extends TestCase
         $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
         $this->assertDatabaseHas('subject_documents', [
             'subject_id' => $subject->id,
-            'source_reference' => 'archives-LEX/LEX-26-042/recommande-AR.pdf',
+            'source_reference' => 'seraphotheque-pack:archives-LEX/LEX-26-042/recommande-AR.pdf',
         ]);
 
         // Retirer un asset du pack
@@ -352,7 +352,7 @@ class SeraphothequeIngestionTest extends TestCase
         // Le document doit persister
         $this->assertDatabaseHas('subject_documents', [
             'subject_id' => $subject->id,
-            'source_reference' => 'archives-LEX/LEX-26-042/recommande-AR.pdf',
+            'source_reference' => 'seraphotheque-pack:archives-LEX/LEX-26-042/recommande-AR.pdf',
         ]);
     }
 
@@ -371,7 +371,7 @@ class SeraphothequeIngestionTest extends TestCase
 
         $this->assertDatabaseHas('subject_documents', [
             'subject_id' => $subject->id,
-            'source_reference' => 'archives-LEX/LEX-26-042/recommande-AR.pdf',
+            'source_reference' => 'seraphotheque-pack:archives-LEX/LEX-26-042/recommande-AR.pdf',
         ]);
 
         // Retirer un asset du pack
@@ -387,7 +387,7 @@ class SeraphothequeIngestionTest extends TestCase
         // Le document doit être supprimé
         $this->assertDatabaseMissing('subject_documents', [
             'subject_id' => $subject->id,
-            'source_reference' => 'archives-LEX/LEX-26-042/recommande-AR.pdf',
+            'source_reference' => 'seraphotheque-pack:archives-LEX/LEX-26-042/recommande-AR.pdf',
         ]);
     }
 
@@ -409,5 +409,60 @@ class SeraphothequeIngestionTest extends TestCase
             $this->assertStringNotContainsString('/tmp/', $ref, 'La source_reference ne doit pas contenir de chemin absolu /tmp/.');
             $this->assertStringNotContainsString('storage/framework/testing', $ref, 'La source_reference ne doit pas contenir de chemin de test temporaire.');
         }
+    }
+
+    /** @test */
+    public function manual_document_with_shared_source_reference_is_not_appropriated(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        // Créer Subject sans ingestion
+        $adminUser = \App\Models\User::factory()->create(['role' => 'admin']);
+        $subject = \App\Models\Subject::create([
+            'slug' => 'seraphotheque-situation-2026',
+            'user_id' => $adminUser->id,
+            'category_id' => 10,
+            'sub_category_id' => 14,
+            'theme' => 'test',
+            'title' => 'Test',
+            'body' => 'test body',
+            'citizen_body' => 'test citizen',
+            'public_body' => 'test public',
+            'status' => 'draft',
+            'citizen_status' => 'draft',
+            'public_status' => 'draft',
+        ]);
+
+        // Document MANUEL avec une source_reference du catalogue pipeline (SANS namespace)
+        $manualDoc = \App\Models\SubjectDocument::create([
+            'subject_id' => $subject->id,
+            'filename' => 'manuel.pdf',
+            'stored_filename' => 'manuel.pdf',
+            'path' => 'test/manuel-preserve.pdf',
+            'disk' => 'documents',
+            'mime_type' => 'application/pdf',
+            'size' => 9999,
+            'title' => 'Document manuel collisionnel',
+            'visibility' => \App\Models\VisibilityLevel::Working->value,
+            'source_reference' => 'archives-LEX/LEX-26-042/recommande-AR.pdf',
+        ]);
+
+        Storage::disk('documents')->put('test/manuel-preserve.pdf', 'contenu-manuel');
+
+        // Ingestion
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject->refresh();
+
+        // Le document manuel ne doit PAS être approprié (le titre doit rester manuel)
+        $this->assertDatabaseHas('subject_documents', [
+            'id' => $manualDoc->id,
+            'title' => 'Document manuel collisionnel',
+            'filename' => 'manuel.pdf',
+            'size' => 9999,
+        ]);
     }
 }
