@@ -124,6 +124,52 @@ class ImpersonationLocalTest extends TestCase
      */
 
     /**
+     * UI — indicateur + bouton restore visibles pendant impersonation
+     */
+    public function test_navbar_shows_impersonation_indicator_and_restore_button_during_session(): void
+    {
+        $this->app['env'] = 'local';
+
+        $admin = User::factory()->create([
+            'id' => 1,
+            'role' => 'admin',
+            'email_verified_at' => now(),
+            'requires_setup' => false,
+        ]);
+
+        // Déclencher impersonation
+        $this->actingAs($admin)
+            ->get(route('impersonate.become', ['citoyen']) . '?redirect=' . urlencode('/dashboard'))
+            ->assertRedirect('/dashboard')
+            ->assertSessionHas('success');
+
+        // User courant est maintenant le test-citoyen
+        $this->assertEquals('citoyen', auth()->user()->role);
+        $this->assertNotEquals(1, auth()->user()->id);
+        $this->assertTrue(session()->has('impersonate_admin_id'));
+
+        // Charger une page avec navbar en tant que citoyen impersonné
+        $response = $this->get('/dashboard');
+        $response->assertOk();
+
+        // L'état impersoné doit afficher l'indicateur et le bouton de restauration
+        $response->assertSee('Impersonation citoyen');
+        $response->assertSee('Revenir admin');
+
+        // Le panneau "Tester comme" ne doit PAS s'afficher car id !== 1
+        $response->assertDontSee('Tester comme');
+
+        // Restaurer via bouton
+        $this->post(route('impersonate.restore') . '?redirect=' . urlencode('/dashboard'))
+            ->assertRedirect('/dashboard')
+            ->assertSessionHas('success');
+
+        $this->assertAuthenticatedAs($admin);
+        $this->assertEquals(1, auth()->user()->id);
+        $this->assertFalse(session()->has('impersonate_admin_id'));
+    }
+
+    /**
      * G — restore sans session impersonation est sûr
      */
     public function test_restore_requires_existing_impersonation_session(): void
