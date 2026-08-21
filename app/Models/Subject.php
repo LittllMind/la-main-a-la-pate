@@ -352,11 +352,11 @@ class Subject extends Model
 
         $html = (string) $converter->convert($markdown);
 
-        // Swap inline-code ANCHOR markers back to real HTML span IDs
+        // Attach extracted IDs directly to heading elements (Pandoc semantics)
         foreach ($ids as $id) {
-            $html = str_replace(
-                '<code>ANCHOR_' . $id . '</code>',
-                '<span id="' . $id . '"></span>',
+            $html = preg_replace(
+                '/<h([1-6])>(.*?)\s*<code>ANCHOR_' . preg_quote($id, '/') . '<\/code>\s*<\/h\1>/',
+                '<h$1 id="' . $id . '">$2</h$1>',
                 $html
             );
         }

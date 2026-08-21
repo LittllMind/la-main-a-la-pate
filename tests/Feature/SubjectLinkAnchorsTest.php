@@ -39,10 +39,11 @@ class SubjectLinkAnchorsTest extends TestCase
 
         $html = $subject->renderBody();
 
-        // Inline Pandoc ID should be extracted
         $this->assertStringContainsString('id="comparatif-2025-2026"', $html);
         // But the raw {#...} should NOT appear in output
         $this->assertStringNotContainsString('{#comparatif-2025-2026}', $html);
+        // Heading element itself must carry the id (Pandoc semantic)
+        $this->assertStringContainsString('<h2 id="chronologie">Chronologie</h2>', $html);
     }
 
     public function test_heading_id_allows_anchor_navigation(): void
