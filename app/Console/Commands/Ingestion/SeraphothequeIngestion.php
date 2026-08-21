@@ -11,20 +11,24 @@ use App\Models\SubjectVersion;
 use App\Models\User;
 use App\Models\VisibilityLevel;
 use App\Services\DocumentStorageService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
- * Ingestion locale du Subject Séraphothèque selon le manifest v1.1.
+ * Ingestion locale du Subject Séraphothèque selon le manifest PUBLIC-V1.
  *
- * Crée le Subject en draft et attache uniquement les SubjectDocument Working
- * dont les assets physiques existent réellement. Aucun placeholder n'est créé.
+ * Le manifest 99-MANIFEST/public-v1.csv est l'autorité pour l'identité
+ * documentaire (doc_id), la source_reference, l'audience et les assets.
+ * Aucun catalogue hardcodé n'est utilisé pour PUBLIC-V1.
  */
 class SeraphothequeIngestion extends Command
 {
     protected $signature = 'app:seraphotheque-ingestion {--dry-run} {--force} {--pack-path=} {--user-id=1}';
 
-    protected $description = 'Ingère le Subject Séraphothèque et ses documents Working dans LMALP (draft uniquement).';
+    protected $description = 'Ingère le Subject Séraphothèque et ses documents selon le manifest PUBLIC-V1.';
 
     private string $packPath;
     private DocumentStorageService $storage;
@@ -38,12 +42,42 @@ class SeraphothequeIngestion extends Command
             $this->packPath = $this->option('pack-path');
         } else {
             $this->error("L'option --pack-path est obligatoire.");
+
             return self::FAILURE;
         }
 
         if (! is_dir($this->packPath)) {
             $this->error("Pack introuvable : {$this->packPath}");
+
             return self::FAILURE;
+        }
+
+        try {
+            $manifest = $this->loadManifest();
+        } catch (RuntimeException $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
+        }
+
+        $docIds = collect($manifest)->pluck('doc_id')->all();
+
+        if ($this->option('dry-run')) {
+            $this->info('[DRY-RUN] Manifest résolu du pack.');
+            foreach ($manifest as $row) {
+                $hasAsset = ! empty($row['asset_path']);
+                $this->line('---');
+                $this->line("doc_id          : {$row['doc_id']}");
+                $this->line("source_reference: {$row['source_reference']}");
+                $this->line("audience        : {$row['audience']}");
+                $this->line('asset_path      : ' . ($hasAsset ? $row['asset_path'] : '[NO ASSET]'));
+                $this->line('asset_sha256    : ' . ($hasAsset ? $row['asset_sha256'] : '[NO ASSET]'));
+                $this->line("action          : {$row['proposed_action']}");
+            }
+            $this->line('---');
+            $this->info('Lignes : ' . count($manifest) . ' ; PUBLIC : ' . count(array_filter($manifest, fn ($r) => $r['audience'] === VisibilityLevel::Public->value)) . ' ; CITIZEN : ' . count(array_filter($manifest, fn ($r) => $r['audience'] === VisibilityLevel::Citizen->value)) . ' ; avec asset : ' . count(array_filter($manifest, fn ($r) => ! empty($r['asset_path']))));
+
+            return self::SUCCESS;
         }
 
         $author = User::find($userId);
@@ -52,15 +86,8 @@ class SeraphothequeIngestion extends Command
 
         if (! $author || ! $category || ! $subCategory) {
             $this->error("Prérequis manquants : user_id={$userId}, category_id=10, sub_category_id=14.");
-            return self::FAILURE;
-        }
 
-        if ($this->option('dry-run')) {
-            $this->info('[DRY-RUN] Analyse du manifest uniquement.');
-            $this->line('Subject: La Séraphothèque — Comprendre la situation');
-            $this->line('Documents Working prévus : 5');
-            $this->line('Documents publics absents : sommation expurgée, email Curvelier nettoyé, AOT publiable, profession de foi.');
-            return self::SUCCESS;
+            return self::FAILURE;
         }
 
         $publicBody = $this->assemblePublicBody();
@@ -109,96 +136,27 @@ class SeraphothequeIngestion extends Command
             $this->info('Aucune SubjectVersion créée : représentations inchangées.');
         }
 
-        $documents = [
-            [
-                'title' => 'Sommation du 24 avril 2026 — originale',
-                'type' => 'sommation',
-                'date' => '2026-04-24',
-                'author' => 'Maître Eric de Jurquet, commissaire de justice',
-                'recipient' => 'Aurélien Tisserand',
-                'rep' => RepresentationType::Scan,
-                'source' => $this->packPath . '/archives-LEX/OPS-originaux-LEX/04-procedure/sommation-huissier.pdf',
-                'source_reference' => 'seraphotheque-pack:archives-LEX/OPS-originaux-LEX/04-procedure/sommation-huissier.pdf',
-                'establishes' => 'Les demandes formellement adressées à Aurélien Tisserand par l\'intermédiaire du commissaire de justice mandaté par la commune.',
-                'limitations' => 'La date et l\'heure exactes de la remise ne sont pas suffisamment lisibles sur la feuille correspondante. L\'acte ne constitue pas à lui seul une décision de justice tranchant l\'ensemble des questions juridiques en discussion.',
-            ],
-            [
-                'title' => 'Recommandé avec A/R n° 1A 216 790 8709 — demande de documents',
-                'type' => 'courrier administratif',
-                'date' => '2026-04-16',
-                'author' => 'La Séraphothèque',
-                'recipient' => 'Mairie du Rozier',
-                'rep' => RepresentationType::Scan,
-                'source' => $this->packPath . '/archives-LEX/LEX-26-042/recommande-AR.pdf',
-                'source_reference' => 'seraphotheque-pack:archives-LEX/LEX-26-042/recommande-AR.pdf',
-                'establishes' => 'Dépôt postal d\'un courrier recommandé avec avis de réception adressé à la mairie.',
-                'limitations' => 'Le contenu exact de la lettre n\'est pas entièrement transcrit dans les sources disponibles.',
-            ],
-            [
-                'title' => 'Convention occupation 2025 — boutique',
-                'type' => 'convention',
-                'date' => '2025-04-01',
-                'author' => 'Commune du Rozier',
-                'recipient' => 'Anna El Agri et Aurélien Tisserand',
-                'rep' => RepresentationType::Scan,
-                'source' => $this->packPath . '/archives-LEX/LEX-26-042/bail-boutique-2025.pdf',
-                'source_reference' => 'seraphotheque-pack:archives-LEX/LEX-26-042/bail-boutique-2025.pdf',
-                'establishes' => 'Convention d\'occupation précaire signée pour l\'été 2025.',
-                'limitations' => 'Représentation numérisée ; vérifier la qualité d\'OCR avant toute citation.',
-            ],
-            [
-                'title' => 'Projet de convention 2026 — Tisserand / El Agri',
-                'type' => 'convention',
-                'date' => '2026-04-01',
-                'author' => 'Commune du Rozier',
-                'recipient' => 'Anna El Agri et Aurélien Tisserand',
-                'rep' => RepresentationType::Scan,
-                'source' => $this->packPath . '/archives-LEX/LEX-26-042/bail tisserand - el agri.pdf',
-                'source_reference' => 'seraphotheque-pack:archives-LEX/LEX-26-042/bail tisserand - el agri.pdf',
-                'establishes' => 'Projet de convention d\'occupation précaire proposé par la commune pour 2026.',
-                'limitations' => 'Projet non signé par les deux parties à la date de mise à jour.',
-            ],
-            [
-                'title' => 'Délibération du Conseil municipal du 27 avril 2026 — délégations au maire',
-                'type' => 'délibération',
-                'date' => '2026-04-27',
-                'author' => 'Conseil municipal du Rozier',
-                'recipient' => 'Maire',
-                'rep' => RepresentationType::Copy,
-                'source' => $this->packPath . '/archives-LEX/LEX-26-042/-DELEGATION MAIRE.doc',
-                'source_reference' => 'seraphotheque-pack:archives-LEX/LEX-26-042/-DELEGATION MAIRE.doc',
-                'establishes' => 'Délégation au maire pour la conclusion et la révision du louage de choses pour une durée ≤ 12 ans.',
-                'limitations' => 'La date de transmission/publication portée sur le document (24/03/2026) est antérieure à la séance du 27/04/2026 ; anomalie documentaire à vérifier.',
-            ],
-        ];
-
-        $knownRefs = collect($documents)->pluck('source_reference')->all();
-
+        // Suppression des documents pipeline obsolètes uniquement avec --force
         if ($this->option('force')) {
-            $subject->documents()
-                ->whereIn('source_reference', $knownRefs)
-                ->get()
-                ->each(function ($doc) {
-                    if ($this->storage->exists($doc->path)) {
-                        $this->storage->delete($doc->path);
-                    }
-                    $doc->delete();
-                });
+            $this->pruneStalePipelineDocuments($subject, $docIds);
         }
 
         $position = 0;
-
         $createdCount = 0;
-        foreach ($documents as $meta) {
-            if (! $meta['source'] || ! file_exists($meta['source'])) {
-                $this->warn("Asset manquant : {$meta['title']} — ignoré.");
+
+        foreach ($manifest as $row) {
+            // Ligne sans asset : pas de SubjectDocument binaire ; conservée pour mapping éditorial futur
+            if (empty($row['asset_path'])) {
+                $this->info("Document sans asset : {$row['doc_id']} — aucun binaire créé.");
                 continue;
             }
 
-            $currentSha256 = hash_file('sha256', $meta['source']);
+            $sourcePath = $row['resolved_asset_path'];
+            $currentSha256 = hash_file('sha256', $sourcePath);
+            $sourceReference = $row['source_reference'];
 
             $existingDoc = SubjectDocument::where('subject_id', $subject->id)
-                ->where('source_reference', $meta['source_reference'])
+                ->where('source_reference', $sourceReference)
                 ->first();
 
             $shouldStore = ! $existingDoc || $existingDoc->source_sha256 !== $currentSha256;
@@ -206,8 +164,8 @@ class SeraphothequeIngestion extends Command
             if ($shouldStore) {
                 $newPath = $this->storage->storeEncrypted(
                     $subject->id,
-                    $meta['source'],
-                    basename($meta['source'])
+                    $sourcePath,
+                    basename($sourcePath)
                 );
             }
 
@@ -217,22 +175,22 @@ class SeraphothequeIngestion extends Command
 
                     try {
                         $existingDoc->update([
-                            'filename' => basename($meta['source']),
+                            'filename' => basename($sourcePath),
                             'stored_filename' => basename($newPath),
                             'path' => $newPath,
                             'disk' => 'documents',
-                            'mime_type' => mime_content_type($meta['source']) ?: 'application/octet-stream',
-                            'size' => filesize($meta['source']),
-                            'title' => $meta['title'],
-                            'document_date' => $meta['date'],
-                            'document_type' => $meta['type'],
-                            'author' => $meta['author'],
-                            'recipient' => $meta['recipient'],
-                            'representation_type' => $meta['rep'],
+                            'mime_type' => mime_content_type($sourcePath) ?: 'application/octet-stream',
+                            'size' => filesize($sourcePath),
+                            'title' => $row['titre'],
+                            'document_date' => $row['date'],
+                            'document_type' => $row['type'],
+                            'author' => null,
+                            'recipient' => null,
+                            'representation_type' => RepresentationType::Original,
                             'redacted' => false,
-                            'visibility' => VisibilityLevel::Working->value,
-                            'establishes' => $meta['establishes'],
-                            'limitations' => $meta['limitations'],
+                            'visibility' => $row['audience'],
+                            'establishes' => null,
+                            'limitations' => null,
                             'position' => ++$position,
                             'source_sha256' => $currentSha256,
                         ]);
@@ -244,7 +202,7 @@ class SeraphothequeIngestion extends Command
                         throw $e;
                     }
 
-                    // Supprimer l'ancien fichier seulement après succes de la mise à jour DB
+                    // Supprimer l'ancien fichier seulement après succès de la mise à jour DB
                     if ($this->storage->exists($oldPath)) {
                         $this->storage->delete($oldPath);
                     }
@@ -253,14 +211,10 @@ class SeraphothequeIngestion extends Command
                 } else {
                     // Contenu identique : pas de nouveau fichier, mettre à jour métadonnées seulement
                     $existingDoc->update([
-                        'title' => $meta['title'],
-                        'document_date' => $meta['date'],
-                        'document_type' => $meta['type'],
-                        'author' => $meta['author'],
-                        'recipient' => $meta['recipient'],
-                        'representation_type' => $meta['rep'],
-                        'establishes' => $meta['establishes'],
-                        'limitations' => $meta['limitations'],
+                        'title' => $row['titre'],
+                        'document_date' => $row['date'],
+                        'document_type' => $row['type'],
+                        'representation_type' => RepresentationType::Original,
                         'position' => ++$position,
                     ]);
 
@@ -269,23 +223,23 @@ class SeraphothequeIngestion extends Command
             } else {
                 $doc = SubjectDocument::create([
                     'subject_id' => $subject->id,
-                    'filename' => basename($meta['source']),
+                    'filename' => basename($sourcePath),
                     'stored_filename' => basename($newPath),
                     'path' => $newPath,
                     'disk' => 'documents',
-                    'mime_type' => mime_content_type($meta['source']) ?: 'application/octet-stream',
-                    'size' => filesize($meta['source']),
-                    'title' => $meta['title'],
-                    'document_date' => $meta['date'],
-                    'document_type' => $meta['type'],
-                    'author' => $meta['author'],
-                    'recipient' => $meta['recipient'],
-                    'source_reference' => $meta['source_reference'],
-                    'representation_type' => $meta['rep'],
+                    'mime_type' => mime_content_type($sourcePath) ?: 'application/octet-stream',
+                    'size' => filesize($sourcePath),
+                    'title' => $row['titre'],
+                    'document_date' => $row['date'],
+                    'document_type' => $row['type'],
+                    'author' => null,
+                    'recipient' => null,
+                    'source_reference' => $sourceReference,
+                    'representation_type' => RepresentationType::Original,
                     'redacted' => false,
-                    'visibility' => VisibilityLevel::Working->value,
-                    'establishes' => $meta['establishes'],
-                    'limitations' => $meta['limitations'],
+                    'visibility' => $row['audience'],
+                    'establishes' => null,
+                    'limitations' => null,
                     'position' => ++$position,
                     'source_sha256' => $currentSha256,
                 ]);
@@ -294,13 +248,238 @@ class SeraphothequeIngestion extends Command
             }
 
             $createdCount++;
-            $this->info("Document attaché : {$meta['title']}");
+            $this->info("Document attaché : {$row['titre']} ({$row['audience']})");
         }
 
-        $this->info("Ingestion terminée : {$createdCount} document(s) Working attaché(s).");
-        $this->info('Aucun SubjectDocument public créé (versions expurgées/nettoyées absentes).');
+        $this->info("Ingestion terminée : {$createdCount} document(s) attaché(s).");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Charge, normalise et valide le manifest du pack.
+     * Fail-closed : une anomalie lève une RuntimeException avant toute mutation.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function loadManifest(): array
+    {
+        $manifestPath = $this->packPath . '/99-MANIFEST/public-v1.csv';
+
+        if (! is_file($manifestPath)) {
+            throw new RuntimeException("Manifest introuvable : {$manifestPath}");
+        }
+
+        $handle = fopen($manifestPath, 'r');
+        if ($handle === false) {
+            throw new RuntimeException("Impossible de lire le manifest : {$manifestPath}");
+        }
+
+        $headers = fgetcsv($handle);
+        if ($headers === false) {
+            fclose($handle);
+            throw new RuntimeException('Manifest vide ou illisible.');
+        }
+
+        $headers = array_map(fn ($h) => trim(strtolower((string) $h)), $headers);
+        $required = ['doc_id', 'audience', 'source_reference', 'asset_path', 'asset_sha256'];
+        foreach ($required as $col) {
+            if (! in_array($col, $headers, true)) {
+                fclose($handle);
+                throw new RuntimeException("Colonne obligatoire manquante : {$col}");
+            }
+        }
+        $colIndex = array_flip($headers);
+
+        $rows = [];
+        $line = 2;
+        while (($data = fgetcsv($handle)) !== false) {
+            if (count($data) !== count($headers)) {
+                fclose($handle);
+                throw new RuntimeException("Ligne {$line} : nombre de colonnes invalide.");
+            }
+
+            $row = [];
+            foreach ($colIndex as $col => $idx) {
+                $row[$col] = trim($data[$idx] ?? '');
+            }
+
+            $rows[] = $row;
+            $line++;
+        }
+        fclose($handle);
+
+        return $this->validateManifest($rows);
+    }
+
+    /**
+     * Valide le manifest et résout les assets.
+     *
+     * @param array<int, array<string, string>> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function validateManifest(array $rows): array
+    {
+        if (count($rows) === 0) {
+            throw new RuntimeException('Manifest sans entrée documentaire.');
+        }
+
+        $allowedAudiences = [VisibilityLevel::Public->value, VisibilityLevel::Citizen->value];
+        $seenDocIds = [];
+        $validated = [];
+
+        foreach ($rows as $index => $row) {
+            $line = $index + 2;
+            $docId = $row['doc_id'];
+
+            if ($docId === '') {
+                throw new RuntimeException("Ligne {$line} : doc_id vide.");
+            }
+
+            if (isset($seenDocIds[$docId])) {
+                throw new RuntimeException("Ligne {$line} : doc_id dupliqué '{$docId}'.");
+            }
+            $seenDocIds[$docId] = true;
+
+            $expectedRef = 'seraphotheque-pack:' . $docId;
+            if ($row['source_reference'] !== $expectedRef) {
+                throw new RuntimeException("Ligne {$line} : source_reference attendu '{$expectedRef}', trouvé '{$row['source_reference']}'.");
+            }
+
+            $audience = strtolower($row['audience']);
+            if (! in_array($audience, $allowedAudiences, true)) {
+                throw new RuntimeException("Ligne {$line} : audience invalide '{$row['audience']}' (autorisé : public, citizen).");
+            }
+            $visibility = VisibilityLevel::from($audience)->value;
+
+            $hasAssetPath = $row['asset_path'] !== '';
+            $hasAssetHash = $row['asset_sha256'] !== '';
+
+            if ($hasAssetPath && ! $hasAssetHash) {
+                throw new RuntimeException("Ligne {$line} : asset_sha256 manquant pour asset_path '{$row['asset_path']}'.");
+            }
+            if (! $hasAssetPath && $hasAssetHash) {
+                throw new RuntimeException("Ligne {$line} : asset_sha256 présent sans asset_path.");
+            }
+
+            $resolvedPath = null;
+            if ($hasAssetPath) {
+                $resolvedPath = $this->resolveAssetPath($row['asset_path']);
+                if (! is_file($resolvedPath)) {
+                    throw new RuntimeException("Ligne {$line} : asset introuvable '{$row['asset_path']}'.");
+                }
+
+                $realHash = hash_file('sha256', $resolvedPath);
+                if (! hash_equals($row['asset_sha256'], $realHash)) {
+                    throw new RuntimeException("Ligne {$line} : hash asset invalide pour '{$row['asset_path']}' (attendu {$row['asset_sha256']}, trouvé {$realHash}).");
+                }
+            }
+
+            $proposedAction = $this->proposedManifestAction($docId);
+
+            $validated[] = [
+                'doc_id' => $docId,
+                'titre' => $row['titre'] ?? '',
+                'date' => $this->parseDocumentDate($row['date'] ?? null),
+                'type' => $row['type'] ?? 'document',
+                'audience' => $visibility,
+                'source_reference' => $expectedRef,
+                'asset_path' => $row['asset_path'],
+                'asset_sha256' => $row['asset_sha256'],
+                'resolved_asset_path' => $resolvedPath,
+                'proposed_action' => $proposedAction,
+            ];
+        }
+
+        return $validated;
+    }
+
+    private function resolveAssetPath(string $assetPath): string
+    {
+        // Interdit : chemin absolu, remontée de répertoire, symlink hors pack
+        if (str_starts_with($assetPath, '/')) {
+            throw new RuntimeException("asset_path absolu interdit : {$assetPath}");
+        }
+        if (str_contains($assetPath, '..')) {
+            throw new RuntimeException("asset_path interdit (contient '..') : {$assetPath}");
+        }
+
+        $resolvedPack = realpath($this->packPath);
+        if ($resolvedPack === false) {
+            throw new RuntimeException("Impossible de résoudre la racine du pack.");
+        }
+
+        $resolved = realpath($resolvedPack . '/' . $assetPath);
+        if ($resolved === false) {
+            throw new RuntimeException("Impossible de résoudre l'asset : {$assetPath}");
+        }
+
+        if (! str_starts_with($resolved, $resolvedPack . DIRECTORY_SEPARATOR) && $resolved !== $resolvedPack) {
+            throw new RuntimeException("asset_path sort du pack : {$assetPath}");
+        }
+
+        return $resolved;
+    }
+
+    private function parseDocumentDate(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        // Formats acceptés : YYYY ou YYYY-MM-DD
+        try {
+            if (preg_match('/^\d{4}$/', $value)) {
+                return Carbon::createFromDate((int) $value, 1, 1)->format('Y-m-d');
+            }
+
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    private function proposedManifestAction(string $docId): string
+    {
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->first();
+        if (! $subject) {
+            return 'CREATE';
+        }
+
+        $existing = SubjectDocument::where('subject_id', $subject->id)
+            ->where('source_reference', 'seraphotheque-pack:' . $docId)
+            ->first();
+
+        if (! $existing) {
+            return 'CREATE';
+        }
+
+        // Simplification dry-run : on ne compare pas le hash ici (validation complète faite avant)
+        return 'UNCHANGED';
+    }
+
+    /**
+     * Supprime les documents du namespace seraphotheque-pack dont le doc_id
+     * n'est plus présent dans le manifest courant. Les documents manuels sont
+     * toujours préservés.
+     */
+    private function pruneStalePipelineDocuments(Subject $subject, array $currentDocIds): void
+    {
+        $namespacePrefix = 'seraphotheque-pack:';
+
+        $subject->documents()
+            ->where('source_reference', 'like', $namespacePrefix . '%')
+            ->get()
+            ->each(function ($doc) use ($currentDocIds, $namespacePrefix) {
+                $docId = Str::after($doc->source_reference, $namespacePrefix);
+                if (! in_array($docId, $currentDocIds, true)) {
+                    if ($this->storage->exists($doc->path)) {
+                        $this->storage->delete($doc->path);
+                    }
+                    $doc->delete();
+                    $this->warn("Document pipeline obsolète supprimé : {$doc->source_reference}");
+                }
+            });
     }
 
     private function assemblePublicBody(): string
@@ -343,19 +522,8 @@ class SeraphothequeIngestion extends Command
 
     private function assembleWorkingBody(string $publicBody): string
     {
-        $assets = "**Assets Working disponibles :**\n";
-        $assets .= "- Sommation originale (PDF) — archives-LEX/OPS-originaux-LEX/04-procedure/sommation-huissier.pdf\n";
-        $assets .= "- Recommandé A/R (PDF) — archives-LEX/LEX-26-042/recommande-AR.pdf\n";
-        $assets .= "- Convention 2025 (PDF) — archives-LEX/LEX-26-042/bail-boutique-2025.pdf\n";
-        $assets .= "- Projet 2026 (PDF) — archives-LEX/LEX-26-042/bail tisserand - el agri.pdf\n";
-        $assets .= "- Délibération délégations (DOC) — archives-LEX/LEX-26-042/-DELEGATION MAIRE.doc\n\n";
-        $assets .= "**Versions expurgées / publiques absentes :**\n";
-        $assets .= "- Sommation expurgée\n";
-        $assets .= "- Email Curvelier nettoyé\n";
-        $assets .= "- AOT publiable\n";
-        $assets .= "- Profession de foi originale\n";
-
-        return $publicBody . "\n\n---\n\n" . $assets;
+        // Mapping legacy des corps : le Working n'est plus fourni par le manifest PUBLIC-V1.
+        return $publicBody;
     }
 
     private function readPackFile(string $file): string
@@ -364,6 +532,7 @@ class SeraphothequeIngestion extends Command
         if (! file_exists($path)) {
             return "\n\n> Fichier {$file} manquant.\n";
         }
+
         return file_get_contents($path);
     }
 
@@ -457,20 +626,24 @@ class SeraphothequeIngestion extends Command
             // Nettoyer lignes artefacts restantes
             $fPart = preg_replace('/^\s*#\s*[`\']*fiche-f-demandes-documents\.md[`\']*\s*\n*/mi', '', $fPart);
             $fPart = preg_replace('/^\s*#\s+Demandes de documents administratifs\s*$/mi', '', $fPart);
+
             return [$ePart, trim($fPart)];
         }
+
         return [$fiche, ''];
     }
 
     private function stripLeadingH1(string $text): string
     {
         $text = preg_replace('/^\s*#\s+[^\n]+\n*/u', '', $text);
+
         return trim($text);
     }
 
     private function cleanChronologie(string $text): string
     {
         $text = preg_replace('/^\s*#\s+Chronologie.*?\n/m', "## Chronologie — La Séraphothèque {#chronologie}\n", $text);
+
         return trim($text);
     }
 

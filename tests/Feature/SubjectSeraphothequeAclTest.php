@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use App\Models\SubCategory;
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 class SubjectSeraphothequeAclTest extends TestCase
@@ -14,28 +17,36 @@ class SubjectSeraphothequeAclTest extends TestCase
     protected function ingestSeraphotheque(): Subject
     {
         $admin = User::factory()->create(['role' => 'admin', 'email_verified_at' => now(), 'requires_setup' => false]);
-        $category = \App\Models\Category::factory()->create(['id' => 10, 'name' => 'Vie du village', 'slug' => 'vie-du-village']);
-        \App\Models\SubCategory::factory()->create(['id' => 14, 'category_id' => 10, 'name' => 'Séraphothèque', 'slug' => 'seraphotheque']);
+        $category = Category::factory()->create(['id' => 10, 'name' => 'Vie du village', 'slug' => 'vie-du-village']);
+        SubCategory::factory()->create(['id' => 14, 'category_id' => 10, 'name' => 'Séraphothèque', 'slug' => 'seraphotheque']);
 
         $pack = storage_path('framework/testing/seraphotheque-pack');
-        @mkdir($pack, 0755, true);
-        @mkdir($pack . '/archives-LEX/OPS-originaux-LEX/04-procedure', 0755, true);
-        @mkdir($pack . '/archives-LEX/LEX-26-042', 0755, true);
+        @mkdir($pack . '/03-DOCUMENTS/PUBLIC', 0755, true);
+        @mkdir($pack . '/03-DOCUMENTS/CITIZEN', 0755, true);
+        @mkdir($pack . '/99-MANIFEST', 0755, true);
 
-        file_put_contents($pack . '/archives-LEX/OPS-originaux-LEX/04-procedure/sommation-huissier.pdf', "%PDF-1.4 fake\n");
-        file_put_contents($pack . '/archives-LEX/LEX-26-042/recommande-AR.pdf', "%PDF-1.4 fake\n");
-        file_put_contents($pack . '/archives-LEX/LEX-26-042/bail-boutique-2025.pdf', "%PDF-1.4 fake\n");
-        file_put_contents($pack . '/archives-LEX/LEX-26-042/bail tisserand - el agri.pdf', "%PDF-1.4 fake\n");
-        file_put_contents($pack . '/archives-LEX/LEX-26-042/-DELEGATION MAIRE.doc', "fake doc\n");
+        file_put_contents($pack . '/03-DOCUMENTS/PUBLIC/doc-public.pdf', "%PDF-1.4 fake public\n");
+        file_put_contents($pack . '/03-DOCUMENTS/CITIZEN/doc-citizen.pdf', "%PDF-1.4 fake citizen\n");
 
-        file_put_contents($pack . '/index.md', "## 1. Comprendre\n\n## 5. La sommation\n\n## 6. Ce que dit la mairie\n\n## 7. Solutions\n\n## 8. Propositions\n\n## 12. Approfondir\n");
+        $publicSha = hash_file('sha256', $pack . '/03-DOCUMENTS/PUBLIC/doc-public.pdf');
+        $citizenSha = hash_file('sha256', $pack . '/03-DOCUMENTS/CITIZEN/doc-citizen.pdf');
+
+        $csv = "public_id,doc_id,titre,date,type,audience,source,source_reference,original_sha256,asset_path,asset_sha256,expurgations,fiche,chronology_event,status\n"
+            . 'PUB-01,DOC-ACL-PUBLIC,"Lettre ouverte Séraphothèque",2026-01-01,pdf,PUBLIC,test,seraphotheque-pack:DOC-ACL-PUBLIC,,'
+            . '"03-DOCUMENTS/PUBLIC/doc-public.pdf",' . $publicSha . ",aucune,,,gelé\n"
+            . 'CIT-01,DOC-ACL-CITIZEN,"Convention occupation 2025",2025-04-01,pdf,CITIZEN,test,seraphotheque-pack:DOC-ACL-CITIZEN,,'
+            . '"03-DOCUMENTS/CITIZEN/doc-citizen.pdf",' . $citizenSha . "," . '"coordonnées, signatures",,,gelé' . "\n";
+
+        file_put_contents($pack . '/99-MANIFEST/public-v1.csv', $csv);
+
+        file_put_contents($pack . '/index.md', "## 1. Comprendre\n\n## 5. La sommation du 24 avril 2026\n\n## 6. Ce que dit la mairie\n\n## 7. Solutions\n\n## 8. Propositions\n\n## 12. Approfondir\n");
         file_put_contents($pack . '/fiche-d-sommation-24-avril-2026.md', "## Fiche sommation\n");
         file_put_contents($pack . '/fiche-e-mail-maire-14-mai-2026.md', "## Fiche email\n#fiche-f-demandes-documents.md\n## Fiche demandes\n");
         file_put_contents($pack . '/fiche-h-demande-aot.md', "## Fiche AOT\n");
         file_put_contents($pack . '/chronologie.md', "## Chronologie\n");
         file_put_contents($pack . '/questions-ouvertes.md', "## Questions ouvertes\n");
 
-        \Illuminate\Support\Facades\Artisan::call('app:seraphotheque-ingestion', [
+        $exitCode = Artisan::call('app:seraphotheque-ingestion', [
             '--user-id' => $admin->id,
             '--pack-path' => $pack,
         ]);
