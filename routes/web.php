@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ImpersonateController;
 use App\Http\Controllers\LandingSectionController;
 use App\Http\Controllers\PostPublicController;
 use App\Http\Controllers\ProfileController;
@@ -139,6 +140,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/raccourcis', [\App\Http\Controllers\UserShortcutController::class, 'store'])->name('shortcuts.store');
     Route::delete('/raccourcis/{shortcut}', [\App\Http\Controllers\UserShortcutController::class, 'destroy'])->name('shortcuts.destroy');
+
+    // Impersonation locale : l'admin principal (id 1) se met dans la peau des rôles test
+    Route::get('/devenir/{role}', [ImpersonateController::class, 'become'])->whereIn('role', ['admin', 'moderator', 'citoyen', 'member'])->name('impersonate.become');
+    Route::post('/revenir-admin', [ImpersonateController::class, 'restore'])->name('impersonate.restore');
 });
 
 /*

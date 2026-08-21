@@ -49,6 +49,23 @@
             {{-- Desktop secondary nav + hamburger trigger --}}
             <div class="flex items-center gap-2">
                 @auth
+                    @if(app()->environment('local') && auth()->user()->id === 1)
+                        <div class="hidden lg:flex items-center mr-2" title="Mode local uniquement">
+                            <div class="flex items-center gap-1 bg-indigo-50 border border-indigo-200 rounded-lg px-2 py-1">
+                                <span class="text-[10px] uppercase font-semibold text-indigo-700 mr-1">Tester comme :</span>
+                                <a href="{{ route('impersonate.become', 'member') }}?redirect={{ urlencode(url()->current()) }}" class="text-xs px-2 py-1 rounded bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition">Membre</a>
+                                <a href="{{ route('impersonate.become', 'citoyen') }}?redirect={{ urlencode(url()->current()) }}" class="text-xs px-2 py-1 rounded bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition">Citoyen</a>
+                                <a href="{{ route('impersonate.become', 'moderator') }}?redirect={{ urlencode(url()->current()) }}" class="text-xs px-2 py-1 rounded bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition">Modérateur</a>
+                                <a href="{{ route('impersonate.become', 'admin') }}?redirect={{ urlencode(url()->current()) }}" class="text-xs px-2 py-1 rounded bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition">Admin test</a>
+                                <form method="POST" action="{{ route('logout') }}" class="inline m-0">
+                                    @csrf
+                                    <input type="hidden" name="redirect" value="{{ url()->current() }}">
+                                    <button type="submit" class="text-xs px-2 py-1 rounded bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition">Visiteur</button>
+                                </form>
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Mobile icons --}}
                     <div class="flex lg:hidden items-center gap-1">
                         @foreach($navItems as $item)
@@ -71,8 +88,22 @@
                                   style="background-color: {{ auth()->user()->color ?: '#64748b' }}">
                                 {{ substr(auth()->user()->name, 0, 1) }}
                             </span>
-                            <span class="max-w-[8rem] truncate">{{ auth()->user()->name }}</span>
+                            <div class="flex flex-col">
+                                <span class="max-w-[8rem] truncate">{{ auth()->user()->name }}</span>
+                                @if(session('impersonate_admin_id'))
+                                    <span class="text-[10px] text-amber-600 font-semibold">Impersonation {{ auth()->user()->role }}</span>
+                                @endif
+                            </div>
                         </a>
+                        @if(session('impersonate_admin_id'))
+                            <form method="POST" action="{{ route('impersonate.restore') }}" class="inline" title="Revenir au compte admin principal">
+                                @csrf
+                                <input type="hidden" name="redirect" value="{{ url()->current() }}">
+                                <button type="submit" class="flex items-center gap-1 px-3 py-2 rounded-md text-xs text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition">
+                                    Revenir admin
+                                </button>
+                            </form>
+                        @endif
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
                             <button type="submit"
