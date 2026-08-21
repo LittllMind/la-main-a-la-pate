@@ -322,6 +322,14 @@ class Subject extends Model
             $markdown = self::convertHtmlToMarkdown($markdown);
         }
 
+        // Supprimer le lien #documents si aucun document visible pour cette représentation.
+        // Le contrôleur a déjà préfiltré $this->body (via bodyFor) et $this->documents (via visibleTo).
+        $hasVisibleDocs = $this->documents->count() > 0;
+        if (!$hasVisibleDocs) {
+            $markdown = preg_replace('/\\[([^\\]]+)\\]\\(#documents\\)/', '$1', $markdown);
+            $markdown = preg_replace('/<a[^>]*href="[^"]*#documents"[^>]*>.*?<\\/a>/s', '', $markdown);
+        }
+
         // Preprocess Pandoc-style heading identifiers {#id} into stable markers
         $ids = [];
         $markdown = preg_replace_callback(
