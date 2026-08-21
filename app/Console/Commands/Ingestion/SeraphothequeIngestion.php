@@ -170,29 +170,83 @@ class SeraphothequeIngestion extends Command
                 continue;
             }
 
+            $currentSha256 = hash_file('sha256', $meta['source']);
+
             $existingDoc = SubjectDocument::where('subject_id', $subject->id)
                 ->where('source_reference', $meta['source_reference'])
                 ->first();
 
-            if (! $existingDoc) {
-                $path = $this->storage->storeEncrypted(
+            $shouldStore = ! $existingDoc || $existingDoc->source_sha256 !== $currentSha256;
+
+            if ($shouldStore) {
+                $newPath = $this->storage->storeEncrypted(
                     $subject->id,
                     $meta['source'],
                     basename($meta['source'])
                 );
-            } else {
-                $path = $existingDoc->path;
             }
 
-            SubjectDocument::updateOrCreate(
-                [
+            if ($existingDoc) {
+                if ($shouldStore) {
+                    $oldPath = $existingDoc->path;
+
+                    try {
+                        $existingDoc->update([
+                            'filename' => basename($meta['source']),
+                            'stored_filename' => basename($newPath),
+                            'path' => $newPath,
+                            'disk' => 'documents',
+                            'mime_type' => mime_content_type($meta['source']) ?: 'application/octet-stream',
+                            'size' => filesize($meta['source']),
+                            'title' => $meta['title'],
+                            'document_date' => $meta['date'],
+                            'document_type' => $meta['type'],
+                            'author' => $meta['author'],
+                            'recipient' => $meta['recipient'],
+                            'representation_type' => $meta['rep'],
+                            'redacted' => false,
+                            'visibility' => VisibilityLevel::Working->value,
+                            'establishes' => $meta['establishes'],
+                            'limitations' => $meta['limitations'],
+                            'position' => ++$position,
+                            'source_sha256' => $currentSha256,
+                        ]);
+                    } catch (\Exception $e) {
+                        // En cas d'échec DB, nettoyer le nouveau fichier pour éviter l'orphelin
+                        if ($this->storage->exists($newPath)) {
+                            $this->storage->delete($newPath);
+                        }
+                        throw $e;
+                    }
+
+                    // Supprimer l'ancien fichier seulement après succes de la mise à jour DB
+                    if ($this->storage->exists($oldPath)) {
+                        $this->storage->delete($oldPath);
+                    }
+
+                    $path = $newPath;
+                } else {
+                    // Contenu identique : pas de nouveau fichier, mettre à jour métadonnées seulement
+                    $existingDoc->update([
+                        'title' => $meta['title'],
+                        'document_date' => $meta['date'],
+                        'document_type' => $meta['type'],
+                        'author' => $meta['author'],
+                        'recipient' => $meta['recipient'],
+                        'representation_type' => $meta['rep'],
+                        'establishes' => $meta['establishes'],
+                        'limitations' => $meta['limitations'],
+                        'position' => ++$position,
+                    ]);
+
+                    $path = $existingDoc->path;
+                }
+            } else {
+                $doc = SubjectDocument::create([
                     'subject_id' => $subject->id,
-                    'source_reference' => $meta['source_reference'],
-                ],
-                [
                     'filename' => basename($meta['source']),
-                    'stored_filename' => basename($path),
-                    'path' => $path,
+                    'stored_filename' => basename($newPath),
+                    'path' => $newPath,
                     'disk' => 'documents',
                     'mime_type' => mime_content_type($meta['source']) ?: 'application/octet-stream',
                     'size' => filesize($meta['source']),
@@ -201,14 +255,18 @@ class SeraphothequeIngestion extends Command
                     'document_type' => $meta['type'],
                     'author' => $meta['author'],
                     'recipient' => $meta['recipient'],
+                    'source_reference' => $meta['source_reference'],
                     'representation_type' => $meta['rep'],
                     'redacted' => false,
                     'visibility' => VisibilityLevel::Working->value,
                     'establishes' => $meta['establishes'],
                     'limitations' => $meta['limitations'],
                     'position' => ++$position,
-                ]
-            );
+                    'source_sha256' => $currentSha256,
+                ]);
+
+                $path = $newPath;
+            }
 
             $createdCount++;
             $this->info("Document attaché : {$meta['title']}");

@@ -33,6 +33,7 @@ class SubjectDocument extends Model
         'category',
         'position',
         'visibility',
+        'source_sha256',
     ];
 
     protected $casts = [
