@@ -7,6 +7,7 @@ use App\Models\RepresentationType;
 use App\Models\SubCategory;
 use App\Models\Subject;
 use App\Models\SubjectDocument;
+use App\Models\SubjectVersion;
 use App\Models\User;
 use App\Models\VisibilityLevel;
 use App\Services\DocumentStorageService;
@@ -64,6 +65,9 @@ class SeraphothequeIngestion extends Command
 
         $publicBody = $this->assemblePublicBody();
         $citizenBody = $this->assembleCitizenBody($publicBody);
+        $workingBody = $this->assembleWorkingBody($publicBody);
+
+        $existingSubject = Subject::where('slug', 'seraphotheque-situation-2026')->first();
 
         $subject = Subject::updateOrCreate(
             ['slug' => 'seraphotheque-situation-2026'],
@@ -73,7 +77,7 @@ class SeraphothequeIngestion extends Command
                 'sub_category_id' => 14,
                 'theme' => $category->name,
                 'title' => 'La Séraphothèque — Comprendre la situation',
-                'body' => $this->assembleWorkingBody($publicBody),
+                'body' => $workingBody,
                 'citizen_body' => $citizenBody,
                 'public_body' => $publicBody,
                 'status' => 'draft',
@@ -83,6 +87,27 @@ class SeraphothequeIngestion extends Command
         );
 
         $this->info("Subject créé/mis à jour : ID {$subject->id}, slug {$subject->slug}");
+
+        // Snapshot des trois représentations uniquement si une d'elles a changé
+        // ou si c'est la première création par le pipeline.
+        $bodyChanged = ! $existingSubject || $existingSubject->body !== $workingBody;
+        $citizenChanged = ! $existingSubject || $existingSubject->citizen_body !== $citizenBody;
+        $publicChanged = ! $existingSubject || $existingSubject->public_body !== $publicBody;
+
+        if ($bodyChanged || $citizenChanged || $publicChanged) {
+            SubjectVersion::create([
+                'subject_id' => $subject->id,
+                'user_id' => $userId,
+                'body' => $workingBody,
+                'citizen_body' => $citizenBody,
+                'public_body' => $publicBody,
+                'change_summary' => 'Ingestion du pack Séraphothèque',
+            ]);
+
+            $this->info('SubjectVersion créée : snapshot des trois représentations.');
+        } else {
+            $this->info('Aucune SubjectVersion créée : représentations inchangées.');
+        }
 
         $documents = [
             [

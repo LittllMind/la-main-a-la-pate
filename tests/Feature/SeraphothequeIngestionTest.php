@@ -6,6 +6,7 @@ use App\Console\Commands\Ingestion\SeraphothequeIngestion;
 use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\Subject;
+use App\Models\SubjectVersion;
 use App\Models\User;
 use App\Models\VisibilityLevel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -482,6 +483,149 @@ class SeraphothequeIngestionTest extends TestCase
         $this->assertNotNull($doc);
         $this->assertNotNull($doc->source_sha256);
         $this->assertEquals(64, strlen($doc->source_sha256), 'SHA-256 doit être 64 caractères hex.');
+    }
+
+    /** @test */
+    public function first_ingestion_creates_exactly_one_subject_version(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        $this->assertNull(Subject::where('slug', 'seraphotheque-situation-2026')->first());
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $versions = SubjectVersion::where('subject_id', $subject->id)->get();
+
+        $this->assertCount(1, $versions, 'La première ingestion doit créer exactement une SubjectVersion.');
+        $this->assertEquals($admin->id, $versions->first()->user_id);
+        $this->assertEquals($subject->body, $versions->first()->body);
+        $this->assertEquals($subject->citizen_body, $versions->first()->citizen_body);
+        $this->assertEquals($subject->public_body, $versions->first()->public_body);
+    }
+
+    /** @test */
+    public function identical_rerun_does_not_create_new_subject_version(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $this->assertCount(1, SubjectVersion::where('subject_id', $subject->id)->get());
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject->refresh();
+        $this->assertCount(1, SubjectVersion::where('subject_id', $subject->id)->get(), 'Une relance identique ne doit pas créer de SubjectVersion.');
+    }
+
+    /** @test */
+    public function changed_text_content_creates_a_new_subject_version(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $versions = SubjectVersion::where('subject_id', $subject->id)->orderBy('id')->get();
+        $this->assertCount(1, $versions);
+
+        $firstSnapshotBody = $versions->first()->body;
+
+        // Modifier le contenu textuel du pack
+        $index = file_get_contents($pack . '/index.md');
+        file_put_contents($pack . '/index.md', $index . "\n\nNouveau paragraphe ajouté après la première version.");
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject->refresh();
+        $versions = SubjectVersion::where('subject_id', $subject->id)->orderBy('id')->get();
+
+        $this->assertCount(2, $versions, 'Un changement de contenu textuel doit créer exactement une nouvelle SubjectVersion.');
+        $this->assertStringContainsString('Nouveau paragraphe ajouté', $subject->body);
+        $this->assertEquals($firstSnapshotBody, $versions[0]->body, 'Le premier snapshot doit contenir l\'ancien body.');
+        $this->assertStringContainsString('Nouveau paragraphe ajouté', $versions[1]->body, 'Le second snapshot doit contenir le nouvel état final.');
+        $this->assertEquals($subject->citizen_body, $versions[1]->citizen_body);
+        $this->assertEquals($subject->public_body, $versions[1]->public_body);
+    }
+
+    /** @test */
+    public function document_only_change_does_not_create_subject_version(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $this->assertCount(1, SubjectVersion::where('subject_id', $subject->id)->get());
+
+        $bodyBefore = $subject->body;
+        $citizenBodyBefore = $subject->citizen_body;
+        $publicBodyBefore = $subject->public_body;
+
+        // Modifier uniquement le contenu binaire d'un asset sans toucher aux fichiers texte
+        file_put_contents($pack . '/archives-LEX/LEX-26-042/recommande-AR.pdf', "%PDF-1.4 V2 fake documentaire seul\n");
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject->refresh();
+        $this->assertCount(1, SubjectVersion::where('subject_id', $subject->id)->get(), 'Une modification documentaire seule ne doit pas créer de SubjectVersion.');
+        $this->assertEquals($bodyBefore, $subject->body);
+        $this->assertEquals($citizenBodyBefore, $subject->citizen_body);
+        $this->assertEquals($publicBodyBefore, $subject->public_body);
+    }
+
+    /** @test */
+    public function dry_run_does_not_create_subject_version(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $this->assertCount(1, SubjectVersion::where('subject_id', $subject->id)->get());
+
+        // Modifier le contenu textuel et binaire
+        $index = file_get_contents($pack . '/index.md');
+        file_put_contents($pack . '/index.md', $index . "\n\nTEXT DRY RUN.");
+        file_put_contents($pack . '/archives-LEX/LEX-26-042/recommande-AR.pdf', "%PDF-1.4 dry run changed\n");
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+            '--dry-run' => true,
+        ]);
+
+        // Aucune mutation DB : le Subject n'existe plus dans la DB car RefreshDatabase ? Non — le test n'a pas rechargé.
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $subject->refresh();
+        $this->assertCount(1, SubjectVersion::where('subject_id', $subject->id)->get(), 'Dry-run ne doit créer aucune SubjectVersion.');
+        $this->assertStringNotContainsString('TEXT DRY RUN', $subject->body, 'Dry-run ne doit pas modifier les représentations.');
     }
 
     /** @test */
