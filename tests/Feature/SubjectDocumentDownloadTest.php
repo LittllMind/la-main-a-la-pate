@@ -64,4 +64,139 @@ class SubjectDocumentDownloadTest extends TestCase
             ->get(route('subjects.documents.download', [$subject->slug, $document->id]))
             ->assertNotFound();
     }
+
+    public function test_public_text_document_download_succeeds_for_guest_when_subject_is_published(): void
+    {
+        Storage::fake('documents');
+
+        $service = app(\App\Services\DocumentStorageService::class);
+        $plainText = "From: emetteur\nTo: destinataire\nSubject: Information\n\nCorps du message\n";
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('email.json', $plainText);
+        $subject = Subject::factory()->create([
+            'status' => 'published',
+            'citizen_status' => 'published',
+            'public_status' => 'published',
+        ]);
+        $path = $service->storeEncrypted($subject->id, $file->getRealPath(), 'email.json');
+
+        $document = SubjectDocument::create([
+            'subject_id' => $subject->id,
+            'filename' => 'Email-2026-07-01_deplacement-portants.json',
+            'stored_filename' => basename($path),
+            'path' => $path,
+            'disk' => 'documents',
+            'mime_type' => 'text/plain',
+            'size' => strlen($plainText),
+            'title' => 'Information déplacement portants',
+            'category' => 'source',
+            'visibility' => \App\Models\VisibilityLevel::Public->value,
+        ]);
+
+        $response = $this->get(route('subjects.documents.download', [$subject->slug, $document->id]));
+
+        $response->assertOk()
+            ->assertHeader('Content-Type', 'text/plain; charset=UTF-8');
+
+        ob_start();
+        $response->baseResponse->sendContent();
+        $body = ob_get_clean();
+
+        $this->assertSame($plainText, $body);
+    }
+
+    public function test_download_error_does_not_disclose_internal_data_to_guest(): void
+    {
+        Storage::fake('documents');
+
+        $subject = Subject::factory()->create([
+            'status' => 'published',
+            'citizen_status' => 'published',
+            'public_status' => 'published',
+        ]);
+
+        $document = SubjectDocument::create([
+            'subject_id' => $subject->id,
+            'filename' => 'Email-2026-07-01_deplacement-portants.json',
+            'stored_filename' => 'secret.enc',
+            'path' => 'be/27/secret.enc',
+            'disk' => 'documents',
+            'mime_type' => 'text/plain',
+            'size' => 2000,
+            'title' => 'Information déplacement portants',
+            'category' => 'source',
+            'visibility' => \App\Models\VisibilityLevel::Public->value,
+        ]);
+
+        // Simuler un stockage qui reconnait l'existence du fichier mais echoue au dechiffrement.
+        $mockStorage = $this->createMock(\App\Services\DocumentStorageService::class);
+        $mockStorage->method('exists')->willReturn(true);
+        $mockStorage->method('decrypt')->willThrowException(
+            new \RuntimeException('Decryption failed for secret path /home/REDACTED/documents/be/27/secret.enc')
+        );
+        $this->app->instance(\App\Services\DocumentStorageService::class, $mockStorage);
+
+        config(['app.debug' => false]);
+
+        $response = $this->get(route('subjects.documents.download', [$subject->slug, $document->id]));
+
+        $response->assertStatus(500);
+        $response->assertDontSee('/home/');
+        $response->assertDontSee('secret.enc');
+        $response->assertDontSee('Decryption failed');
+        $response->assertDontSee('Corps du message');
+    }
+
+    public function test_citizen_document_is_not_accessible_to_guest(): void
+    {
+        Storage::fake('documents');
+
+        $subject = Subject::factory()->create([
+            'status' => 'published',
+            'citizen_status' => 'published',
+            'public_status' => 'published',
+        ]);
+
+        $document = SubjectDocument::create([
+            'subject_id' => $subject->id,
+            'filename' => 'citizen.pdf',
+            'stored_filename' => 'citizen.enc',
+            'path' => 'path/citizen.enc',
+            'disk' => 'documents',
+            'mime_type' => 'application/pdf',
+            'size' => 1000,
+            'title' => 'Document Citizen',
+            'category' => 'source',
+            'visibility' => \App\Models\VisibilityLevel::Citizen->value,
+        ]);
+
+        $this->get(route('subjects.documents.download', [$subject->slug, $document->id]))
+            ->assertNotFound();
+    }
+
+    public function test_working_document_is_not_accessible_to_guest(): void
+    {
+        Storage::fake('documents');
+
+        $subject = Subject::factory()->create([
+            'status' => 'published',
+            'citizen_status' => 'published',
+            'public_status' => 'published',
+        ]);
+
+        $document = SubjectDocument::create([
+            'subject_id' => $subject->id,
+            'filename' => 'working.pdf',
+            'stored_filename' => 'working.enc',
+            'path' => 'path/working.enc',
+            'disk' => 'documents',
+            'mime_type' => 'application/pdf',
+            'size' => 1000,
+            'title' => 'Document Working',
+            'category' => 'source',
+            'visibility' => \App\Models\VisibilityLevel::Working->value,
+        ]);
+
+        $this->get(route('subjects.documents.download', [$subject->slug, $document->id]))
+            ->assertNotFound();
+    }
 }

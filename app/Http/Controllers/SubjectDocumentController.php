@@ -226,13 +226,46 @@ class SubjectDocumentController extends Controller
             abort(404);
         }
 
-        return response()->streamDownload(function () use ($document) {
+        // Le déchiffrement est tenté en dehors du stream pour pouvoir
+        // retourner une réponse générique en cas d'erreur sans exposer
+        // de stacktrace ou de contenu au client.
+        $plain = null;
+        try {
             $plain = $this->storage->decrypt($document->path);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response('Une erreur est survenue lors du téléchargement.', 500);
+        }
+
+        return response()->streamDownload(function () use (&$plain) {
             echo $plain;
-            sodium_memzero($plain);
+            $this->secureZero($plain);
         }, $document->filename, [
             'Content-Type' => $document->mime_type,
         ]);
+    }
+
+    /**
+     * Efface sûrement un buffer en mémoire.
+     * Utilise sodium_memzero quand l'extension est présente, sinon
+     * libère la référence de manière portable sans interrompre le
+     * téléchargement.
+     */
+    private function secureZero(?string &$buffer): void
+    {
+        if ($buffer === null) {
+            return;
+        }
+
+        if (function_exists('sodium_memzero')) {
+            \sodium_memzero($buffer);
+
+            return;
+        }
+
+        $buffer = '';
+        unset($buffer);
     }
 
     // Convertir un texte Markdown en PDF et l'attacher comme document

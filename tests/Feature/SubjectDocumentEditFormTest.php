@@ -18,7 +18,6 @@ class SubjectDocumentEditFormTest extends TestCase
         $service = app(\App\Services\DocumentStorageService::class);
         $pdf = UploadedFile::fake()->createWithContent($filename, str_repeat('X', $size));
         $path = $service->storeEncrypted($subject->id, $pdf->getRealPath(), $filename);
-        Storage::disk('documents')->put($path, 'encrypted-blob-' . $filename);
 
         return SubjectDocument::create([
             'subject_id' => $subject->id,
