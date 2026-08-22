@@ -14,13 +14,14 @@ class Subject extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'theme', 'title', 'slug', 'body', 'citizen_body', 'public_body', 'citizen_status', 'public_status', 'citizen_published_at', 'public_published_at', 'status', 'locked_at', 'category_id', 'sub_category_id', 'visibility', 'published_at'];
+    protected $fillable = ['user_id', 'theme', 'title', 'slug', 'body', 'citizen_body', 'public_body', 'citizen_status', 'public_status', 'citizen_published_at', 'public_published_at', 'public_is_listed', 'status', 'locked_at', 'category_id', 'sub_category_id', 'visibility', 'published_at'];
 
     protected $casts = [
         'locked_at' => 'datetime',
         'last_activity_at' => 'datetime',
         'citizen_published_at' => 'datetime',
         'public_published_at' => 'datetime',
+        'public_is_listed' => 'boolean',
     ];
 
     public function user(): BelongsTo
@@ -75,6 +76,10 @@ class Subject extends Model
      * Guest : sujets dont la version publique est publiée.
      * Citoyen : sujets dont la version citoyenne est publiée OU version publique publiée.
      * Admin/moderator/auteur/collaborateur : tous les sujets non archivés.
+     *
+     * Note : ce scope ne filtre PAS public_is_listed.
+     *        L'affichage dans les surfaces de découverte doit être appliqué
+     *        explicitement via scopeListedInCatalogue quand c'est pertinent.
      */
     public function scopeVisibleTo($query, ?User $user)
     {
@@ -100,6 +105,17 @@ class Subject extends Model
                         ->whereNotNull('public_body');
                 });
         });
+    }
+
+    /**
+     * Limite les sujets à ceux qui doivent apparaître dans les surfaces
+     * générales de découverte (catalogue, recherche, arbres, sitemap).
+     * Un sujet public mais public_is_listed=false reste visible par URL
+     * directe et via ses CTA, mais n'apparaît pas ici.
+     */
+    public function scopeListedInCatalogue($query)
+    {
+        return $query->where('public_is_listed', true);
     }
 
     /**

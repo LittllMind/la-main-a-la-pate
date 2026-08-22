@@ -23,6 +23,7 @@ class SearchController extends Controller
         $user = auth()->user();
 
         $subjectQuery = Subject::visibleTo($user)
+            ->listedInCatalogue()
             ->select(['id', 'title', 'slug', 'status', 'created_at', 'user_id'])
             ->with('user:id,name')
             ->limit(20);

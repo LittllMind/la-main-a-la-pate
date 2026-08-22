@@ -57,7 +57,7 @@ class DocumentTreeController extends Controller
 
         $categories = Category::with([
             'subCategories' => fn ($q) => $q->orderBy('name'),
-            'subCategories.subjects' => fn ($q) => $q->visibleTo($user)->orderBy('title'),
+            'subCategories.subjects' => fn ($q) => $q->visibleTo($user)->listedInCatalogue()->orderBy('title'),
             'subCategories.subjects.documents' => fn ($q) => $q->visibleTo($user)->orderBy('position')->orderBy('created_at'),
         ])->orderBy('display_order')->orderBy('name')->get();
 
