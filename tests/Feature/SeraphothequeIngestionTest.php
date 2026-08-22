@@ -687,6 +687,53 @@ MD;
     }
 
     /** @test */
+    public function it_accepts_public_deferred_redacted_document_without_binary(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment([
+            [
+                'doc_id' => self::NO_ASSET_DOC_ID,
+                // public_id n'est pas utilisé par le pipeline, on le reprend pour cohérence
+                'audience' => 'PUBLIC',
+                'asset_path' => '',
+                'asset_sha256' => '',
+                'expurgations' => 'coordonnées, signatures',
+            ],
+        ]);
+
+        $exitCode = Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+        $this->assertEquals(0, $exitCode);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+
+        $this->assertDatabaseMissing('subject_documents', [
+            'subject_id' => $subject->id,
+            'source_reference' => 'seraphotheque-pack:' . self::NO_ASSET_DOC_ID,
+        ]);
+
+        $storedFileCount = collect(Storage::disk('documents')->allFiles())
+            ->filter(fn ($file) => str_contains($file, 'no-asset'))
+            ->count();
+        $this->assertEquals(0, $storedFileCount, 'Aucun fichier ne doit être stocké pour un asset volontairement différé.');
+
+        // Les deux autres documents binaires du manifest sont ingérés normalement
+        $this->assertCount(2, $subject->documents, 'Seuls les deux docs avec asset sont créés.');
+        $this->assertDatabaseHas('subject_documents', [
+            'subject_id' => $subject->id,
+            'source_reference' => 'seraphotheque-pack:' . self::PUBLIC_DOC_ID,
+        ]);
+        $this->assertDatabaseHas('subject_documents', [
+            'subject_id' => $subject->id,
+            'source_reference' => 'seraphotheque-pack:' . self::CITIZEN_DOC_ID,
+        ]);
+
+        // La fiche éditoriale est conservée dans public_body
+        $this->assertStringContainsString('## Documents et fiches documentaires {#documents}', $subject->public_body);
+    }
+
+    /** @test */
     public function it_preserves_existing_subjects(): void
     {
         ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
