@@ -484,46 +484,260 @@ class SeraphothequeIngestion extends Command
 
     private function assemblePublicBody(): string
     {
-        $index = $this->readPackFile('index.md');
-        $ficheD = $this->readPackFile('fiche-d-sommation-24-avril-2026.md');
-        $ficheE = $this->readPackFile('fiche-e-mail-maire-14-mai-2026.md');
-        $ficheH = $this->readPackFile('fiche-h-demande-aot.md');
-        $chronologie = $this->readPackFile('chronologie.md');
-        $questions = $this->readPackFile('questions-ouvertes.md');
+        $index = $this->readPackFile('01-SUJET/index.md');
+        $index = $this->stripFrontMatter($index);
+        $index = $this->stripLeadingH1($index);
+        $index = $this->normalizeNumberedHeadings($index);
+        $sections = $this->splitIndexSections($index);
 
-        $index = $this->cleanIndex($index);
-
-        [$ficheEclean, $ficheF] = $this->splitFicheE($ficheE);
-
-        $ficheD = $this->stripLeadingH1($ficheD);
-        $ficheEclean = $this->stripLeadingH1($ficheEclean);
-        $ficheF = $this->stripLeadingH1($ficheF);
-        $ficheH = $this->stripLeadingH1($ficheH);
-
+        $chronologie = $this->readPackFile('02-CHRONOLOGIE/chronologie.md');
+        $chronologie = $this->stripFrontMatter($chronologie);
         $chronologie = $this->cleanChronologie($chronologie);
-        $questions = $this->addAnchorId($questions, 'questions-ouvertes');
 
-        $index = $this->insertAfterSection($index, '## 5.', "\n\n## Fiche — Sommation du 24 avril 2026\n\n" . $ficheD);
-        $index = $this->insertAfterSection($index, '## 6.', "\n\n## Fiche — Email du maire du 14 mai 2026\n\n" . $ficheEclean);
-        $index = $this->insertAfterSection($index, '## 7.', "\n\n## Fiche — Demandes de documents administratifs\n\n" . $ficheF);
-        $index = $this->insertAfterSection($index, '## 8.', "\n\n## Fiche — Demande d'AOT du 16 juin 2026\n\n" . $ficheH);
+        $questions = $this->readPackFile('05-QUESTIONS-OUVERTES/questions-ouvertes.md');
+        $questions = $this->stripFrontMatter($questions);
+        $questions = $this->stripLeadingH1($questions);
+        $questions = $this->wrapSection($questions, 'Questions ouvertes', 'questions-ouvertes');
 
-        $index .= "\n\n---\n\n## Comparatif 2025 / 2026 {#comparatif-2025-2026}\n\n"
-            . "Voir le tableau comparatif des conventions 2025 et 2026 (à venir).\n\n"
-            . "---\n\n" . $chronologie . "\n\n---\n\n" . $questions;
+        $documentsSection = $this->buildDocumentsSection($sections);
 
-        return $index;
+        $sources = $this->readPackFile('06-SOURCES/index.md');
+        $sources = $this->stripFrontMatter($sources);
+        $sources = $this->stripLeadingH1($sources);
+        $sources = $this->wrapSection($sources, 'Lire les sources', 'lire-les-sources');
+
+        $positions = $this->combineSections([
+            $sections[4] ?? ['heading' => '', 'content' => ''],
+            $sections[6] ?? ['heading' => '', 'content' => ''],
+        ]);
+
+        $body = "# La Séraphothèque — Situation du local communal\n\n"
+            . "**Dossier documentaire en cours d’enrichissement — version du 21 août 2026.**\n\n"
+            . $this->wrapSection($sections[1]['content'] ?? '', 'Comprendre en une minute', 'comprendre', $sections[1]['heading'] ?? null) . "\n\n---\n\n"
+            . $this->wrapSection($sections[2]['content'] ?? '', 'Les principaux enjeux', 'enjeux', $sections[2]['heading'] ?? null) . "\n\n---\n\n"
+            . $this->wrapSection($sections[3]['content'] ?? '', 'Ce qui change en 2026', 'changements-2026', $sections[3]['heading'] ?? null) . "\n\n---\n\n"
+            . $chronologie . "\n\n---\n\n"
+            . $this->wrapSection($positions, 'Positions des acteurs', 'positions') . "\n\n---\n\n"
+            . $this->wrapSection($sections[5]['content'] ?? '', 'Principaux points de désaccord', 'desaccords', $sections[5]['heading'] ?? null) . "\n\n---\n\n"
+            . $questions . "\n\n---\n\n"
+            . $documentsSection . "\n\n---\n\n"
+            . $sources;
+
+        return $this->compactWhitespace($body);
     }
 
     private function assembleCitizenBody(string $publicBody): string
     {
+        // Aucun texte éditorial Citizen distinct validé dans PUBLIC-V1.
         return $publicBody;
     }
 
     private function assembleWorkingBody(string $publicBody): string
     {
-        // Mapping legacy des corps : le Working n'est plus fourni par le manifest PUBLIC-V1.
+        // Aucun texte éditorial Working distinct validé dans PUBLIC-V1.
         return $publicBody;
+    }
+
+    private function wrapSection(string $content, string $title, string $anchor, ?string $originalHeading = null): string
+    {
+        $content = $this->rewriteNavigationLinks($content);
+        $content = $this->stripTrailingHorizontalRules($content);
+
+        $heading = '';
+        if ($originalHeading !== null && $originalHeading !== '' && $originalHeading !== $title) {
+            $heading = "### {$originalHeading}\n\n";
+        }
+
+        return "## {$title} {#{$anchor}}\n\n" . $heading . trim($content);
+    }
+
+    private function combineSections(array $sections): string
+    {
+        $parts = [];
+        foreach ($sections as $section) {
+            if (empty($section['content'])) {
+                continue;
+            }
+            $heading = trim($section['heading'] ?? '');
+            $text = trim($section['content']);
+            if ($heading !== '') {
+                $parts[] = "### {$heading}\n\n{$text}";
+            } else {
+                $parts[] = $text;
+            }
+        }
+
+        return $this->rewriteNavigationLinks(implode("\n\n---\n\n", $parts));
+    }
+
+    /**
+     * Normalise les titres de section numérotées pour le parser interne.
+     * Accepte aussi bien `# 1. Titre` que `## 1. Titre`.
+     */
+    private function normalizeNumberedHeadings(string $text): string
+    {
+        return preg_replace('/^##?\s+(\d+\.\s+.*)$/m', '# $1', $text) ?? $text;
+    }
+
+    /**
+     * Lit les sections numérotées de 01-SUJET/index.md.
+     * Renvoie un tableau indexé par numéro de section.
+     *
+     * @return array<int, array{heading: string, content: string}>
+     */
+    private function splitIndexSections(string $index): array
+    {
+        preg_match_all(
+            '/^#\s+(\d+)\.\s+([^\n]+)\n((?:(?!^#\s+\d+\.).)*)/ms',
+            $index,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        $sections = [];
+        foreach ($matches as $m) {
+            $sections[(int) $m[1]] = [
+                'heading' => trim($m[2]),
+                'content' => trim($m[3]),
+            ];
+        }
+
+        return $sections;
+    }
+
+    /**
+     * Construit la section #documents à partir des §7 (demandes) et §8 (solutions)
+     * du sujet, des fiches documentaires et de la légende issue du README.
+     */
+    private function buildDocumentsSection(array $sections): string
+    {
+        $parts = ["## Documents et fiches documentaires {#documents}"];
+
+        $demandes = $sections[7]['content'] ?? '';
+        $solutions = $sections[8]['content'] ?? '';
+
+        if ($demandes !== '') {
+            $demandes = $this->convertNumberedHeadingToH3($demandes);
+            $parts[] = $this->rewriteNavigationLinks($demandes);
+        }
+
+        if ($solutions !== '') {
+            $solutions = $this->convertNumberedHeadingToH3($solutions);
+            $parts[] = $this->rewriteNavigationLinks($solutions);
+        }
+
+        $fiches = $this->loadFiches();
+        if ($fiches !== '') {
+            $parts[] = $fiches;
+        }
+
+        $legend = $this->doctrineLegend();
+        if ($legend !== '') {
+            $parts[] = $legend;
+        }
+
+        return implode("\n\n", $parts);
+    }
+
+    private function loadFiches(): string
+    {
+        $files = glob($this->packPath . '/04-FICHES/*.md');
+        if ($files === false || empty($files)) {
+            return '';
+        }
+
+        sort($files);
+
+        $parts = [];
+        foreach ($files as $file) {
+            $text = file_get_contents($file);
+            if ($text === false) {
+                continue;
+            }
+            $text = $this->stripFrontMatter($text);
+            // Transformer le H1 de fiche en H3 sous la section #documents
+            $text = preg_replace('/^#\s+(.+)$/m', '### $1', $text);
+            $parts[] = trim($this->rewriteNavigationLinks($text));
+        }
+
+        return empty($parts) ? '' : implode("\n\n", $parts);
+    }
+
+    private function doctrineLegend(): string
+    {
+        $readme = $this->readPackFile('00-LIRE-DABORD.md');
+        $readme = $this->stripFrontMatter($readme);
+
+        if (! preg_match('/##\s+Doctrine\s*\n(.*?)(?=\n##|\z)/s', $readme, $m)) {
+            return "Légende : chaque assertion est classée selon son statut documentaire.";
+        }
+
+        $doctrine = trim($m[1]);
+        $doctrine = str_replace(
+            ['**Fait documenté**', '**Position d\'acteur**', '**Question ouverte**'],
+            ['**FAIT DOCUMENTÉ**', '**POSITION / DÉCLARATION**', '**QUESTION OUVERTE**'],
+            $doctrine
+        );
+
+        // Ajout de la catégorie SOURCE, provenant de l'index des sources.
+        return "### Légende documentaire\n\n" . $doctrine . "\n- **SOURCE** : référencée dans l'index des sources.";
+    }
+
+    private function stripFrontMatter(string $text): string
+    {
+        return preg_replace('/^---\s*\n.*?\n---\s*\n/s', '', $text) ?? $text;
+    }
+
+    private function convertNumberedHeadingToH3(string $text): string
+    {
+        return preg_replace('/^#\s+\d+\.\s+([^\n]+)/m', '### $1', $text) ?? $text;
+    }
+
+    private function stripTrailingHorizontalRules(string $text): string
+    {
+        return preg_replace('/\n*---\s*\n*$/m', '', $text) ?? $text;
+    }
+
+    private function cleanChronologie(string $text): string
+    {
+        $text = preg_replace('/^\s*#\s+Chronologie.*?\n/m', "## Chronologie {#chronologie}\n", $text);
+
+        return trim($text);
+    }
+
+    private function stripLeadingH1(string $text): string
+    {
+        return trim(preg_replace('/^\s*#\s+[^\n]+\n*/u', '', $text) ?? $text);
+    }
+
+    private function addAnchorId(string $text, string $id): string
+    {
+        // Supprimer les headings parasites de nom de fichier
+        $text = preg_replace('/^\s*#\s*`?[^`]+?\.md`?\s*\n*/m', '', $text);
+
+        // Ajouter l'ancre au premier heading restant
+        $text = preg_replace('/^(\s*##?\s+[^#\n{]+)/m', "\\1 {#{$id}}", $text, 1);
+
+        return trim($text);
+    }
+
+    private function rewriteNavigationLinks(string $text): string
+    {
+        $text = preg_replace('/→\s*\*\*Voir la chronologie( complète)?\*\*/u', '→ [Voir la chronologie$1](#chronologie)', $text);
+        $text = preg_replace('/→\s*\*\*Voir les documents\*\*/u', '→ [Voir les documents](#documents)', $text);
+        $text = preg_replace('/→\s*\*\*Voir les questions encore ouvertes\*\*/u', '→ [Voir les questions ouvertes](#questions-ouvertes)', $text);
+        $text = preg_replace('/→\s*\*\*Voir les questio[^*]*\*\*/u', '→ [Voir les questions ouvertes](#questions-ouvertes)', $text);
+        $text = preg_replace('/→\s*\*\*Comparer la convention 2025[^*]*\*\*/u', '→ [Comparer la convention 2025 et le projet 2026 article par article](#comparatif-2025-2026)', $text);
+
+        return $text;
+    }
+
+    private function compactWhitespace(string $text): string
+    {
+        $text = preg_replace("/[ \t]+\n/", "\n", $text);
+        $text = preg_replace("/\n{3,}/", "\n\n", $text);
+
+        return trim($text);
     }
 
     private function readPackFile(string $file): string
@@ -534,143 +748,5 @@ class SeraphothequeIngestion extends Command
         }
 
         return file_get_contents($path);
-    }
-
-    private function cleanIndex(string $markdown): string
-    {
-        // 1. Supprimer H1 titre du pack (même avec whitespace précédent)
-        $markdown = preg_replace('/^\s*#\s+LA\s+S[ÉE]RAPHOTH[ÈE]QUE.*?\n+/ui', "\n", $markdown);
-
-        // 2. Supprimer noms de fichiers + backticks éventuels (regex multi-formes)
-        $markdown = preg_replace('/`?fiche-[a-z0-9\-]+\.md`?/iu', '', $markdown);
-
-        // 3. Nettoyer doubles backticks résiduels et backticks isolés devenus parasites
-        $markdown = str_replace('``', '', $markdown);           // `` → rien
-        $markdown = str_replace("'`", "'", $markdown);            // "'`" n'existe probablement pas
-        $markdown = str_replace("`\n", "\n", $markdown);          // backtick avant newline
-        $markdown = str_replace("\n`", "\n", $markdown);          // backtick après newline
-
-        // 4. Normaliser hiérarchie
-        $lines = explode("\n", $markdown);
-        $newLines = [];
-        foreach ($lines as $line) {
-            if (preg_match('/^#\s+(\d+\.\s+.*)/', $line, $m)) {
-                // Section principale en H1 du pack (2-12) → H2
-                $newLines[] = '## ' . $m[1];
-            } elseif (preg_match('/^##\s+(\d+\.\s+.*)/', $line, $m)) {
-                // Section déjà H2 → garder H2
-                $newLines[] = '## ' . $m[1];
-            } elseif (preg_match('/^##\s+(.+)/', $line, $m)) {
-                // Sous-section texte → H3
-                $newLines[] = '### ' . $m[1];
-            } else {
-                $newLines[] = $line;
-            }
-        }
-        $markdown = implode("\n", $newLines);
-
-        // 5. Substitutions éditoriales validées
-        $markdown = str_replace(
-            'une sommation mandatée par la commune leur demande',
-            'une sommation établie à la demande de la commune et adressée à Aurélien Tisserand demande',
-            $markdown
-        );
-        $markdown = str_replace(
-            'Les demandes ne commencent pas le 6 mai.',
-            'Les premières demandes documentaires actuellement retrouvées remontent au 13 avril 2026.',
-            $markdown
-        );
-        // Neutraliser mention non attestée
-        $markdown = preg_replace(
-            '/le Défenseur des Droits de la Lozère en copie\.?/u',
-            "l'avocat en copie.",
-            $markdown
-        );
-        // Titre §10
-        $markdown = str_replace(
-            '## 10. Un engagement du programme municipal à documenter',
-            '## 10. Profession de foi : source originale à obtenir',
-            $markdown
-        );
-
-        // 6. Navigation liens
-        $markdown = preg_replace('/→\s*\*\*Voir la chronologie\*\*/u', '→ [Voir la chronologie](#chronologie)', $markdown);
-        $markdown = preg_replace('/→\s*\*\*Voir les documents\*\*/u', '→ [Voir les documents](#documents)', $markdown);
-        $markdown = preg_replace('/→\s*\*\*Voir les questio[^*]*\*\*/u', '→ [Voir les questions ouvertes](#questions-ouvertes)', $markdown);
-
-        // §12
-        $markdown = preg_replace('/→\s*\*\*Chronologie\*\*/u', '→ [Chronologie](#chronologie)', $markdown);
-        $markdown = preg_replace('/→\s*\*\*Comparaison convention 2025[^*]*\*\*/u', '→ [Comparaison 2025 / projet 2026](#comparatif-2025-2026)', $markdown);
-        $markdown = preg_replace('/→\s*\*\*Documents et fiches documentaires\*\*/u', '→ [Documents et fiches documentaires](#documents)', $markdown);
-        $markdown = preg_replace('/→\s*\*\*Questions ouvertes\*\*/u', '→ [Questions ouvertes](#questions-ouvertes)', $markdown);
-
-        // §2
-        $markdown = preg_replace('/→\s*\*\*Comparer la convention 2025[^*]*\*\*/u', '→ [Comparer la convention 2025 et le projet 2026](#comparatif-2025-2026)', $markdown);
-
-        // §5 / §6
-        $markdown = preg_replace('/→\s*\*\*Consulter la fiche documentaire[^*]*version expurgée[^*]*\*\*/u', '→ Voir la fiche ci-dessous. Version expurgée à venir.', $markdown);
-        $markdown = preg_replace('/→\s*\*\*Consulter les extraits approuvés[^*]*\*\*/u', '→ Version expurgée à venir.', $markdown);
-
-        // 7. Compact lignes vides + whitespace trailing
-        $markdown = preg_replace("/[ \t]+\n/", "\n", $markdown);
-        $markdown = preg_replace("/\n{3,}/", "\n\n", $markdown);
-
-        return trim($markdown);
-    }
-
-    private function splitFicheE(string $fiche): array
-    {
-        if (preg_match('/^\s*#\s*[`\']*fiche-f-demandes-documents\.md[`\']*\s*$/mi', $fiche, $m, PREG_OFFSET_CAPTURE)) {
-            $ePart = trim(substr($fiche, 0, $m[0][1]));
-            $fPart = trim(substr($fiche, $m[0][1] + strlen($m[0][0])));
-            // Nettoyer lignes artefacts restantes
-            $fPart = preg_replace('/^\s*#\s*[`\']*fiche-f-demandes-documents\.md[`\']*\s*\n*/mi', '', $fPart);
-            $fPart = preg_replace('/^\s*#\s+Demandes de documents administratifs\s*$/mi', '', $fPart);
-
-            return [$ePart, trim($fPart)];
-        }
-
-        return [$fiche, ''];
-    }
-
-    private function stripLeadingH1(string $text): string
-    {
-        $text = preg_replace('/^\s*#\s+[^\n]+\n*/u', '', $text);
-
-        return trim($text);
-    }
-
-    private function cleanChronologie(string $text): string
-    {
-        $text = preg_replace('/^\s*#\s+Chronologie.*?\n/m', "## Chronologie — La Séraphothèque {#chronologie}\n", $text);
-
-        return trim($text);
-    }
-
-    private function addAnchorId(string $text, string $id): string
-    {
-        // Remove artifact filename headings first
-        $text = preg_replace('/^\s*#\s*`?[^`]+?\.md`?\s*\n*/m', '', $text);
-
-        // Add anchor ID to the first remaining heading
-        $text = preg_replace('/^(\s*##?\s+[^#\n{]+)/m', "\\1 { #$id }", $text, 1);
-
-        return trim($text);
-    }
-
-    private function insertAfterSection(string $body, string $sectionMarker, string $content): string
-    {
-        if (! str_contains($body, $sectionMarker)) {
-            return $body . $content;
-        }
-
-        $pos = strpos($body, $sectionMarker);
-        $next = strpos($body, "\n## ", $pos + strlen($sectionMarker));
-
-        if ($next === false) {
-            return $body . $content;
-        }
-
-        return substr($body, 0, $next) . $content . substr($body, $next);
     }
 }

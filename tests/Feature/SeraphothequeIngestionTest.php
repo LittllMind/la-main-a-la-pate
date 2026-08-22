@@ -152,13 +152,302 @@ class SeraphothequeIngestionTest extends TestCase
         }
         file_put_contents($pack . '/99-MANIFEST/public-v1.csv', $csv);
 
-        $index = "# LA SÉRAPHOTHÈQUE — Comprendre la situation\n\n## 1. Comprendre en une minute\n\nTexte.\n\n## 5. La sommation du 24 avril 2026\n\n## 6. Ce que dit la mairie\n\n## 8. Les solutions proposées\n\n## 12. Approfondir\n";
-        file_put_contents($pack . '/index.md', $index);
-        file_put_contents($pack . '/fiche-d-sommation-24-avril-2026.md', "## Fiche sommation\n");
-        file_put_contents($pack . '/fiche-e-mail-maire-14-mai-2026.md', "## Fiche email\n");
-        file_put_contents($pack . '/fiche-h-demande-aot.md', "## Fiche AOT\n");
-        file_put_contents($pack . '/chronologie.md', "## Chronologie\n");
-        file_put_contents($pack . '/questions-ouvertes.md', "## Questions ouvertes\n");
+        $readme = <<<'MD'
+---
+tags: [public-v1, seraphotheque, readme, canon]
+date: 2026-08-21
+---
+
+# 00 — LIRE D'ABORD — Pack PUBLIC V1
+
+## Doctrine
+
+- Chaque assertion importante est explicitement classée : **Fait documenté**, **Position d'acteur**, ou **Question ouverte**.
+- Aucune analyse juridique dans la narration principale.
+- Les documents manquants sont mentionnés comme tels — jamais comme preuves d'absence.
+MD;
+
+        $index = <<<'MD'
+---
+tags: [sujet-public, seraphotheque, v1, narration]
+date: 2026-08-21
+type: public-narrative
+dossier: litige-boutique
+---
+
+# La Séraphothèque — Comprendre la situation
+
+**Dernière mise à jour : août 2026**
+
+Cette page rassemble les principaux faits, leur chronologie et les documents disponibles concernant le désaccord entre La Séraphothèque et la commune du Rozier.
+
+L'objectif est de permettre à chacun de distinguer ce qui est établi par les documents, les positions exprimées par les différentes parties et les questions qui restent ouvertes.
+
+---
+
+# 1. Comprendre en une minute
+
+Le local communal aujourd'hui occupé par La Séraphothèque fait l'objet de conventions précaires successives depuis 2022.
+
+→ **Voir la chronologie**
+
+→ **Voir les documents**
+
+→ **Voir les questions encore ouvertes**
+
+---
+
+# 2. Ce qui a changé dans la convention 2026
+
+Le projet 2026 conserve :
+
+- une durée de six mois ;
+- un loyer de 350 € par mois charges comprises ;
+- une destination commerciale du local.
+
+Mais plusieurs dispositions nouvelles apparaissent.
+
+### Domaine public
+
+Un nouvel article 4 bis précise que la convention ne confère aucun droit d'occupation du domaine public.
+
+→ **Comparer la convention 2025 et le projet 2026 article par article**
+
+---
+
+# 3. Pourquoi avons-nous refusé de signer ?
+
+## Position de La Séraphothèque
+
+Notre refus ne portait pas sur le principe de payer un loyer. Nous avons demandé que la situation puisse être expliquée et discutée plutôt que de signer immédiatement le nouveau projet.
+
+---
+
+# 4. Qui pouvait décider ?
+
+Le 27 avril 2026, le Conseil municipal examine un point « Délégation au maire ».
+
+**Il n'est pas établi dans les documents actuellement disponibles que l'acte final de délégation a été signé ou publié.**
+
+→ **Question ouverte** : contenu exact et conditions de la délégation votée le 27 avril.
+
+---
+
+# 5. La sommation du 24 avril 2026
+
+L'acte est **daté du 24 avril 2026**.
+
+La sommation demande notamment : signer la convention, cesser l'occupation du domaine public, retirer les installations, rétablir une largeur de passage de 1,40 m.
+
+→ **Consulter la fiche documentaire et la version expurgée**
+
+---
+
+# 6. Ce que dit la mairie sur l'avenir du local
+
+Le maire a évoqué par écrit la possibilité d'une reprise future du bâtiment.
+
+### Ce qui n'est pas établi à ce jour
+
+Les documents actuellement disponibles ne permettent pas d'identifier :
+
+- une décision formelle de transférer la mairie ;
+- une étude de faisabilité ;
+- une estimation du coût ;
+- une inscription budgétaire spécifique ;
+- une délibération actant ce transfert.
+
+Le dossier sera mis à jour si de tels documents sont obtenus.
+
+---
+
+# 7. Nos demandes de documents
+
+Les demandes ne commencent pas le 6 mai.
+
+**Lorsqu'un document n'a pas été communiqué, cela ne signifie pas que nous affirmons qu'il n'existe pas.**
+
+---
+
+# 8. Les solutions que nous avons proposées
+
+### Discussion
+
+Nous avons demandé à plusieurs reprises que la situation puisse être discutée.
+
+### Régularisation des portants : demande d'AOT
+
+Le 16 juin 2026, une demande d'autorisation d'occupation temporaire du domaine public a été adressée à la mairie pour deux portants commerciaux.
+
+---
+
+# 9. Chronologie condensée
+
+→ **Voir la chronologie complète**
+
+| Date | Événement |
+|------|-----------|
+| Mai 2022 | Première convention pour le local |
+| 2026-04-24 | Sommation (72 h) |
+| Août 2026 | Aucune convention 2026 signée par les deux parties |
+MD;
+
+        $chronologie = <<<'MD'
+---
+tags: [chronologie, documentaire, public-v1, seraphotheque]
+date: 2026-08-21
+type: chronologie-documentaire
+dossier: litige-boutique
+---
+
+# Chronologie documentaire — PUBLIC V1
+
+## 2022 — Installation et premières conventions
+
+| Date | Événement neutre | DOC_ID | Type source | Certitude |
+|------|------------------|--------|-------------|-----------|
+| 2022-05-01 | Convention été 2022 signée | BAIL-2022 | Bail signé | CERTAIN |
+
+## 2026 — Conflit contractuel
+
+| Date | Événement neutre | DOC_ID | Type source | Certitude |
+|------|------------------|--------|-------------|-----------|
+| 2026-04-24 | Sommation par commissaire de justice | SERAPH-DOC-0904 | Acte d'huissier | CERTAIN |
+
+## Événements non datés documentairement
+
+| Événement | DOC_ID | Statut |
+|-----------|--------|--------|
+| Exemplaire signé de la convention privée | MANQ-009 | NON LOCALISÉ |
+| Acte final officiel de délégation | MANQ-005 | ACTE FINAL MANQUANT |
+
+---
+
+*Pack : PUBLIC V1 — gelé le 2026-08-21*
+MD;
+
+        $fiche = <<<'MD'
+---
+tags: [fiche-documentaire, trottoir-prive, email, public-v1]
+date: 2026-08-21
+type: fiche-documentaire
+dossier: litige-boutique
+---
+
+# Fiche documentaire — Email du 1er juillet 2026 : déplacement des portants
+
+**Titre :** Information relative au déplacement de nos portants
+**Date :** 2026-07-01
+**Auteur / émetteur :** Aurélien Tisserand / Anna El Agri
+**Destinataire :** Mairie du Rozier
+**Nature :** email
+**Statut :** source originale retrouvée
+
+## Pourquoi publier cette pièce
+
+Elle établit que les exploitants ont informé la mairie par écrit du déplacement de leurs installations commerciales hors du domaine public communal, vers une emprise privée.
+
+## Ce qu'elle établit
+
+- Les portants ont été déplacés vers une emprise présentée comme privée.
+- La mairie était informée par écrit de cette démarche.
+
+## Ce qu'elle n'établit pas
+
+- Elle ne prouve pas que la convention a effectivement été signée.
+- L'exemplaire signé de la convention n'a pas été localisé.
+
+→ **Version expurgée disponible**
+
+---
+
+*Fiche gelée le 2026-08-21*
+MD;
+
+        $questions = <<<'MD'
+---
+tags: [questions-ouvertes, public-v1, seraphotheque]
+date: 2026-08-21
+type: questions-ouvertes
+dossier: litige-boutique
+---
+
+# Questions ouvertes — PUBLIC V1
+
+Questions auxquelles les documents actuellement disponibles ne permettent pas de répondre complètement.
+
+---
+
+## Statut et gestion du local
+
+### Le local relève-t-il du domaine public ou du domaine privé communal ?
+
+Des informations ont été demandées. La réponse documentaire complète n'est pas disponible dans le corpus actuel.
+
+### Existe-t-il un acte de classement ou de déclassement ?
+
+Le maire a exprimé une position à ce sujet, mais la pièce administrative correspondante n'a pas été identifiée.
+
+---
+
+## AOT
+
+### Quelle suite officielle a été donnée à la demande du 16 juin ?
+
+La demande et son dépôt sont documentés. Aucune décision écrite, arrêté ou délibération formalisant son acceptation ou son refus n'a été retrouvée dans le corpus actuellement disponible.
+
+---
+
+*Pack : PUBLIC V1 — gelé le 2026-08-21*
+MD;
+
+        $sources = <<<'MD'
+---
+tags: [sources, public-v1, seraphotheque, reference]
+date: 2026-08-21
+type: sources-index
+dossier: litige-boutique
+---
+
+# Sources — PUBLIC V1
+
+## Sources primaires (A)
+
+| Source | Type | Identifiant |
+|--------|------|-------------|
+| Convocation CM 27 avril 2026 | Document officiel | SERAPH-DOC-0445 |
+| Compte rendu CM 27 avril 2026 | Document transmis | CM-27-04-CR |
+| Sommation 24 avril 2026 | Acte d'huissier | SERAPH-DOC-0904 |
+
+## Sources secondaires (B)
+
+| Source | Type | Identifiant |
+|--------|------|-------------|
+| Emails échanges | Correspondance | Archives Himalaya |
+
+---
+
+*Pack : PUBLIC V1 — gelé le 2026-08-21*
+MD;
+
+        @mkdir($pack . '/01-SUJET', 0755, true);
+        @mkdir($pack . '/02-CHRONOLOGIE', 0755, true);
+        @mkdir($pack . '/04-FICHES', 0755, true);
+        @mkdir($pack . '/05-QUESTIONS-OUVERTES', 0755, true);
+        @mkdir($pack . '/06-SOURCES', 0755, true);
+
+        file_put_contents($pack . '/00-LIRE-DABORD.md', $readme);
+        file_put_contents($pack . '/01-SUJET/index.md', $index);
+        file_put_contents($pack . '/02-CHRONOLOGIE/chronologie.md', $chronologie);
+        file_put_contents($pack . '/04-FICHES/fiche-email-01-07-2026-trottoir-prive.md', $fiche);
+        file_put_contents($pack . '/05-QUESTIONS-OUVERTES/questions-ouvertes.md', $questions);
+        file_put_contents($pack . '/06-SOURCES/index.md', $sources);
+
+        // Nettoyer les anciens fichiers legacy du layout précédent
+        @unlink($pack . '/index.md');
+        @unlink($pack . '/fiche-d-sommation-24-avril-2026.md');
+        @unlink($pack . '/fiche-e-mail-maire-14-mai-2026.md');
+        @unlink($pack . '/fiche-h-demande-aot.md');
     }
 
     private function manifestPath(string $pack): string
@@ -213,9 +502,128 @@ class SeraphothequeIngestionTest extends TestCase
         $this->assertNotEmpty($subject->body);
         $this->assertNotEmpty($subject->citizen_body);
         $this->assertNotEmpty($subject->public_body);
-        $this->assertStringContainsString('## Fiche — Sommation du 24 avril 2026', $subject->public_body);
-        $this->assertStringContainsString('## Chronologie', $subject->public_body);
-        $this->assertStringContainsString('## Questions ouvertes', $subject->public_body);
+        $this->assertStringContainsString('## Documents et fiches documentaires {#documents}', $subject->public_body);
+        $this->assertStringContainsString('## Chronologie {#chronologie}', $subject->public_body);
+        $this->assertStringContainsString('{#questions-ouvertes}', $subject->public_body);
+    }
+
+    /** @test */
+    public function public_body_uses_canonical_public_v1_mapping(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+
+        $this->assertStringContainsString('# La Séraphothèque — Situation du local communal', $subject->public_body);
+        $this->assertStringContainsString('Dossier documentaire en cours d’enrichissement — version du 21 août 2026', $subject->public_body);
+
+        $this->assertStringContainsString('## Comprendre en une minute {#comprendre}', $subject->public_body);
+        $this->assertStringContainsString('## Les principaux enjeux {#enjeux}', $subject->public_body);
+        $this->assertStringContainsString('## Ce qui change en 2026 {#changements-2026}', $subject->public_body);
+        $this->assertStringContainsString('## Chronologie {#chronologie}', $subject->public_body);
+        $this->assertStringContainsString('## Positions des acteurs {#positions}', $subject->public_body);
+        $this->assertStringContainsString('## Principaux points de désaccord {#desaccords}', $subject->public_body);
+        $this->assertStringContainsString('## Questions ouvertes {#questions-ouvertes}', $subject->public_body);
+        $this->assertStringContainsString('## Documents et fiches documentaires {#documents}', $subject->public_body);
+        $this->assertStringContainsString('## Lire les sources {#lire-les-sources}', $subject->public_body);
+
+        $this->assertStringNotContainsString('## Fiche — Sommation du 24 avril 2026', $subject->public_body, 'Ancienne fiche legacy absente.');
+        $this->assertStringNotContainsString('archives-LEX', $subject->public_body, 'Anciens chemins legacy absents.');
+
+        // Ordre des anchors : comprendre doit apparaître avant enjeux, enjeux avant changements, etc.
+        $order = [
+            'comprendre',
+            'enjeux',
+            'changements-2026',
+            'chronologie',
+            'positions',
+            'desaccords',
+            'questions-ouvertes',
+            'documents',
+            'lire-les-sources',
+        ];
+        $positions = array_map(fn ($a) => strpos($subject->public_body, "{#{$a}}"), $order);
+        for ($i = 0; $i < count($order) - 1; $i++) {
+            $this->assertNotFalse($positions[$i], "Anchor manquant : {$order[$i]}");
+            $this->assertGreaterThan($positions[$i], $positions[$i + 1], "Anchor {$order[$i + 1]} doit suivre {$order[$i]}");
+        }
+    }
+
+    /** @test */
+    public function chronology_and_questions_and_comparator_are_included(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+
+        $this->assertStringContainsString('## Chronologie {#chronologie}', $subject->public_body);
+        $this->assertStringContainsString('## Questions ouvertes {#questions-ouvertes}', $subject->public_body);
+        $this->assertStringContainsString('Comparer la convention 2025 et le projet 2026', $subject->public_body);
+    }
+
+    /** @test */
+    public function documentary_doctrine_is_preserved(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+
+        $this->assertStringContainsString('FAIT DOCUMENTÉ', $subject->public_body, 'Doctrine : distinction FAIT DOCUMENTÉ présente.');
+        $this->assertStringContainsString('POSITION / DÉCLARATION', $subject->public_body, 'Doctrine : distinction POSITION présente.');
+        $this->assertStringContainsString('QUESTION OUVERTE', $subject->public_body, 'Doctrine : distinction QUESTION OUVERTE présente.');
+        $this->assertStringContainsString('SOURCE', $subject->public_body, 'Doctrine : distinction SOURCE présente.');
+
+        $this->assertStringNotContainsString("ce document n'existe pas", strtolower($subject->public_body), 'Absence documentaire jamais présentée comme existence négative.');
+        $this->assertStringContainsString('n\'a pas été communiqué', $subject->public_body);
+        $this->assertStringContainsString('n\'a pas été identifié', $subject->public_body);
+    }
+
+    /** @test */
+    public function citizen_assets_are_not_linked_inside_public_body(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+
+        $this->assertStringNotContainsString('03-DOCUMENTS/CITIZEN', $subject->public_body, 'Aucun chemin CITIZEN ne doit apparaître dans public_body.');
+        $this->assertStringNotContainsString('doc-citizen', $subject->public_body, 'Aucune référence directe à un asset CITIZEN dans public_body.');
+    }
+
+    /** @test */
+    public function subject_versions_snapshot_new_public_v1_content(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $firstVersion = SubjectVersion::where('subject_id', $subject->id)->firstOrFail();
+
+        $this->assertStringContainsString('La Séraphothèque — Situation du local communal', $firstVersion->public_body);
+        $this->assertStringContainsString('## Comprendre en une minute {#comprendre}', $firstVersion->public_body);
     }
 
     /** @test */
@@ -1072,9 +1480,14 @@ class SeraphothequeIngestionTest extends TestCase
 
         $firstSnapshotBody = $versions->first()->body;
 
-        // Modifier le contenu textuel du pack
-        $index = file_get_contents($pack . '/index.md');
-        file_put_contents($pack . '/index.md', $index . "\n\nNouveau paragraphe ajouté après la première version.");
+        // Modifier le contenu textuel du pack (dans la section 1, utilisée pour public_body)
+        $index = file_get_contents($pack . '/01-SUJET/index.md');
+        $index = str_replace(
+            '# 1. Comprendre en une minute',
+            "# 1. Comprendre en une minute\n\nNouveau paragraphe ajouté après la première version.",
+            $index
+        );
+        file_put_contents($pack . '/01-SUJET/index.md', $index);
 
         Artisan::call('app:seraphotheque-ingestion', [
             '--pack-path' => $pack,
@@ -1138,8 +1551,8 @@ class SeraphothequeIngestionTest extends TestCase
         $this->assertCount(1, SubjectVersion::where('subject_id', $subject->id)->get());
 
         // Modifier le contenu textuel et binaire
-        $index = file_get_contents($pack . '/index.md');
-        file_put_contents($pack . '/index.md', $index . "\n\nTEXT DRY RUN.");
+        $index = file_get_contents($pack . '/01-SUJET/index.md');
+        file_put_contents($pack . '/01-SUJET/index.md', $index . "\n\nTEXT DRY RUN.");
         file_put_contents($pack . '/03-DOCUMENTS/PUBLIC/doc-public.pdf', "%PDF-1.4 dry run changed\n");
 
         Artisan::call('app:seraphotheque-ingestion', [
