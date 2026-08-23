@@ -247,6 +247,42 @@ class SubjectDocumentController extends Controller
     }
 
     /**
+     * Affiche le document directement dans le navigateur (inline) pour les
+     * formats publics pris en charge : PDF, HTML, PNG, etc.
+     * Mêmes contrôles ACL/chiffrement que download.
+     */
+    public function view(Subject $subject, SubjectDocument $document)
+    {
+        Gate::authorize('view', $subject);
+
+        if (! $document->visibleTo(auth()->user())) {
+            abort(404);
+        }
+
+        if (! $this->storage->exists($document->path)) {
+            abort(404);
+        }
+
+        $plain = null;
+        try {
+            $plain = $this->storage->decrypt($document->path);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response('Une erreur est survenue lors de l\'ouverture du document.', 500);
+        }
+
+        return response()->stream(function () use (&$plain) {
+            echo $plain;
+            $this->secureZero($plain);
+        }, 200, [
+            'Content-Type' => $document->mime_type,
+            'Content-Disposition' => 'inline; filename="' . $document->filename . '"',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /**
      * Efface sûrement un buffer en mémoire.
      * Utilise sodium_memzero quand l'extension est présente, sinon
      * libère la référence de manière portable sans interrompre le

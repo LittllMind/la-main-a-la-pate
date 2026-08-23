@@ -228,7 +228,11 @@ Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserv
                     <div class="flex items-center gap-3 text-xs">
                         <span class="text-slate-400">Ajouté le {{ $doc->created_at->format('d/m/Y') }}</span>
                         <span class="text-slate-300">|</span>
-                        <a href="{{ route('subjects.documents.download', [$subject->slug, $doc->id]) }}" class="text-emerald-700 hover:underline font-medium">⬇ Télécharger</a>
+                        @if($doc->hasStoredFile())
+                            <a href="{{ route('subjects.documents.view', [$subject->slug, $doc->id]) }}" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:underline font-medium">👁 Consulter / Ouvrir</a>
+                            <span class="text-slate-300">|</span>
+                            <a href="{{ route('subjects.documents.download', [$subject->slug, $doc->id]) }}" class="text-slate-600 hover:underline font-medium" download title="Télécharger">⬇ Télécharger</a>
+                        @endif
                         
                         @can('update', $subject)
                             <form method="POST" action="{{ route('subjects.documents.update', [$subject->slug, $doc->id]) }}" class="inline mt-2">

@@ -26,7 +26,7 @@ use RuntimeException;
  */
 class SeraphothequeIngestion extends Command
 {
-    protected $signature = 'app:seraphotheque-ingestion {--dry-run} {--force} {--pack-path=} {--user-id=1}';
+    protected $signature = 'app:seraphotheque-ingestion {--dry-run} {--force} {--sync-bodies} {--pack-path=} {--user-id=1}';
 
     protected $description = 'Ingère le Subject Séraphothèque et ses documents selon le manifest PUBLIC-V1.';
 
@@ -96,6 +96,14 @@ class SeraphothequeIngestion extends Command
 
         $existingSubject = Subject::where('slug', 'seraphotheque-situation-2026')->first();
 
+        // Cas B — réingestion documentaire : préserver les représentations éditoriales
+        // validées manuellement, sauf intention explicite --sync-bodies.
+        if ($existingSubject && ! $this->option('sync-bodies')) {
+            $workingBody = $existingSubject->body;
+            $citizenBody = $existingSubject->citizen_body;
+            $publicBody = $existingSubject->public_body;
+        }
+
         $subject = Subject::updateOrCreate(
             ['slug' => 'seraphotheque-situation-2026'],
             [
@@ -116,7 +124,8 @@ class SeraphothequeIngestion extends Command
         $this->info("Subject créé/mis à jour : ID {$subject->id}, slug {$subject->slug}");
 
         // Snapshot des trois représentations uniquement si une d'elles a changé
-        // ou si c'est la première création par le pipeline.
+        // ou si c'est la première création par le pipeline. L'option --sync-bodies
+        // est requise pour qu'une réingestion génère un snapshot éditorial.
         $bodyChanged = ! $existingSubject || $existingSubject->body !== $workingBody;
         $citizenChanged = ! $existingSubject || $existingSubject->citizen_body !== $citizenBody;
         $publicChanged = ! $existingSubject || $existingSubject->public_body !== $publicBody;

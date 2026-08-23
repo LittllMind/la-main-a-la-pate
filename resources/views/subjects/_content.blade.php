@@ -58,10 +58,10 @@
                         {{ $doc->icon() }}
                     </span>
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-baseline gap-2">
-                            <a href="{{ $doc->url() }}" class="text-sm font-medium text-emerald-700 hover:text-emerald-900 truncate">
+                        <div class="flex items-baseline gap-2 flex-wrap">
+                            <span class="text-sm font-medium text-slate-900 truncate">
                                 {{ $doc->title ?: $doc->filename }}
-                            </a>
+                            </span>
                             <span class="text-xs text-slate-400 whitespace-nowrap">{{ $doc->humanSize() }}</span>
                             @if($doc->redacted)
                                 <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200" data-redacted-badge>Version expurgée</span>
@@ -101,9 +101,16 @@
                             <span class="text-xs text-slate-400">Ajouté le {{ $doc->created_at->format('d/m/Y') }}</span>
                         </div>
                     </div>
-                    <a href="{{ $doc->url() }}" class="text-sm text-slate-500 hover:text-slate-900 border border-slate-300 rounded-md px-2 py-1 bg-white" download title="Télécharger">
-                        Télécharger
-                    </a>
+                    <div class="flex items-center gap-2">
+                        @if($doc->hasStoredFile())
+                            <a href="{{ $doc->url() }}" target="_blank" rel="noopener noreferrer" class="text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-2 py-1 bg-emerald-50" data-testid="btn-doc-view">
+                                Consulter / Ouvrir
+                            </a>
+                            <a href="{{ $doc->downloadUrl() }}" class="text-sm text-slate-500 hover:text-slate-900 border border-slate-300 rounded-md px-2 py-1 bg-white" download title="Télécharger" data-testid="btn-doc-download">
+                                Télécharger
+                            </a>
+                        @endif
+                    </div>
                 </li>
             @endforeach
         </ul>

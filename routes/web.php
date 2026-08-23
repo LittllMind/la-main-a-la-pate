@@ -68,7 +68,8 @@ Route::middleware(['auth', 'verified'])->prefix('sujets')->name('subjects.')->gr
 Route::prefix('sujets')->name('subjects.')->group(function () {
     Route::get('/{subject:slug}', [SubjectController::class, 'show'])->name('show')->where('subject', '^(?!export-pdf$|arbre$|arbre-data$|creer$|importer$)[^/]+$');
 
-    // Routes documents publiques (download autorisé selon audience)
+    // Routes documents publiques (consulter inline ou télécharger selon audience)
+    Route::get('/{subject:slug}/documents/{document}/voir', [SubjectDocumentController::class, 'view'])->name('documents.view');
     Route::get('/{subject:slug}/documents/{document}/telecharger', [SubjectDocumentController::class, 'download'])->name('documents.download');
 });
 

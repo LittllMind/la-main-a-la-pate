@@ -52,7 +52,17 @@ class SubjectDocument extends Model
 
     public function url(): string
     {
+        return route('subjects.documents.view', [$this->subject->slug, $this->id]);
+    }
+
+    public function downloadUrl(): string
+    {
         return route('subjects.documents.download', [$this->subject->slug, $this->id]);
+    }
+
+    public function hasStoredFile(): bool
+    {
+        return filled($this->path) && Storage::disk($this->disk)->exists($this->path);
     }
 
     public function scopeVisibleTo($query, ?User $user)

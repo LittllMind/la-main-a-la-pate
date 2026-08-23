@@ -6,10 +6,16 @@
 <div class="max-w-4xl mx-auto px-4 py-8">
 
     <div class="mb-6">
-        <a href="{{ route('subjects.index') }}" class="text-sm text-slate-500 hover:text-slate-900 mb-2 inline-block">← Retour aux sujets</a>
+        @php
+            $isGuest = auth()->guest();
+            $backIsSeraphotheque = $isGuest && $subject->theme === 'Séraphothèque';
+            $backUrl = $backIsSeraphotheque ? route('seraphotheque') : route('subjects.index');
+            $effectiveStatus = $isGuest ? $subject->public_status : $subject->status;
+        @endphp
+        <a href="{{ $backUrl }}" class="text-sm text-slate-500 hover:text-slate-900 mb-2 inline-block">{{ $backIsSeraphotheque ? '← Retour à la Séraphothèque' : '← Retour aux sujets' }}</a>
         <div class="flex items-center gap-2 text-xs mb-2">
             <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ $subject->theme }}</span>
-            @if($subject->status === 'draft')
+            @if($effectiveStatus === 'draft')
                 <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Brouillon</span>
             @endif
         </div>

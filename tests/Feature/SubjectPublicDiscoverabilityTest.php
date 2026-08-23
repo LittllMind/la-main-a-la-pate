@@ -244,6 +244,28 @@ class SubjectPublicDiscoverabilityTest extends TestCase
     }
 
     /** @test */
+    public function seraphotheque_public_page_does_not_show_draft_badge_and_links_back_to_seraphotheque(): void
+    {
+        $subject = $this->makeSubject([
+            'theme' => 'Séraphothèque',
+            'title' => 'Seraphotheque situation 2026',
+            'slug' => 'seraphotheque-situation-2026',
+            'public_status' => 'published',
+            'public_is_listed' => false,
+        ]);
+
+        $response = $this->get(route('subjects.show', $subject->slug));
+        $response->assertOk();
+
+        $response->assertDontSee('Brouillon');
+        $response->assertSee('Retour à la Séraphothèque');
+        $this->assertStringContainsString(
+            route('seraphotheque', [], false),
+            $response->getContent()
+        );
+    }
+
+    /** @test */
     public function seraphotheque_cta_reaches_unlisted_public_subject(): void
     {
         $subject = $this->makeSubject([

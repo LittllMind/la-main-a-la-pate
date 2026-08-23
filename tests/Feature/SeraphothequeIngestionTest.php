@@ -1539,6 +1539,7 @@ MD;
         Artisan::call('app:seraphotheque-ingestion', [
             '--pack-path' => $pack,
             '--user-id' => $admin->id,
+            '--sync-bodies' => true,
         ]);
 
         $subject->refresh();
@@ -1582,6 +1583,163 @@ MD;
         $this->assertEquals($bodyBefore, $subject->body);
         $this->assertEquals($citizenBodyBefore, $subject->citizen_body);
         $this->assertEquals($publicBodyBefore, $subject->public_body);
+    }
+
+    /** @test */
+    public function reingestion_after_editorial_sentinel_preserves_all_bodies(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        // Première ingestion
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+
+        // Patch éditorial post-ingestion : sentinelles sur les trois représentations
+        $subject->update([
+            'body' => 'BODY-SENTINEL-EDITORIAL',
+            'citizen_body' => 'CITIZEN-SENTINEL-EDITORIAL',
+            'public_body' => 'PUBLIC-SENTINEL-EDITORIAL',
+        ]);
+
+        $subject->refresh();
+        $this->assertCount(1, SubjectVersion::where('subject_id', $subject->id)->get());
+
+        // Modifier uniquement l'asset d'un document existant
+        file_put_contents($pack . '/03-DOCUMENTS/PUBLIC/doc-public.pdf', "%PDF-1.4 V2 fake après patch éditorial\n");
+
+        // Recalculer le hash dans le manifest
+        $publicSha = hash_file('sha256', $pack . '/03-DOCUMENTS/PUBLIC/doc-public.pdf');
+        $citizenSha = hash_file('sha256', $pack . '/03-DOCUMENTS/CITIZEN/doc-citizen.pdf');
+        $rows = [
+            [
+                'public_id' => 'PUB-01',
+                'doc_id' => self::PUBLIC_DOC_ID,
+                'titre' => 'Document public',
+                'date' => '2026-01-01',
+                'type' => 'pdf',
+                'audience' => 'PUBLIC',
+                'source' => 'test',
+                'source_reference' => 'seraphotheque-pack:' . self::PUBLIC_DOC_ID,
+                'original_sha256' => '',
+                'asset_path' => '03-DOCUMENTS/PUBLIC/doc-public.pdf',
+                'asset_sha256' => $publicSha,
+                'expurgations' => '',
+                'fiche' => '',
+                'chronology_event' => '',
+                'status' => 'gelé',
+            ],
+            [
+                'public_id' => 'CIT-01',
+                'doc_id' => self::CITIZEN_DOC_ID,
+                'titre' => 'Document citoyen',
+                'date' => '2026-01-02',
+                'type' => 'pdf',
+                'audience' => 'CITIZEN',
+                'source' => 'test',
+                'source_reference' => 'seraphotheque-pack:' . self::CITIZEN_DOC_ID,
+                'original_sha256' => '',
+                'asset_path' => '03-DOCUMENTS/CITIZEN/doc-citizen.pdf',
+                'asset_sha256' => $citizenSha,
+                'expurgations' => '',
+                'fiche' => '',
+                'chronology_event' => '',
+                'status' => 'gelé',
+            ],
+            [
+                'public_id' => 'NO-01',
+                'doc_id' => self::NO_ASSET_DOC_ID,
+                'titre' => 'Sans asset',
+                'date' => '2026-01-03',
+                'type' => 'md',
+                'audience' => 'PUBLIC',
+                'source' => 'test',
+                'source_reference' => 'seraphotheque-pack:' . self::NO_ASSET_DOC_ID,
+                'original_sha256' => '',
+                'asset_path' => '',
+                'asset_sha256' => '',
+                'expurgations' => '',
+                'fiche' => '',
+                'chronology_event' => '',
+                'status' => 'gelé',
+            ],
+        ];
+        $this->writeManifest($pack, $rows);
+
+        // Réingestion documentaire
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject->refresh();
+
+        // Contract : les représentations éditoriales doivent être préservées
+        $this->assertEquals('BODY-SENTINEL-EDITORIAL', $subject->body);
+        $this->assertEquals('CITIZEN-SENTINEL-EDITORIAL', $subject->citizen_body);
+        $this->assertEquals('PUBLIC-SENTINEL-EDITORIAL', $subject->public_body);
+
+        // Le document public doit avoir été mis à jour
+        $doc = $subject->documents()->where('source_reference', 'seraphotheque-pack:' . self::PUBLIC_DOC_ID)->first();
+        $this->assertNotNull($doc);
+        $this->assertEquals($publicSha, $doc->source_sha256);
+        $this->assertNotEquals(hash_file('sha256', $pack . '/03-DOCUMENTS/CITIZEN/doc-citizen.pdf'), $doc->source_sha256);
+
+        // Aucune SubjectVersion parasite
+        $this->assertCount(1, SubjectVersion::where('subject_id', $subject->id)->get());
+    }
+
+    /** @test */
+    public function body_replacement_requires_sync_bodies_option(): void
+    {
+        ['admin' => $admin, 'pack' => $pack] = $this->seedEnvironment();
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject = Subject::where('slug', 'seraphotheque-situation-2026')->firstOrFail();
+        $subject->update([
+            'body' => 'BODY-SENTINEL-KEEP',
+            'citizen_body' => 'CITIZEN-SENTINEL-KEEP',
+            'public_body' => 'PUBLIC-SENTINEL-KEEP',
+        ]);
+
+        // Modifier le contenu textuel du pack sans l'option explicite
+        $index = file_get_contents($pack . '/01-SUJET/index.md');
+        $index = str_replace(
+            '# 1. Comprendre en une minute',
+            "# 1. Comprendre en une minute\n\nTexte PACK sans option sync-bodies.",
+            $index
+        );
+        file_put_contents($pack . '/01-SUJET/index.md', $index);
+
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+        ]);
+
+        $subject->refresh();
+
+        $this->assertEquals('BODY-SENTINEL-KEEP', $subject->body);
+        $this->assertEquals('CITIZEN-SENTINEL-KEEP', $subject->citizen_body);
+        $this->assertEquals('PUBLIC-SENTINEL-KEEP', $subject->public_body);
+        $this->assertCount(1, SubjectVersion::where('subject_id', $subject->id)->get(), 'Sans --sync-bodies, aucune SubjectVersion parasite.');
+
+        // Avec --sync-bodies, le nouveau pack écrase les représentations
+        Artisan::call('app:seraphotheque-ingestion', [
+            '--pack-path' => $pack,
+            '--user-id' => $admin->id,
+            '--sync-bodies' => true,
+        ]);
+
+        $subject->refresh();
+        $this->assertStringContainsString('Texte PACK sans option sync-bodies.', $subject->public_body);
+        $this->assertCount(2, SubjectVersion::where('subject_id', $subject->id)->get(), 'Avec --sync-bodies, le changement textuel crée un snapshot.');
     }
 
     /** @test */
