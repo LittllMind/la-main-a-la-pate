@@ -385,7 +385,170 @@ class Subject extends Model
             );
         }
 
+        // Assign explicit internal-link anchors to the next heading after each link.
+        // This is generic: any `[text](#id)` in the body becomes the id of the
+        // first subsequent heading that does not already have one.
+        $html = self::assignInternalLinkAnchorsToHeadings($html);
+
+        // Generate stable IDs for headings that don't already have one.
+        $html = self::generateHeadingIds($html);
+
         return $html;
+    }
+
+    /**
+     * Scan rendered HTML for internal links `[...](#id)` and assign each requested
+     * id to the next heading that does not already carry an id.
+     */
+    private static function assignInternalLinkAnchorsToHeadings(string $html): string
+    {
+        // Collect internal link anchors and their approximate byte position.
+        $links = [];
+        if (preg_match_all('/<a[^>]*\shref="#([^"]+)"[^>]*>/', $html, $matches, PREG_OFFSET_CAPTURE)) {
+            foreach ($matches[1] as $match) {
+                $links[] = ['id' => $match[0], 'pos' => $match[1]];
+            }
+        }
+
+        if ($links === []) {
+            return $html;
+        }
+
+        $usedIds = [];
+        if (preg_match_all('/<h[1-6][^>]*\sid="([^"]+)"/', $html, $existing)) {
+            foreach ($existing[1] as $id) {
+                $usedIds[$id] = true;
+            }
+        }
+
+        // Find headings without id and track assignments.
+        $assigned = [];
+        $linkIndex = 0;
+        if (preg_match_all('/<h([1-6])([^>]*)>(.*?)<\/h\1>/s', $html, $headings, PREG_OFFSET_CAPTURE)) {
+            foreach ($headings[0] as $i => $full) {
+                $pos = $full[1];
+                $tag = $headings[1][$i][0];
+                $attrs = $headings[2][$i][0];
+                $content = $headings[3][$i][0];
+
+                // Skip headings that already have an id.
+                if (preg_match('/\sid="([^"]+)"/', $attrs, $existingId)) {
+                    $usedIds[$existingId[1]] = true;
+                    continue;
+                }
+
+                // Advance link index to first link occurring before this heading.
+                while ($linkIndex < count($links) && $links[$linkIndex]['pos'] < $pos) {
+                    $linkIndex++;
+                }
+
+                // Look backward to the nearest unassigned, unused link id.
+                $assignedId = null;
+                for ($j = $linkIndex - 1; $j >= 0; $j--) {
+                    $candidate = $links[$j]['id'];
+                    if (!isset($assigned[$candidate]) && !isset($usedIds[$candidate])) {
+                        $assignedId = $candidate;
+                        break;
+                    }
+                }
+
+                if ($assignedId !== null) {
+                    $assigned[$assignedId] = true;
+                    $usedIds[$assignedId] = true;
+                    $newAttrs = $attrs ? $attrs . ' id="' . $assignedId . '"' : 'id="' . $assignedId . '"';
+                    $html = substr_replace(
+                        $html,
+                        '<h' . $tag . $newAttrs . '>' . $content . '</h' . $tag . '>',
+                        $pos,
+                        strlen($full[0])
+                    );
+                    // Restart parsing because html length/offsets changed.
+                    return self::assignInternalLinkAnchorsToHeadings($html);
+                }
+            }
+        }
+
+        return $html;
+    }
+
+    /**
+     * Generate stable IDs for any remaining headings without an id.
+     */
+    private static function generateHeadingIds(string $html): string
+    {
+        $seenIds = [];
+        if (preg_match_all('/<h[1-6][^>]*\sid="([^"]+)"/', $html, $existing)) {
+            foreach ($existing[1] as $id) {
+                $seenIds[$id] = true;
+            }
+        }
+
+        // Canonical short ids for the V6 frozen public body headings.
+        // These keys are the full slugified heading text; values are the
+        // human-friendly anchors referenced in the body.
+        $canonicalIds = [
+            'comprendre-en-une-minute' => 'comprendre',
+            'les-principaux-enjeux' => 'enjeux',
+            'ce-qui-change-en-2026' => 'changements-2026',
+            'chronologie' => 'chronologie',
+            'positions-des-acteurs' => 'positions',
+            'points-de-desaccord' => 'desaccords',
+            'questions-ouvertes' => 'questions-ouvertes',
+            'documents-et-fiches-documentaires' => 'documents',
+            'comment-lire-les-sources' => 'lire-les-sources',
+        ];
+
+        return preg_replace_callback(
+            '/<h([1-6])([^>]*)>(.*?)<\/h\1>/s',
+            function ($matches) use (&$seenIds, $canonicalIds) {
+                $tag = $matches[1];
+                $attrs = $matches[2];
+                $content = $matches[3];
+
+                if (preg_match('/\sid="([^"]+)"/', $attrs, $existingId)) {
+                    $seenIds[$existingId[1]] = true;
+                    return $matches[0];
+                }
+
+                $text = strip_tags(str_replace('<', ' <', $content));
+                $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+                $text = trim(preg_replace('/\s+/', ' ', $text));
+
+                $slug = self::slugifyForHeadingId($text);
+                $id = $canonicalIds[$slug] ?? $slug;
+                if ($id === '') {
+                    $id = 'heading-' . $tag;
+                }
+
+                $candidate = $id;
+                $counter = 1;
+                while (isset($seenIds[$candidate])) {
+                    $counter++;
+                    $candidate = $id . '-' . $counter;
+                }
+                $seenIds[$candidate] = true;
+
+                $newAttrs = $attrs ? $attrs . ' id="' . $candidate . '"' : 'id="' . $candidate . '"';
+                return '<h' . $tag . $newAttrs . '>' . $content . '</h' . $tag . '>';
+            },
+            $html
+        ) ?? $html;
+    }
+
+    /**
+     * Convert a heading text into a stable, URL-friendly ID.
+     * Lowercase, ASCII only, spaces and punctuation collapsed to hyphens.
+     */
+    public static function slugifyForHeadingId(string $text): string
+    {
+        // Transliterate accented characters to ASCII approximations
+        $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        $text = strtolower($text);
+        // Keep letters, digits, spaces and hyphens
+        $text = preg_replace('/[^a-z0-9\s-]+/', '', $text);
+        // Collapse whitespace and hyphens to a single hyphen
+        $text = preg_replace('/[\s-]+/', '-', $text);
+        return trim($text, '-');
     }
 
     public static function convertHtmlToMarkdown(string $html): string
