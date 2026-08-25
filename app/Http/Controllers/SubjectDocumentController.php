@@ -33,7 +33,67 @@ class SubjectDocumentController extends Controller
     }
 
     /**
-     * Determine if a file is an image and should be stored as gallery image, not document.
+     * Affiche une représentation HTML lisible d'un document de type email.
+     * Masque le JSON brut, les headers techniques et les metadata d'ingestion.
+     */
+    public function emailView(Subject $subject, SubjectDocument $document)
+    {
+        Gate::authorize('view', $subject);
+
+        if ($document->subject_id !== $subject->id) {
+            abort(404);
+        }
+
+        if (! $document->visibleTo(auth()->user())) {
+            abort(404);
+        }
+
+        if (! $document->isEmail()) {
+            abort(404);
+        }
+
+        if (! $this->storage->exists($document->path)) {
+            abort(404);
+        }
+
+        $plain = null;
+        try {
+            $plain = $this->storage->decrypt($document->path);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response('Une erreur est survenue lors de l\'ouverture du message.', 500);
+        }
+
+        $payload = json_decode($plain, true) ?: [];
+        $this->secureZero($plain);
+
+        $date = $payload['date'] ?? $document->document_date?->format('d/m/Y') ?? null;
+        $subjectText = $payload['subject'] ?? $document->title ?? null;
+        $from = $payload['from'] ?? $payload['sender'] ?? $document->author ?? null;
+        $to = $payload['to'] ?? $document->recipient ?? null;
+
+        $bodyText = '';
+        if (! empty($payload['body_text'])) {
+            $bodyText = $payload['body_text'];
+        } elseif (! empty($payload['body'])) {
+            $bodyText = is_string($payload['body']) ? $payload['body'] : '';
+        } elseif (! empty($payload['body_html'])) {
+            $bodyText = strip_tags($payload['body_html']);
+        }
+
+        return view('subjects.documents.email', [
+            'subject' => $subject,
+            'document' => $document,
+            'emailDate' => $date,
+            'emailSubject' => $subjectText,
+            'emailFrom' => $from,
+            'emailTo' => $to,
+            'emailBody' => $bodyText,
+        ]);
+    }
+
+    /**
      */
     private function isImageFile(\Illuminate\Http\UploadedFile $file): bool
     {
@@ -218,7 +278,15 @@ class SubjectDocumentController extends Controller
     {
         Gate::authorize('view', $subject);
 
+        if ($document->subject_id !== $subject->id) {
+            abort(404);
+        }
+
         if (! $document->visibleTo(auth()->user())) {
+            abort(404);
+        }
+
+        if ($document->isEmail()) {
             abort(404);
         }
 
@@ -255,8 +323,16 @@ class SubjectDocumentController extends Controller
     {
         Gate::authorize('view', $subject);
 
+        if ($document->subject_id !== $subject->id) {
+            abort(404);
+        }
+
         if (! $document->visibleTo(auth()->user())) {
             abort(404);
+        }
+
+        if ($document->isEmail()) {
+            return redirect()->route('subjects.documents.email', [$subject->slug, $document->id]);
         }
 
         if (! $this->storage->exists($document->path)) {

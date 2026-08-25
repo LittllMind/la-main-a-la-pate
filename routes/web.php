@@ -71,6 +71,7 @@ Route::prefix('sujets')->name('subjects.')->group(function () {
     // Routes documents publiques (consulter inline ou télécharger selon audience)
     Route::get('/{subject:slug}/documents/{document}/voir', [SubjectDocumentController::class, 'view'])->name('documents.view');
     Route::get('/{subject:slug}/documents/{document}/telecharger', [SubjectDocumentController::class, 'download'])->name('documents.download');
+    Route::get('/{subject:slug}/documents/{document}/email', [SubjectDocumentController::class, 'emailView'])->name('documents.email');
 });
 
 

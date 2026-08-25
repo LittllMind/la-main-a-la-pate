@@ -100,7 +100,12 @@ class Subject extends Model
                     $q2->where('citizen_status', 'published')
                         ->whereNotNull('citizen_body');
                 })
-                ->orWhere(function ($q2) {
+                ->orWhere(function ($q2) use ($user) {
+                    // Citoyen n'a pas accès au statut public ; autres rôles authentifiés (hors admin/auteur/collab) non plus.
+                    if ($user->role !== 'citoyen') {
+                        $q2->whereRaw('1 = 0');
+                        return;
+                    }
                     $q2->where('public_status', 'published')
                         ->whereNotNull('public_body');
                 });
@@ -190,6 +195,11 @@ class Subject extends Model
     /**
      * Retourne le corps à afficher selon le niveau d'accès.
      * Pas de fallback silencieux depuis un niveau supérieur.
+     *
+     * Exception Séraphothèque : la version publique du dossier documentaire
+     * est accessible uniquement aux visiteurs non authentifiés (public unlisted
+     * géré hors catalogue). Les utilisateurs authentifiés y accèdent via les
+     * versions Working/Citoyen habituelles.
      */
     public function bodyFor(?User $user): ?string
     {
@@ -201,9 +211,13 @@ class Subject extends Model
             if ($this->citizen_status === 'published' && filled($this->citizen_body)) {
                 return $this->citizen_body;
             }
-            if ($this->public_status === 'published' && filled($this->public_body)) {
+
+            // Public général : membres/citoyens peuvent lire la version publique.
+            // Séraphothèque : réservé aux guests.
+            if ($this->public_status === 'published' && filled($this->public_body) && ! $this->isSeraphothequeDossier()) {
                 return $this->public_body;
             }
+
             return null;
         }
 
@@ -216,7 +230,7 @@ class Subject extends Model
 
     public function canBeViewedBy(?User $user): bool
     {
-        if ($this->bodyFor($user) !== null) {
+        if ($body = $this->bodyFor($user)) {
             return true;
         }
 
@@ -346,6 +360,12 @@ class Subject extends Model
             $markdown = preg_replace('/<a[^>]*href="[^"]*#documents"[^>]*>.*?<\\/a>/s', '', $markdown);
         }
 
+        // Résoudre les liens narratif → preuves dans le dossier Séraphothèque (Guest Public).
+        // Le texte V7 reste inchangé ; seul le HTML est transformé côté serveur.
+        if ($this->isSeraphothequeDossier() && str_contains($markdown, '→ Consulter la fiche documentaire')) {
+            $markdown = $this->resolveSeraphothequeFicheLinks($markdown);
+        }
+
         // Preprocess Pandoc-style heading identifiers {#id} into stable markers
         $ids = [];
         $markdown = preg_replace_callback(
@@ -393,19 +413,27 @@ class Subject extends Model
         // Generate stable IDs for headings that don't already have one.
         $html = self::generateHeadingIds($html);
 
-        return $html;
+        return $this->wrapHtmlTables($html);
     }
 
     /**
-     * Scan rendered HTML for internal links `[...](#id)` and assign each requested
-     * id to the next heading that does not already carry an id.
+     * Englobe chaque <table> dans un wrapper overflow-x-auto pour mobile.
      */
+    private function wrapHtmlTables(string $html): string
+    {
+        return preg_replace('/(<table\b[^>]*>)(.*?)(<\/table>)/s', '<div class="overflow-x-auto">$1$2$3</div>', $html) ?? $html;
+    }
     private static function assignInternalLinkAnchorsToHeadings(string $html): string
     {
-        // Collect internal link anchors and their approximate byte position.
+        // Collect internal link anchors and their position.
+        // Exclude document-item anchors (e.g. #doc-seraphotheque-pack-...): those target
+        // list items rendered in the document section, not headings.
         $links = [];
         if (preg_match_all('/<a[^>]*\shref="#([^"]+)"[^>]*>/', $html, $matches, PREG_OFFSET_CAPTURE)) {
             foreach ($matches[1] as $match) {
+                if (str_starts_with($match[0], 'doc-')) {
+                    continue;
+                }
                 $links[] = ['id' => $match[0], 'pos' => $match[1]];
             }
         }
@@ -414,6 +442,17 @@ class Subject extends Model
             return $html;
         }
 
+        // IDs already present in the rendered HTML (headings, sections, document items, etc.).
+        // Internal links targeting an existing element are already resolved and must not be
+        // reassigned to a heading later in the page (e.g. V7 links to doc-* anchors).
+        $existingElementIds = [];
+        if (preg_match_all('/\sid="([^"]+)"/', $html, $existing)) {
+            foreach ($existing[1] as $id) {
+                $existingElementIds[$id] = true;
+            }
+        }
+
+        // IDs already assigned to headings during this pass.
         $usedIds = [];
         if (preg_match_all('/<h[1-6][^>]*\sid="([^"]+)"/', $html, $existing)) {
             foreach ($existing[1] as $id) {
@@ -421,7 +460,8 @@ class Subject extends Model
             }
         }
 
-        // Find headings without id and track assignments.
+        // Find headings without id and assign each unassigned internal link to the
+        // nearest subsequent heading whose target does not already exist in the DOM.
         $assigned = [];
         $linkIndex = 0;
         if (preg_match_all('/<h([1-6])([^>]*)>(.*?)<\/h\1>/s', $html, $headings, PREG_OFFSET_CAPTURE)) {
@@ -437,16 +477,16 @@ class Subject extends Model
                     continue;
                 }
 
-                // Advance link index to first link occurring before this heading.
+                // Advance link cursor to the first link occurring before this heading.
                 while ($linkIndex < count($links) && $links[$linkIndex]['pos'] < $pos) {
                     $linkIndex++;
                 }
 
-                // Look backward to the nearest unassigned, unused link id.
+                // Look backward for the nearest unassigned link whose target is not already resolved.
                 $assignedId = null;
                 for ($j = $linkIndex - 1; $j >= 0; $j--) {
                     $candidate = $links[$j]['id'];
-                    if (!isset($assigned[$candidate]) && !isset($usedIds[$candidate])) {
+                    if (!isset($assigned[$candidate]) && !isset($usedIds[$candidate]) && !isset($existingElementIds[$candidate])) {
                         $assignedId = $candidate;
                         break;
                     }
@@ -455,14 +495,14 @@ class Subject extends Model
                 if ($assignedId !== null) {
                     $assigned[$assignedId] = true;
                     $usedIds[$assignedId] = true;
-                    $newAttrs = $attrs ? $attrs . ' id="' . $assignedId . '"' : 'id="' . $assignedId . '"';
+                    $newAttrs = $attrs ? $attrs . ' id="' . $assignedId . '"' : ' id="' . $assignedId . '"';
                     $html = substr_replace(
                         $html,
                         '<h' . $tag . $newAttrs . '>' . $content . '</h' . $tag . '>',
                         $pos,
                         strlen($full[0])
                     );
-                    // Restart parsing because html length/offsets changed.
+                    // Restart parsing because HTML length/offsets changed.
                     return self::assignInternalLinkAnchorsToHeadings($html);
                 }
             }
@@ -528,7 +568,7 @@ class Subject extends Model
                 }
                 $seenIds[$candidate] = true;
 
-                $newAttrs = $attrs ? $attrs . ' id="' . $candidate . '"' : 'id="' . $candidate . '"';
+                $newAttrs = $attrs ? $attrs . ' id="' . $candidate . '"' : ' id="' . $candidate . '"';
                 return '<h' . $tag . $newAttrs . '>' . $content . '</h' . $tag . '>';
             },
             $html
@@ -561,6 +601,62 @@ class Subject extends Model
         ]);
 
         return $converter->convert($html);
+    }
+
+    /**
+     * Détermine si ce subject est le dossier public documentaire Séraphothèque.
+     */
+    public function isSeraphothequeDossier(): bool
+    {
+        return $this->sub_category_id === 14 || ($this->subCategory?->slug === 'seraphotheque');
+    }
+
+    /**
+     * Remplace les placeholders "→ Consulter la fiche documentaire" du markdown V7
+     * par des liens Markdown canoniques vers les ancres de documents.
+     * Le texte V7 source est préservé en entrée ; ici on mute une copie.
+     *
+     * Ne transforme que si le document source correspondant est attaché au sujet,
+     * pour éviter les liens morts lorsque le dossier n'a pas encore de corpus.
+     */
+    private function resolveSeraphothequeFicheLinks(string $markdown): string
+    {
+        $refs = [
+            '### Convention d’été 2025' => 'seraphotheque-pack:SERAPH-DOC-0535',
+            '### Projet de convention d’été 2026' => 'seraphotheque-pack:SERAPH-DOC-0239',
+            '### Sommation du 24 avril 2026' => 'seraphotheque-pack:SERAPH-DOC-0904',
+            '### Email du maire du 14 mai 2026' => 'seraphotheque-pack:SERAPH-DOC-1263',
+            '### Demande d’AOT du 16 juin 2026' => 'seraphotheque-pack:SERAPH-DOC-0293',
+        ];
+
+        $existingRefs = $this->documents()->pluck('source_reference')->all();
+
+        $lines = explode("\n", $markdown);
+        $currentContext = null;
+
+        foreach ($lines as $key => $line) {
+            foreach ($refs as $heading => $sourceRef) {
+                if (str_starts_with($line, $heading)) {
+                    $currentContext = $sourceRef;
+                    break;
+                }
+            }
+
+            if ($currentContext !== null && str_contains($line, '→ Consulter la fiche documentaire')) {
+                $hasDoc = (bool) array_filter($existingRefs, fn ($ref) => str_contains((string) $ref, $currentContext));
+                if ($hasDoc) {
+                    $anchor = 'doc-' . str_replace([':', '/'], '-', $currentContext);
+                    $lines[$key] = str_replace(
+                        '**→ Consulter la fiche documentaire**',
+                        "[**→ Consulter la fiche documentaire**](#{$anchor})",
+                        $line
+                    );
+                }
+                $currentContext = null;
+            }
+        }
+
+        return implode("\n", $lines);
     }
 
     protected static function booted(): void

@@ -25,15 +25,13 @@
             Rédigé par {{ $subject->user->name }} — {{ $subject->updated_at->format('d/m/Y') }}
         </div>
 
-        <div class="flex items-center gap-3 mt-4 flex-wrap">
-            <a href="{{ route('subjects.pdf.show', $subject->slug) }}" target="_blank" class="inline-block bg-slate-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition" data-testid="btn-pdf-show">Ouvrir le PDF</a>
-            <a href="{{ route('subjects.pdf.download', $subject->slug) }}" class="inline-block bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-200 transition" data-testid="btn-pdf-download">Télécharger le PDF</a>
-        </div>
+        @if(auth()->check())
+            <div class="flex items-center gap-3 mt-4 flex-wrap">
+                <a href="{{ route('subjects.pdf.show', $subject->slug) }}" target="_blank" class="inline-block bg-slate-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition" data-testid="btn-pdf-show">Ouvrir le PDF</a>
+                <a href="{{ route('subjects.pdf.download', $subject->slug) }}" class="inline-block bg-slate-100 text-slate-700 border border-slate-300 px-4 py-2 rounded-md text-sm font-medium hover:bg-slate-200 transition" data-testid="btn-pdf-download">Télécharger le PDF</a>
+            </div>
+        @endif
     </div>
-
-    <article class="bg-white rounded-lg border border-slate-200 p-6 mb-8 subject-document">
-        <div class="prose prose-slate max-w-none subject-markdown">{!! $subject->renderBody() !!}</div>
-    </article>
 
     @include('subjects._content')
 
@@ -82,32 +80,34 @@
         </div>
     @endcan
 
-    <section id="comments" class="bg-slate-50 rounded-lg border border-slate-200 p-6">
-        <h2 class="text-xl font-bold text-slate-900 mb-4">Discussion</h2>
+    @if(auth()->check())
+        <section id="comments" class="bg-slate-50 rounded-lg border border-slate-200 p-6">
+            <h2 class="text-xl font-bold text-slate-900 mb-4">Discussion</h2>
 
-        @forelse($subject->comments as $comment)
-            <div class="mb-4 pb-4 border-b border-slate-200 last:border-0">
-                <div class="flex items-center gap-2 text-sm mb-1">
-                    <span class="inline-block w-2 h-2 rounded-full" style="background-color: {{ $comment->user->color ?: '#64748b' }}"></span>
-                    <span class="font-medium text-slate-900">{{ $comment->user->name }}</span>
-                    <span class="text-slate-400 text-xs">{{ $comment->created_at->format('d/m/Y H:i') }}</span>
+            @forelse($subject->comments as $comment)
+                <div class="mb-4 pb-4 border-b border-slate-200 last:border-0">
+                    <div class="flex items-center gap-2 text-sm mb-1">
+                        <span class="inline-block w-2 h-2 rounded-full" style="background-color: {{ $comment->user->color ?: '#64748b' }}"></span>
+                        <span class="font-medium text-slate-900">{{ $comment->user->name }}</span>
+                        <span class="text-slate-400 text-xs">{{ $comment->created_at->format('d/m/Y H:i') }}</span>
+                    </div>
+                    <p class="text-slate-700 text-sm">{{ $comment->body }}</p>
                 </div>
-                <p class="text-slate-700 text-sm">{{ $comment->body }}</p>
-            </div>
-        @empty
-            <p class="text-slate-500 text-sm italic mb-4">Aucun commentaire pour le moment. Soyez le premier à partager vos idées !</p>
-        @endforelse
+            @empty
+                <p class="text-slate-500 text-sm italic mb-4">Aucun commentaire pour le moment. Soyez le premier à partager vos idées !</p>
+            @endforelse
 
-        <form method="POST" action="{{ route('subjects.comments.store', $subject->slug) }}" class="mt-4">
-            @csrf
-            <label for="comment" class="block text-sm font-medium text-slate-700 mb-1">Votre contribution</label>
-            <textarea id="comment" name="body" rows="3" maxlength="5000" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">{{ old('body') }}</textarea>
-            @error('body')
-                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
-            @enderror
-            <button type="submit" class="mt-2 bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">Commenter</button>
-        </form>
-    </section>
+            <form method="POST" action="{{ route('subjects.comments.store', $subject->slug) }}" class="mt-4">
+                @csrf
+                <label for="comment" class="block text-sm font-medium text-slate-700 mb-1">Votre contribution</label>
+                <textarea id="comment" name="body" rows="3" maxlength="5000" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">{{ old('body') }}</textarea>
+                @error('body')
+                    <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+                @enderror
+                <button type="submit" class="mt-2 bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">Commenter</button>
+            </form>
+        </section>
+    @endif
 
 </div>
 

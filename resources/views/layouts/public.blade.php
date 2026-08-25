@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'La Main a la Pate')</title>
+    <title>@yield('title', 'La Main à la Pâte')</title>
 @php
     $isDev = in_array(request()->getHost(), ['127.0.0.1', 'localhost', '10.5.0.2']) || str_contains(request()->getHost(), ':8000') || str_contains(request()->getHost(), ':8001');
 @endphp
@@ -43,7 +43,7 @@
         <div class="max-w-5xl mx-auto px-4 py-8">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
                 <div>
-                    <h4 class="text-white font-semibold mb-2">La Main a la Pate</h4>
+                    <h4 class="text-white font-semibold mb-2">La Main à la Pâte</h4>
                     <p class="text-slate-400 text-xs leading-relaxed">Site communautaire. Actualites, forums et echanges entre voisins.</p>
                 </div>
                 <div>
@@ -64,7 +64,7 @@
                 </div>
             </div>
             <div class="border-t border-slate-700 mt-6 pt-4 text-center text-xs text-slate-500">
-                &copy; {{ date('Y') }} La Main a la Pate — Le Rozier
+                © {{ date('Y') }} La Main à la Pâte — Le Rozier
             </div>
         </div>
     </footer>

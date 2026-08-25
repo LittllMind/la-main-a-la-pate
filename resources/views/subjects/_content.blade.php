@@ -40,10 +40,19 @@
     </section>
 @endif
 
-{{-- Section Documents Sources --}}
+    {{-- Section Documents Sources --}}
 @php
     $currentUser = auth()->user();
     $visibleDocs = $subject->documents->filter(fn($doc) => $doc->visibleTo($currentUser));
+    $groupLabels = [
+        'primary' => 'PIÈCES PRINCIPALES',
+        'positions' => 'POSITIONS / DÉMARCHES',
+        'synthesis' => 'SYNTHÈSE LMALP',
+        'context' => 'DOCUMENT DE CONTEXTE',
+        'other' => 'AUTRES DOCUMENTS',
+    ];
+    $groupOrder = ['primary', 'positions', 'synthesis', 'context', 'other'];
+    $docsByGroup = $visibleDocs->sortBy(fn($doc) => $doc->seraphothequeOrder())->groupBy(fn($doc) => $doc->seraphothequeGroup());
 @endphp
 @if($visibleDocs->count() > 0)
     <section id="documents" class="bg-white rounded-lg border border-slate-200 p-6 mb-8">
@@ -51,68 +60,92 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M6 14h12M3 6h18m-1 14l-4-4h-6l-4 4m-2 0h6"/></svg>
             Sources et documents
         </h2>
-        <ul class="space-y-3">
-            @foreach($visibleDocs as $doc)
-                <li class="flex items-start gap-3 bg-slate-50 rounded-md border border-slate-200 p-3">
-                    <span class="text-2xl select-none" title="Extension: {{ $doc->extension() }}">
-                        {{ $doc->icon() }}
-                    </span>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-baseline gap-2 flex-wrap">
-                            <span class="text-sm font-medium text-slate-900 truncate">
-                                {{ $doc->title ?: $doc->filename }}
-                            </span>
-                            <span class="text-xs text-slate-400 whitespace-nowrap">{{ $doc->humanSize() }}</span>
-                            @if($doc->redacted)
-                                <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200" data-redacted-badge>Version expurgée</span>
-                            @endif
-                        </div>
-                        @if($doc->document_date || $doc->document_type || $doc->author || $doc->recipient)
-                            <div class="text-xs text-slate-500 mb-1 flex flex-wrap gap-x-3 gap-y-1">
-                                @if($doc->document_date)
-                                    <span>Date : {{ $doc->document_date->format('d/m/Y') }}</span>
-                                @endif
-                                @if($doc->document_type)
-                                    <span>Nature : {{ $doc->document_type }}</span>
-                                @endif
-                                @if($doc->author)
-                                    <span>Auteur : {{ $doc->author }}</span>
-                                @endif
-                                @if($doc->recipient)
-                                    <span>Destinataire : {{ $doc->recipient }}</span>
-                                @endif
-                            </div>
-                        @endif
-                        @if($doc->description)
-                            <p class="text-xs text-slate-600 mt-0.5">{{ $doc->description }}</p>
-                        @endif
-                        @if($doc->establishes || $doc->limitations)
-                            <div class="text-xs text-slate-600 mt-1 space-y-1">
-                                @if($doc->establishes)
-                                    <p><span class="font-medium">Établit :</span> {{ $doc->establishes }}</p>
-                                @endif
-                                @if($doc->limitations)
-                                    <p><span class="font-medium">N'établit pas :</span> {{ $doc->limitations }}</p>
-                                @endif
-                            </div>
-                        @endif
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-xs px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 uppercase tracking-wide">{{ $doc->category }}</span>
-                            <span class="text-xs text-slate-400">Ajouté le {{ $doc->created_at->format('d/m/Y') }}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        @if($doc->hasStoredFile())
-                            <a href="{{ $doc->url() }}" target="_blank" rel="noopener noreferrer" class="text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-2 py-1 bg-emerald-50" data-testid="btn-doc-view">
-                                Consulter / Ouvrir
-                            </a>
-                            <a href="{{ $doc->downloadUrl() }}" class="text-sm text-slate-500 hover:text-slate-900 border border-slate-300 rounded-md px-2 py-1 bg-white" download title="Télécharger" data-testid="btn-doc-download">
-                                Télécharger
-                            </a>
-                        @endif
-                    </div>
-                </li>
-            @endforeach
-        </ul>
+
+        @foreach($groupOrder as $group)
+            @php $groupDocs = $docsByGroup->get($group) ?? collect(); @endphp
+            @if($groupDocs->count() > 0)
+                <div class="mb-6 last:mb-0">
+                    <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3 border-b border-slate-200 pb-1">{{ $groupLabels[$group] }}</h3>
+                    <ul class="space-y-3">
+                        @foreach($groupDocs as $doc)
+                            @php
+                                // Pour le dossier public Séraphothèque, l'ancre documentaire canonique
+                                // reprend le source_reference (identifiant de corpus public).
+                                // Pour tous les autres sujets, on utilise l'ID interne afin de ne pas
+                                // exposer la référence source dans le HTML public.
+                                $docAnchor = $subject->isSeraphothequeDossier()
+                                    ? 'doc-' . str_replace([':', '\/'], '-', (string) $doc->source_reference)
+                                    : 'doc-' . $doc->id;
+                            @endphp
+                            <li id="{{ $docAnchor }}" class="flex items-start gap-3 bg-slate-50 rounded-md border border-slate-200 p-3 scroll-mt-4">
+                                <span class="text-2xl select-none" title="Extension: {{ $doc->extension() }}">
+                                    {{ $doc->icon() }}
+                                </span>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-baseline gap-2 flex-wrap">
+                                        <span class="text-sm font-medium text-slate-900 truncate">
+                                            {{ $doc->title ?: $doc->filename }}
+                                        </span>
+                                        <span class="text-xs text-slate-400 whitespace-nowrap">{{ $doc->humanSize() }}</span>
+                                        @if($doc->redacted)
+                                            <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200" data-redacted-badge>Version expurgée</span>
+                                        @endif
+                                    </div>
+                                    @if($doc->document_date || $doc->document_type || $doc->author || $doc->recipient)
+                                        <div class="text-xs text-slate-500 mb-1 flex flex-wrap gap-x-3 gap-y-1">
+                                            @if($doc->document_date)
+                                                <span>Date : {{ $doc->document_date->format('d/m/Y') }}</span>
+                                            @endif
+                                            @if($doc->document_type)
+                                                <span>Nature : {{ $doc->document_type }}</span>
+                                            @endif
+                                            @if($doc->author)
+                                                <span>Auteur : {{ $doc->author }}</span>
+                                            @endif
+                                            @if($doc->recipient)
+                                                <span>Destinataire : {{ $doc->recipient }}</span>
+                                            @endif
+                                        </div>
+                                    @endif
+                                    @if($doc->description)
+                                        <p class="text-xs text-slate-600 mt-0.5">{{ $doc->description }}</p>
+                                    @endif
+                                    @if($doc->establishes || $doc->limitations)
+                                        <div class="text-xs text-slate-600 mt-1 space-y-1">
+                                            @if($doc->establishes)
+                                                <p><span class="font-medium">Établit :</span> {{ $doc->establishes }}</p>
+                                            @endif
+                                            @if($doc->limitations)
+                                                <p><span class="font-medium">N'établit pas :</span> {{ $doc->limitations }}</p>
+                                            @endif
+                                        </div>
+                                    @endif
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-xs px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 uppercase tracking-wide">{{ $doc->category }}</span>
+                                        <span class="text-xs text-slate-400">Ajouté le {{ $doc->created_at->format('d/m/Y') }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    @if($doc->hasStoredFile())
+                                        @if($doc->isEmail())
+                                            <a href="{{ route('subjects.documents.email', [$subject->slug, $doc->id]) }}" class="text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-2 py-1 bg-emerald-50" data-testid="btn-doc-email">
+                                                Lire le message
+                                            </a>
+                                        @else
+                                            <a href="{{ $doc->url() }}" target="_blank" rel="noopener noreferrer" class="text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-2 py-1 bg-emerald-50" data-testid="btn-doc-view">
+                                                Consulter / Ouvrir
+                                            </a>
+                                            <a href="{{ $doc->downloadUrl() }}" class="text-sm text-slate-500 hover:text-slate-900 border border-slate-300 rounded-md px-2 py-1 bg-white" download title="Télécharger" data-testid="btn-doc-download">
+                                                Télécharger
+                                            </a>
+                                        @endif
+                                    @endif
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+        @endforeach
     </section>
 @endif

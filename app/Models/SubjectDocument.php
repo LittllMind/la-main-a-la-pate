@@ -89,6 +89,78 @@ class SubjectDocument extends Model
         return $this->visibility?->visibleTo($user) ?? false;
     }
 
+    /**
+     * Groupe de classification publique déterministe pour les documents du dossier Séraphothèque.
+     * Basé sur source_reference / doc_id ; aucune migration DB.
+     */
+    public function seraphothequeGroup(): string
+    {
+        $ref = (string) $this->source_reference;
+
+        $primary = [
+            'SERAPH-DOC-0535',      // Bail été 2025 signé
+            'SERAPH-DOC-0239',      // Projet convention été 2026
+            'SERAPH-DOC-0904',      // Sommation du 24 avril 2026
+            'SERAPH-DOC-CORRESPONDANCE-MAIRIE-2026', // Correspondance mairie
+            'SERAPH-DOC-1263',      // Email maire 14 mai 2026
+            'SERAPH-DOC-0293',      // Demande AOT 16 juin 2026
+        ];
+        foreach ($primary as $needle) {
+            if (str_contains($ref, $needle)) {
+                return 'primary';
+            }
+        }
+
+        $positions = [
+            'SERAPH-DOC-0997',      // Lettre ouverte Séraphothèque
+            'Email-2026-07-01',     // Information déplacement portants
+            'SERAPH-DOC-0486',      // Projet délibération AOT
+        ];
+        foreach ($positions as $needle) {
+            if (str_contains($ref, $needle)) {
+                return 'positions';
+            }
+        }
+
+        if (str_contains($ref, 'COMP-2025-2026')) {
+            return 'synthesis';
+        }
+
+        if (str_contains($ref, 'SERAPH-DOC-PROFESSION-FOI')) {
+            return 'context';
+        }
+
+        return 'other';
+    }
+
+    /**
+     * Ordre déterministe au sein du groupe Séraphothèque (pas seulement position DB).
+     */
+    public function seraphothequeOrder(): int
+    {
+        $ref = (string) $this->source_reference;
+
+        return match (true) {
+            str_contains($ref, 'SERAPH-DOC-0535') => 1,
+            str_contains($ref, 'SERAPH-DOC-0239') => 2,
+            str_contains($ref, 'SERAPH-DOC-0904') => 3,
+            str_contains($ref, 'SERAPH-DOC-CORRESPONDANCE-MAIRIE-2026') => 4,
+            str_contains($ref, 'SERAPH-DOC-1263') => 5,
+            str_contains($ref, 'SERAPH-DOC-0293') => 6,
+            str_contains($ref, 'SERAPH-DOC-0997') => 7,
+            str_contains($ref, 'Email-2026-07-01') => 8,
+            str_contains($ref, 'SERAPH-DOC-0486') => 9,
+            str_contains($ref, 'COMP-2025-2026') => 10,
+            str_contains($ref, 'SERAPH-DOC-PROFESSION-FOI') => 11,
+            default => 99,
+        };
+    }
+
+    public function isEmail(): bool
+    {
+        return $this->document_type === 'email';
+    }
+
     public function isSecure(): bool
     {
         return $this->disk === 'documents';

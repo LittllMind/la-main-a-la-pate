@@ -12,7 +12,7 @@
             {{-- Brand --}}
             <a href="{{ auth()->check() ? route('dashboard') : route('home') }}" class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span class="hidden sm:inline">La Main a la Pate</span>
+                <span class="hidden sm:inline">La Main à la Pâte</span>
                 <span class="sm:hidden">LMLaP</span>
             </a>
 
@@ -125,8 +125,7 @@
                         </svg>
                     </button>
                 @else
-                    {{-- Guest : aucun lien vers catalogue, communauté, hall ou login. --}}
-                    <span class="text-sm text-slate-400 px-3 py-2">La Main à la Pâte</span>
+                    {{-- Guest : le brand à gauche suffit, pas de doublon ici. --}}
                 @endauth
             </div>
         </div>
