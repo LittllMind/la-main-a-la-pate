@@ -156,8 +156,17 @@ class SubjectDocumentVisibilityUploadTest extends TestCase
         SubjectDocument::factory()->for($subject)->working()
             ->create(['title' => 'WORKING_DOC_MARKER_5p1q', 'stored_filename' => 'working.enc', 'path' => 'subjects/1/working.enc']);
 
+        // Route publique : documents publics seuls.
         $this->actingAs($admin)
             ->get(route('subjects.show', $subject->slug))
+            ->assertOk()
+            ->assertSee('PUBLIC_DOC_MARKER_7x9a')
+            ->assertDontSee('CITIZEN_DOC_MARKER_3k2m')
+            ->assertDontSee('WORKING_DOC_MARKER_5p1q');
+
+        // L'admin voit tous les documents dans l'index.
+        $this->actingAs($admin)
+            ->get(route('subjects.documents.index', $subject->slug))
             ->assertOk()
             ->assertSee('PUBLIC_DOC_MARKER_7x9a')
             ->assertSee('CITIZEN_DOC_MARKER_3k2m')
@@ -189,8 +198,10 @@ class SubjectDocumentVisibilityUploadTest extends TestCase
             ->get(route('subjects.show', $subject->slug))
             ->assertOk()
             ->assertSee('PUBLIC_DOC_MARKER_7x9a')
-            ->assertSee('CITIZEN_DOC_MARKER_3k2m')
+            ->assertDontSee('CITIZEN_DOC_MARKER_3k2m')
             ->assertDontSee('WORKING_DOC_MARKER_5p1q');
+
+        // Aperçu citoyen non autorisé pour un simple citoyen.
     }
 
     public function test_uploaded_document_visibility_is_effective_for_guest()

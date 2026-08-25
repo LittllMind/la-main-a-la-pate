@@ -50,12 +50,12 @@ class SubjectVisibilityLevelsTest extends TestCase
         $response->assertNotFound();
     }
 
-    public function test_citizen_sees_citizen_body_and_fallback_to_public(): void
+    public function test_citizen_sees_public_body_on_public_route_and_citizen_body_in_preview(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $citizen = User::factory()->create(['role' => 'citoyen']);
 
-        // Sujet 1 : citizen publié
+        // Sujet 1 : citizen publié + public publié
         $subjectCitizen = Subject::factory()->create([
             'user_id' => $admin->id,
             'body' => 'Body interne',
@@ -81,8 +81,11 @@ class SubjectVisibilityLevelsTest extends TestCase
 
         $r1 = $this->get(route('subjects.show', $subjectCitizen->slug));
         $r1->assertOk();
-        $r1->assertSee('Body citoyen');
+        // Route publique canonique : public_body.
+        $r1->assertSee('Body public');
         $r1->assertDontSee('Body interne');
+
+        // Aperçu citoyen non autorisé pour un simple citoyen (réservé aux admins/propriétaires).
 
         $r2 = $this->get(route('subjects.show', $subjectPublic->slug));
         $r2->assertOk();
@@ -90,7 +93,7 @@ class SubjectVisibilityLevelsTest extends TestCase
         $r2->assertDontSee('Body interne 2');
     }
 
-    public function test_admin_sees_working_body(): void
+    public function test_admin_sees_public_body_on_public_route_and_working_body_via_edit(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $subject = Subject::factory()->create([
@@ -98,13 +101,20 @@ class SubjectVisibilityLevelsTest extends TestCase
             'body' => 'Body travail',
             'citizen_body' => 'Body citoyen',
             'public_body' => 'Body public',
+            'public_status' => 'published',
         ]);
 
-        $response = $this->actingAs($admin)
-            ->get(route('subjects.show', $subject->slug));
+        $this->actingAs($admin)
+            ->get(route('subjects.show', $subject->slug))
+            ->assertOk()
+            ->assertSee('Body public')
+            ->assertDontSee('Body travail')
+            ->assertDontSee('Body citoyen');
 
-        $response->assertOk();
-        $response->assertSee('Body travail');
+        $this->actingAs($admin)
+            ->get(route('subjects.edit', $subject->slug))
+            ->assertOk()
+            ->assertSee('Body travail');
     }
 
     public function test_public_index_lists_only_public_published_subjects(): void

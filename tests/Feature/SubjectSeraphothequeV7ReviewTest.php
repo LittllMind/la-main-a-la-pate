@@ -444,17 +444,23 @@ class SubjectSeraphothequeV7ReviewTest extends TestCase
     }
 
     /** @test */
-    public function acl_guest_allowed_citizen_and_working_blocked(): void
+    public function acl_public_route_reaches_v7_for_guest_and_authenticated(): void
     {
         $subject = $this->ingestV7Subject();
 
         $this->get(route('subjects.show', $subject->slug))->assertOk();
 
         $citizen = User::factory()->create(['role' => 'citoyen', 'email_verified_at' => now(), 'requires_setup' => false]);
-        $this->actingAs($citizen)->get(route('subjects.show', $subject->slug))->assertNotFound();
+        $this->actingAs($citizen)
+            ->get(route('subjects.show', $subject->slug))
+            ->assertOk()
+            ->assertDontSee('Gel de PUBLIC-V1');
 
         $employe = User::factory()->create(['role' => 'employe', 'email_verified_at' => now(), 'requires_setup' => false]);
-        $this->actingAs($employe)->get(route('subjects.show', $subject->slug))->assertNotFound();
+        $this->actingAs($employe)
+            ->get(route('subjects.show', $subject->slug))
+            ->assertOk()
+            ->assertDontSee('Gel de PUBLIC-V1');
     }
 
     /** @test */

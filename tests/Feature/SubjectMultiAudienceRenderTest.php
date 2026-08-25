@@ -45,26 +45,47 @@ class SubjectMultiAudienceRenderTest extends TestCase
         $response->assertDontSee('Admin Only');
     }
 
-    public function test_citizen_sees_citizen_body_not_admin_body(): void
+    public function test_citizen_and_admin_on_public_route_see_public_body(): void
     {
         $subject = $this->setupSubject();
         $citizen = User::factory()->create(['role' => 'citoyen', 'email_verified_at' => now(), 'requires_setup' => false]);
+        $admin = User::where('role', 'admin')->first();
 
-        $response = $this->actingAs($citizen)->get(route('subjects.show', $subject->slug));
+        // Route canonique publique : public_body pour tout le monde.
+        $this->actingAs($citizen)->get(route('subjects.show', $subject->slug))
+            ->assertOk()
+            ->assertSee('Public Body')
+            ->assertDontSee('Citizen Body')
+            ->assertDontSee('Admin Only');
 
-        $response->assertOk();
-        $response->assertSee('Citizen Body');
-        $response->assertDontSee('Admin Only');
+        $this->actingAs($admin)->get(route('subjects.show', $subject->slug))
+            ->assertOk()
+            ->assertSee('Public Body')
+            ->assertDontSee('Citizen Body')
+            ->assertDontSee('Admin Only');
     }
 
-    public function test_admin_sees_full_body(): void
+    public function test_citizen_sees_citizen_body_in_preview(): void
+    {
+        $subject = $this->setupSubject();
+        $citizen = User::factory()->create(['role' => 'citoyen', 'email_verified_at' => now(), 'requires_setup' => false]);
+        $admin = User::where('role', 'admin')->first();
+
+        $this->actingAs($admin)
+            ->get(route('subjects.preview', [$subject->slug, 'citizen']))
+            ->assertOk()
+            ->assertSee('Citizen Body')
+            ->assertDontSee('Admin Only');
+    }
+
+    public function test_admin_sees_working_body_in_edit(): void
     {
         $subject = $this->setupSubject();
         $admin = User::where('role', 'admin')->first();
 
-        $response = $this->actingAs($admin)->get(route('subjects.show', $subject->slug));
-
-        $response->assertOk();
-        $response->assertSee('Admin Only');
+        $this->actingAs($admin)
+            ->get(route('subjects.edit', $subject->slug))
+            ->assertOk()
+            ->assertSee('Admin Only');
     }
 }

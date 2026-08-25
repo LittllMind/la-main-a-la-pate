@@ -121,7 +121,11 @@ class SubjectDocumentMetadataTest extends TestCase
         Storage::fake('documents');
 
         $admin = User::factory()->create(['role' => 'admin', 'email_verified_at' => now()]);
-        $subject = Subject::factory()->create(['user_id' => $admin->id]);
+        $subject = Subject::factory()->create([
+            'user_id' => $admin->id,
+            'public_status' => 'published',
+            'public_body' => 'Public body.',
+        ]);
         $doc = SubjectDocument::factory()->for($subject)->working()->create([
             'title' => 'Legacy marker OLD_DOC_1122',
         ]);
@@ -129,7 +133,17 @@ class SubjectDocumentMetadataTest extends TestCase
         $this->actingAs($admin)
             ->get(route('subjects.show', $subject->slug))
             ->assertOk()
+            ->assertDontSee('OLD_DOC_1122');
+
+        // L'admin voit le document working dans l'index ; un guest ne le voit pas.
+        $this->actingAs($admin)
+            ->get(route('subjects.documents.index', $subject->slug))
+            ->assertOk()
             ->assertSee('OLD_DOC_1122');
+
+        auth()->logout();
+        $this->get(route('subjects.documents.index', $subject->slug))
+            ->assertRedirect('/');
 
         $doc->refresh();
         $this->assertNull($doc->document_date);
@@ -259,14 +273,27 @@ class SubjectDocumentMetadataTest extends TestCase
             ->assertOk()
             ->assertSee('PUB_MARKER_TITLE_8a2e')
             ->assertSee('PUB_AUTHOR_4f1c')
+            ->assertDontSee('CIT_MARKER_TITLE_2b4n')
+            ->assertDontSee('CIT_AUTHOR_7h3k')
+            ->assertDontSee('CIT_ESTABLISH_5m8p')
+            ->assertDontSee('CIT_LIMIT_2q6w')
+            ->assertDontSee('WORK_MARKER_TITLE_9c1r')
+            ->assertDontSee('WORK_AUTHOR_3v7t')
+            ->assertDontSee('WORK_ESTABLISH_4n2s')
+            ->assertDontSee('WORK_SOURCE_REF_SECRET_3u5q');
+
+        // Le citizen voit les métadonnées citizen dans l'index documents (pas sur la route publique).
+        $this->actingAs($citizen)
+            ->get(route('subjects.documents.index', $subject->slug))
+            ->assertOk()
+            ->assertSee('PUB_MARKER_TITLE_8a2e')
+            ->assertSee('PUB_AUTHOR_4f1c')
             ->assertSee('CIT_MARKER_TITLE_2b4n')
             ->assertSee('CIT_AUTHOR_7h3k')
             ->assertSee('CIT_ESTABLISH_5m8p')
             ->assertSee('CIT_LIMIT_2q6w')
             ->assertDontSee('WORK_MARKER_TITLE_9c1r')
-            ->assertDontSee('WORK_AUTHOR_3v7t')
-            ->assertDontSee('WORK_ESTABLISH_4n2s')
-            ->assertDontSee('WORK_SOURCE_REF_SECRET_3u5q');
+            ->assertDontSee('WORK_AUTHOR_3v7t');
     }
 
     public function test_source_reference_never_leaks_to_guest()
