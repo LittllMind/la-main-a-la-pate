@@ -33,6 +33,7 @@ rsync -avz --delete \
   --exclude 'storage/app/public/subjects' \
   --exclude 'database/database.sqlite' \
   --exclude 'public_html' \
+  --exclude 'public/storage' \
   -e "ssh -i $SSH_KEY -p $SSH_PORT" \
   "$LOCAL_DIR/" "$SSH_USER@$SSH_HOST:$REMOTE_DIR/"
 
@@ -46,7 +47,10 @@ ssh -i "$SSH_KEY" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
    php artisan view:cache && \
    php artisan config:cache && \
    php artisan route:cache && \
-   [ -L public/storage ] && rm public/storage && echo 'Removed public/storage symlink'; \
+   # PHP symlink() is disabled on shared hosting; recreate via shell. Target is relative.
+   [ -L public/storage ] && rm public/storage && echo 'Removed stale public/storage symlink';
+   ln -s storage/app/public public/storage && \
+   ls -ld public/storage && \
    true \
    || echo 'COMMANDS_FAILED'"
 
