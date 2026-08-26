@@ -355,6 +355,13 @@ class SubjectDocumentController extends Controller
             return redirect()->route('subjects.documents.email', [$subject->slug, $document->id]);
         }
 
+        // V8-C : correspondance markdown servie en HTML humain, sans toucher à la source
+        $isSeraphothequeDossier = $subject->isSeraphothequeDossier()
+            && str_contains((string) $document->source_reference, 'SERAPH-DOC-CORRESPONDANCE-MAIRIE-2026');
+        $isMarkdownDossier = $isSeraphothequeDossier
+            && str_contains(strtolower((string) $document->document_type), 'dossier documentaire')
+            && str_contains(strtolower((string) $document->filename), '.md');
+
         if (! $this->storage->exists($document->path)) {
             abort(404);
         }
@@ -366,6 +373,19 @@ class SubjectDocumentController extends Controller
             report($e);
 
             return response('Une erreur est survenue lors de l\'ouverture du document.', 500);
+        }
+
+        if ($isMarkdownDossier) {
+            $html = \App\Models\Subject::renderMarkdownToHtml($plain);
+
+            return response()->view('subjects.documents.markdown_human', [
+                'subject' => $subject,
+                'document' => $document,
+                'htmlBody' => $html,
+            ])->withHeaders([
+                'Content-Type' => 'text/html; charset=UTF-8',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
         }
 
         return response()->stream(function () use (&$plain) {

@@ -360,10 +360,24 @@ class Subject extends Model
             $markdown = preg_replace('/<a[^>]*href="[^"]*#documents"[^>]*>.*?<\\/a>/s', '', $markdown);
         }
 
-        // Résoudre les liens narratif → preuves dans le dossier Séraphothèque (Guest Public).
-        // Le texte V7 reste inchangé ; seul le HTML est transformé côté serveur.
+        // Resoudre les liens narratif -> preuves dans le dossier Seraphotheque (Guest Public).
+        // Le texte V7 reste inchangé ; seul le HTML est transforme cote serveur.
         if ($this->isSeraphothequeDossier() && str_contains($markdown, '→ Consulter la fiche documentaire')) {
             $markdown = $this->resolveSeraphothequeFicheLinks($markdown);
+        }
+
+        return self::renderMarkdownToHtml($markdown);
+    }
+
+    /**
+     * Convertit un texte Markdown autonome en HTML public en reutilisant
+     * exactement la chaine de rendu CommonMark du body (Pandoc anchors,
+     * IDs stables, table wrappers). Pas de mutation du sujet.
+     */
+    public static function renderMarkdownToHtml(string $markdown): string
+    {
+        if (str_contains($markdown, '<') && str_contains($markdown, '>')) {
+            $markdown = self::convertHtmlToMarkdown($markdown);
         }
 
         // Preprocess Pandoc-style heading identifiers {#id} into stable markers
@@ -413,13 +427,13 @@ class Subject extends Model
         // Generate stable IDs for headings that don't already have one.
         $html = self::generateHeadingIds($html);
 
-        return $this->wrapHtmlTables($html);
+        return self::wrapHtmlTables($html);
     }
 
     /**
      * Englobe chaque <table> dans un wrapper overflow-x-auto pour mobile.
      */
-    private function wrapHtmlTables(string $html): string
+    private static function wrapHtmlTables(string $html): string
     {
         return preg_replace('/(<table\b[^>]*>)(.*?)(<\/table>)/s', '<div class="overflow-x-auto">$1$2$3</div>', $html) ?? $html;
     }

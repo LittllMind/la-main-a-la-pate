@@ -158,7 +158,20 @@ class SubjectDocument extends Model
 
     public function isEmail(): bool
     {
-        return $this->document_type === 'email';
+        if ($this->document_type === 'email') {
+            return true;
+        }
+
+        // Patch V8-C : certains messages publics sont reclassifiés comme
+        // sources primaires sans perdre leur comportement email.
+        if ($this->mime_type === 'application/json' && in_array($this->source_reference, [
+            'seraphotheque-pack:Email-2026-04-03-PUBLIC',
+            'gmail:19e686ddc7c6d792',
+        ], true)) {
+            return true;
+        }
+
+        return false;
     }
 
     public function isSecure(): bool

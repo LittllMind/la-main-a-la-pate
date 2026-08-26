@@ -116,6 +116,14 @@ class SubjectSeraphothequeV8ReviewTest extends TestCase
             'source_sha256' => $this->v8CorrespondenceSha,
         ]);
 
+        // V8-C : reclassifier les documents publics selon la taxonomie autorisée.
+        SubjectDocument::where('subject_id', $fresh->id)
+            ->whereIn('source_reference', [
+                'seraphotheque-pack:SERAPH-DOC-0997',
+                'seraphotheque-pack:SERAPH-DOC-0486',
+            ])
+            ->update(['document_type' => 'source primaire']);
+
         // Email maire 3 avril : KEEP PUBLIC (HTML public validé disponible).
         $email3avrilHtml = file_get_contents('/home/aur-lien/Obsidian-Vault/LMLaP/03-SUJETS/seraphotheque/PUBLIC-V1-PATCH-02-STAGING/D-EMAIL-RENouvellement/email-renouvellement-conditions_2026-04-03_PUBLIC.html');
         $email3avrilPayload = json_encode([
@@ -143,7 +151,7 @@ class SubjectSeraphothequeV8ReviewTest extends TestCase
             'category' => 'source',
             'visibility' => VisibilityLevel::Public->value,
             'document_date' => '2026-04-03',
-            'document_type' => 'email',
+            'document_type' => 'source primaire',
             'author' => 'Arnaud CURVELIER',
             'recipient' => 'Aurélien TISSERAND, secrétariat mairie du Rozier, Anna EL AGRI',
             'mime_type' => 'application/json',
@@ -179,7 +187,7 @@ class SubjectSeraphothequeV8ReviewTest extends TestCase
             'category' => 'source',
             'visibility' => VisibilityLevel::Public->value,
             'document_date' => '2026-05-27',
-            'document_type' => 'email',
+            'document_type' => 'source primaire',
             'author' => 'DGFIP / SGC Saint-Affrique',
             'recipient' => 'Aurélien Tisserand',
             'mime_type' => 'application/json',
@@ -323,6 +331,98 @@ class SubjectSeraphothequeV8ReviewTest extends TestCase
         $html = $this->guestShowResponse($subject)->baseResponse->getContent();
         $this->assertStringNotContainsString('Information déplacement portants', $html);
         $this->assertStringNotContainsString('Email maire 14 mai 2026', $html);
+    }
+
+    /** @test */
+    public function taxonomy_v8_public_cards_are_exact(): void
+    {
+        $subject = $this->ingestV8Subject();
+        $html = $this->guestShowResponse($subject)->baseResponse->getContent();
+
+        preg_match_all('/<span[^>]*uppercase[^>]*>([^<]+)<\/span>/', $html, $matches);
+        $badgeCounts = array_count_values(array_map('trim', $matches[1]));
+
+        $expected = [
+            'SOURCE PRIMAIRE' => 8,
+            'DOSSIER DOCUMENTAIRE' => 1,
+            'SYNTHÈSE LMALP' => 1,
+            'DOCUMENT DE CONTEXTE' => 1,
+        ];
+
+        foreach ($expected as $label => $count) {
+            $this->assertSame($count, $badgeCounts[$label] ?? 0, "Badge {$label} doit apparaître {$count} fois.");
+        }
+
+        $this->assertSame(0, $badgeCounts['POSITION / DÉMARCHE'] ?? 0, 'Aucun badge POSITION / DÉMARCHE dans les cartes publiques V8.');
+    }
+
+    /** @test */
+    public function correspondance_v8_serves_html_human_not_raw_markdown(): void
+    {
+        $subject = $this->ingestV8Subject();
+
+        $corr = SubjectDocument::where('subject_id', $subject->id)
+            ->where('source_reference', 'like', '%SERAPH-DOC-CORRESPONDANCE-MAIRIE-2026%')
+            ->firstOrFail();
+
+        $response = $this->get(route('subjects.documents.view', [$subject->slug, $corr->id]));
+        $content = (string) $response->baseResponse->getContent();
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/html; charset=UTF-8');
+
+        // Source Markdown V8 ne doit pas être servi brut au Guest
+        $this->assertStringNotContainsString('# Correspondance Séraphothèque', $content);
+        $this->assertStringNotContainsString('**Provenance :**', $content);
+        $this->assertStringNotContainsString('---', $content);
+
+        // Représentation humaine présente
+        $response->assertSee('Correspondance avec la mairie');
+        $response->assertSee('31 mars 2026, 09:20');
+        $response->assertSee('Mairie du Rozier');
+        $response->assertSee('Arnaud Curvelier');
+        $response->assertSee('Provenance');
+        $response->assertSee('DOSSIER DOCUMENTAIRE');
+    }
+
+    /** @test */
+    public function correspondance_v8_source_sha_preserved(): void
+    {
+        $subject = $this->ingestV8Subject();
+
+        $corr = SubjectDocument::where('subject_id', $subject->id)
+            ->where('source_reference', 'like', '%SERAPH-DOC-CORRESPONDANCE-MAIRIE-2026%')
+            ->firstOrFail();
+
+        $this->assertSame($this->v8CorrespondenceSha, $corr->source_sha256);
+
+        $this->assertSame(
+            $this->v8CorrespondenceSha,
+            hash('sha256', $this->storage->decrypt($corr->path)),
+            'Contenu chiffré correspondance inchangé.'
+        );
+    }
+
+    /** @test */
+    public function dgfip_and_email_3avril_are_source_primaire(): void
+    {
+        $subject = $this->ingestV8Subject();
+
+        $refs = [
+            'seraphotheque-pack:Email-2026-04-03-PUBLIC',
+            'gmail:19e686ddc7c6d792',
+        ];
+
+        foreach ($refs as $ref) {
+            $doc = SubjectDocument::where('subject_id', $subject->id)
+                ->where('source_reference', $ref)
+                ->firstOrFail();
+
+            $this->assertSame('source primaire', $doc->document_type);
+
+            // Les routes email restent accessibles malgré le type source primaire.
+            $this->get(route('subjects.documents.email', [$subject->slug, $doc->id]))->assertOk();
+        }
     }
 
     /** @test */
