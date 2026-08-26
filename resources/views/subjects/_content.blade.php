@@ -46,12 +46,13 @@
     $visibleDocs = $subject->documents->filter(fn($doc) => $doc->visibleTo($currentUser));
     $groupLabels = [
         'primary' => 'PIÈCES PRINCIPALES',
-        'positions' => 'POSITIONS / DÉMARCHES',
-        'synthesis' => 'SYNTHÈSE LMALP',
-        'context' => 'DOCUMENT DE CONTEXTE',
+        'dossier' => 'DOSSIERS DOCUMENTAIRES',
+        'comparatif' => 'COMPARATIFS DOCUMENTAIRES',
+        'context' => 'DOCUMENTS DE CONTEXTE',
+        'synthesis' => 'SYNTHÈSES DOCUMENTAIRES',
         'other' => 'AUTRES DOCUMENTS',
     ];
-    $groupOrder = ['primary', 'positions', 'synthesis', 'context', 'other'];
+    $groupOrder = ['primary', 'dossier', 'comparatif', 'context', 'synthesis', 'other'];
     $docsByGroup = $visibleDocs->sortBy(fn($doc) => $doc->seraphothequeOrder())->groupBy(fn($doc) => $doc->seraphothequeGroup());
 @endphp
 @if($visibleDocs->count() > 0)
@@ -80,9 +81,11 @@
                                 if (! $docTypeBadge) {
                                     $docTypeBadge = match ($group) {
                                         'primary' => ['label' => 'SOURCE PRIMAIRE', 'color' => 'emerald'],
-                                        'synthesis' => ['label' => 'SYNTHÈSE LMALP', 'color' => 'purple'],
+                                        'dossier' => ['label' => 'DOSSIER DOCUMENTAIRE', 'color' => 'blue'],
+                                        'comparatif' => ['label' => 'COMPARATIF DOCUMENTAIRE', 'color' => 'indigo'],
                                         'context' => ['label' => 'DOCUMENT DE CONTEXTE', 'color' => 'slate'],
-                                        default => ['label' => 'POSITION / DÉMARCHE', 'color' => 'amber'],
+                                        'synthesis' => ['label' => 'SYNTHÈSE LMALP', 'color' => 'purple'],
+                                        default => ['label' => 'DOCUMENT', 'color' => 'amber'],
                                     };
                                 }
 

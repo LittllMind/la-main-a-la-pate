@@ -626,43 +626,61 @@ class Subject extends Model
     }
 
     /**
-     * Remplace les placeholders "→ Consulter la fiche documentaire" du markdown V7
-     * par des liens Markdown canoniques vers les ancres de documents.
-     * Le texte V7 source est préservé en entrée ; ici on mute une copie.
+     * Remplace les CTA textuels du dossier Séraphothèque par des liens Markdown
+     * canoniques vers les ancres de documents, sans modifier le Markdown source.
      *
-     * Ne transforme que si le document source correspondant est attaché au sujet,
-     * pour éviter les liens morts lorsque le dossier n'a pas encore de corpus.
+     * La détection repose sur le titre de section immédiatement précédent le CTA
+     * et non sur les IDs numériques de la base. Seuls les documents chargés pour
+     * l'audience courante (relation `documents` préfiltrée par le contrôleur) sont
+     * pris en compte, garantissant l'absence de liens morts.
+     *
+     * Prend en charge les corps V7/V8 (titres simples) et V9 (titres avec
+     * qualification documentaire) dès lors que les expressions-clés identifient
+     * la pièce visée.
      */
     private function resolveSeraphothequeFicheLinks(string $markdown): string
     {
         $refs = [
-            '### Convention d’été 2025' => 'seraphotheque-pack:SERAPH-DOC-0535',
-            '### Projet de convention d’été 2026' => 'seraphotheque-pack:SERAPH-DOC-0239',
-            '### Sommation du 24 avril 2026' => 'seraphotheque-pack:SERAPH-DOC-0904',
-            '### Email du maire du 14 mai 2026' => 'seraphotheque-pack:SERAPH-DOC-1263',
-            '### Demande d’AOT du 16 juin 2026' => 'seraphotheque-pack:SERAPH-DOC-0293',
+            'Convention d’été 2025' => 'seraphotheque-pack:SERAPH-DOC-0535',
+            'Projet de convention d’été 2026' => 'seraphotheque-pack:SERAPH-DOC-0239',
+            'Projet de convention été 2026' => 'seraphotheque-pack:SERAPH-DOC-0239',
+            'Sommation du 24 avril 2026' => 'seraphotheque-pack:SERAPH-DOC-0904',
+            'Demande d’AOT du 16 juin 2026' => 'seraphotheque-pack:SERAPH-DOC-0293',
+            'Correspondance avec la mairie' => 'seraphotheque-pack:SERAPH-DOC-CORRESPONDANCE-MAIRIE-2026',
+            'Projet de délibération' => 'seraphotheque-pack:SERAPH-DOC-0486',
+            'Trésor public' => 'seraphotheque-pack:Email-2026-05-27-DGFIP',
+            'Profession de foi' => 'seraphotheque-pack:SERAPH-DOC-PROFESSION-FOI',
+            'Email du maire du 14 mai 2026' => 'seraphotheque-pack:SERAPH-DOC-1263',
         ];
 
-        $existingRefs = $this->documents()->pluck('source_reference')->all();
+        // Utilise la relation déjà filtrée par le contrôleur (public pour un guest).
+        $existingRefs = $this->documents->pluck('source_reference')->map(fn ($ref) => (string) $ref)->all();
 
         $lines = explode("\n", $markdown);
         $currentContext = null;
 
         foreach ($lines as $key => $line) {
-            foreach ($refs as $heading => $sourceRef) {
-                if (str_starts_with($line, $heading)) {
-                    $currentContext = $sourceRef;
-                    break;
+            // Détection du titre de section : tout titre de niveau 3 contenant
+            // une expression-clé réinitialise le contexte au dernier correspondant.
+            if (preg_match('/^#{1,6}\s+(.+)$/', $line, $headingMatch)) {
+                $heading = $headingMatch[1];
+                $matchedRef = null;
+                foreach ($refs as $needle => $sourceRef) {
+                    if (str_contains($heading, $needle)) {
+                        $matchedRef = $sourceRef;
+                    }
                 }
+                $currentContext = $matchedRef;
+                continue;
             }
 
-            if ($currentContext !== null && str_contains($line, '→ Consulter la fiche documentaire')) {
-                $hasDoc = (bool) array_filter($existingRefs, fn ($ref) => str_contains((string) $ref, $currentContext));
+            if ($currentContext !== null && preg_match('/\*\*→\s*(Consulter la fiche documentaire|Lire la correspondance complète|Consulter le document|Consulter le courriel du 27 mai|Consulter l’extrait contextualisé)\*\*/', $line)) {
+                $hasDoc = (bool) array_filter($existingRefs, fn ($ref) => str_contains($ref, $currentContext));
                 if ($hasDoc) {
                     $anchor = 'doc-' . str_replace([':', '/'], '-', $currentContext);
-                    $lines[$key] = str_replace(
-                        '**→ Consulter la fiche documentaire**',
-                        "[**→ Consulter la fiche documentaire**](#{$anchor})",
+                    $lines[$key] = preg_replace(
+                        '/\*\*→\s*([^*]+)\*\*/',
+                        "[**→ $1**](#{$anchor})",
                         $line
                     );
                 }
