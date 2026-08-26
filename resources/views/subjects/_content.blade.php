@@ -94,11 +94,11 @@
                                     ? 'doc-' . str_replace([':', '\/'], '-', (string) $doc->source_reference)
                                     : 'doc-' . $doc->id;
                             @endphp
-                            <li id="{{ $docAnchor }}" class="flex flex-col sm:flex-row items-start gap-3 bg-slate-50 rounded-md border border-slate-200 p-3 scroll-mt-4">
+                            <li id="{{ $docAnchor }}" class="grid grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 bg-slate-50 rounded-md border border-slate-200 p-3 scroll-mt-4">
                                 <span class="text-2xl select-none shrink-0" title="Extension: {{ $doc->extension() }}">
                                     {{ $doc->icon() }}
                                 </span>
-                                <div class="flex-1 min-w-0 w-full">
+                                <div class="min-w-0">
                                     <h4 class="text-base font-semibold text-slate-900 leading-snug mb-1 break-words">
                                         {{ $doc->title ?: $doc->filename }}
                                     </h4>
@@ -144,7 +144,7 @@
                                         </div>
                                     @endif
                                 </div>
-                                <div class="flex flex-row items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
+                                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
                                     @if($doc->hasStoredFile())
                                         @if($doc->isEmail())
                                             <a href="{{ route('subjects.documents.email', [$subject->slug, $doc->id]) }}" class="inline-flex items-center justify-center text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-3 py-1.5 bg-emerald-50 w-full sm:w-auto" data-testid="btn-doc-email">

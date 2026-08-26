@@ -573,6 +573,35 @@ class SubjectSeraphothequeV8ReviewTest extends TestCase
     }
 
     /** @test */
+    public function document_card_markup_uses_responsive_layout_without_title_crush(): void
+    {
+        $subject = $this->ingestV8Subject();
+
+        $doc = SubjectDocument::where('subject_id', $subject->id)
+            ->where('source_reference', 'seraphotheque-pack:SERAPH-DOC-0535')
+            ->firstOrFail();
+
+        Storage::disk('documents')->put($doc->path, 'fake stored file');
+
+        $html = $this->get(route('subjects.show', $subject->slug))->baseResponse->getContent();
+
+        $anchor = 'doc-seraphotheque-pack-SERAPH-DOC-0535';
+        $this->assertStringContainsString('id="' . $anchor . '"', $html);
+
+        preg_match('/<li[^>]*id="' . preg_quote($anchor, '/') . '"[^>]*>(.*?)\s*<\/li>/s', $html, $matches);
+        $this->assertCount(2, $matches, 'Card HTML should be extractable.');
+        $card = $matches[0];
+
+        $this->assertStringContainsString('grid-cols-1', $card, 'Mobile column layout.');
+        $this->assertStringContainsString('sm:grid-cols-[auto_minmax(0,1fr)_auto]', $card, 'Desktop three-column layout with shrinkable content.');
+        $this->assertStringContainsString('min-w-0', $card, 'Content can shrink without overflow.');
+        $this->assertStringContainsString('break-words', $card, 'Title wraps naturally.');
+        $this->assertStringContainsString('sm:w-auto', $card, 'Actions are not fixed to full width on desktop.');
+        $this->assertStringContainsString('data-testid="btn-doc-view"', $card, 'View action is visible.');
+        $this->assertStringNotContainsString('truncate', $card, 'Title must not be truncated.');
+    }
+
+    /** @test */
     public function working_merged_docs_are_exactly_two(): void
     {
         $subject = $this->ingestV8Subject();

@@ -183,10 +183,10 @@ Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserv
                     default => ['label' => 'DOCUMENT', 'color' => 'slate'],
                 };
             @endphp
-            <div class="bg-white rounded-lg border border-slate-200 p-4 flex flex-col sm:flex-row items-start gap-3">
+            <div class="bg-white rounded-lg border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
                 <div class="text-2xl flex-shrink-0">{{ $doc->icon() }}</div>
-                
-                <div class="flex-1 min-w-0 w-full">
+
+                <div class="min-w-0">
                     <h3 class="text-base font-semibold text-slate-900 leading-snug mb-1 break-words">
                         {{ $doc->title }}
                     </h3>
@@ -234,7 +234,7 @@ Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserv
                     @endif
                 </div>
 
-                <div class="flex flex-row items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
                     @if($doc->hasStoredFile())
                         @if($doc->isEmail())
                             <a href="{{ route('subjects.documents.email', [$subject->slug, $doc->id]) }}" class="inline-flex items-center justify-center text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-3 py-1.5 bg-emerald-50 w-full sm:w-auto">
@@ -251,7 +251,7 @@ Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserv
                             @endif
                         @endif
                     @endif
-                    
+
                     @can('update', $subject)
                         <a href="{{ route('subjects.documents.edit', [$subject->slug, $doc->id]) }}" class="text-blue-700 hover:underline text-xs w-full sm:w-auto text-center sm:text-left">Modifier la fiche</a>
                         <form method="POST" action="{{ route('subjects.documents.destroy', [$subject->slug, $doc->id]) }}" class="inline w-full sm:w-auto" onsubmit="return confirm('Supprimer ce document ?')">
