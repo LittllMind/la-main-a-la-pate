@@ -173,90 +173,93 @@ Redigez ici en Markdown. Les tableaux, listes, citations et liens seront preserv
     @if($subject->documents->count() > 0)
         <div class="space-y-3">
             @foreach($subject->documents as $doc)
-            <div class="bg-white rounded-lg border border-slate-200 p-4 flex items-start gap-4">
+            @php
+                $docTypeLower = strtolower((string) $doc->document_type);
+                $docTypeBadge = match (true) {
+                    str_contains($docTypeLower, 'dossier documentaire') => ['label' => 'DOSSIER DOCUMENTAIRE', 'color' => 'blue'],
+                    str_contains($docTypeLower, 'source primaire') => ['label' => 'SOURCE PRIMAIRE', 'color' => 'emerald'],
+                    str_contains($docTypeLower, 'synthèse') => ['label' => 'SYNTHÈSE LMALP', 'color' => 'purple'],
+                    str_contains($docTypeLower, 'contexte') => ['label' => 'DOCUMENT DE CONTEXTE', 'color' => 'slate'],
+                    default => ['label' => 'DOCUMENT', 'color' => 'slate'],
+                };
+            @endphp
+            <div class="bg-white rounded-lg border border-slate-200 p-4 flex flex-col sm:flex-row items-start gap-3">
                 <div class="text-2xl flex-shrink-0">{{ $doc->icon() }}</div>
                 
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-1 flex-wrap">
-                        <span class="text-sm font-medium text-slate-900 truncate">{{ $doc->title }}</span>
-                        <span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{{ $doc->extension() }}</span>
-                        <span class="text-xs text-slate-400">{{ $doc->humanSize() }}</span>
-                        @if($doc->visibility)
-                            <span class="text-xs px-1.5 py-0.5 rounded bg-{{ $doc->visibility->color() }}-100 text-{{ $doc->visibility->color() }}-700 border border-{{ $doc->visibility->color() }}-200">
-                                {{ $doc->visibility->label() }}
-                            </span>
-                        @endif
-                        @if($doc->representation_type)
-                            <span class="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600" title="Type de représentation">{{ $doc->representation_type->label() }}</span>
-                        @endif
+                <div class="flex-1 min-w-0 w-full">
+                    <h3 class="text-base font-semibold text-slate-900 leading-snug mb-1 break-words">
+                        {{ $doc->title }}
+                    </h3>
+                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                        <span class="text-xs px-1.5 py-0.5 rounded bg-{{ $docTypeBadge['color'] }}-100 text-{{ $docTypeBadge['color'] }}-700 border border-{{ $docTypeBadge['color'] }}-200 uppercase tracking-wide font-medium">
+                            {{ $docTypeBadge['label'] }}
+                        </span>
                         @if($doc->redacted)
-                            <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">Version expurgée</span>
+                            <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200" data-redacted-badge>Version expurgée</span>
                         @endif
-                        @if($doc->isSecure())
-                            <span class="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700" title="Stocké de manière privée et chiffrée">🔒 Sécurisé</span>
+                        <span class="hidden sm:inline text-xs text-slate-400 whitespace-nowrap">{{ $doc->humanSize() }}</span>
+                    </div>
+
+                    <div class="text-xs text-slate-500 mb-2 hidden sm:flex flex-wrap gap-x-3 gap-y-1">
+                        @if($doc->document_date)
+                            <span>Date : {{ $doc->document_date->format('d/m/Y') }}</span>
+                        @endif
+                        @if($doc->document_type && ! str_contains($docTypeLower, 'dossier documentaire') && ! str_contains($docTypeLower, 'source primaire') && ! str_contains($docTypeLower, 'synthèse lmalp') && ! str_contains($docTypeLower, 'contexte'))
+                            <span>Nature : {{ $doc->document_type }}</span>
+                        @endif
+                        @if($doc->author)
+                            <span>Émetteur : {{ $doc->author }}</span>
+                        @endif
+                        @if($doc->recipient)
+                            <span>Destinataire : {{ $doc->recipient }}</span>
                         @endif
                     </div>
-                    @if($doc->document_date || $doc->document_type || $doc->author || $doc->recipient)
-                        <div class="text-xs text-slate-500 mb-1 flex flex-wrap gap-x-3 gap-y-1">
-                            @if($doc->document_date)
-                                <span>Date : {{ $doc->document_date->format('d/m/Y') }}</span>
-                            @endif
-                            @if($doc->document_type)
-                                <span>Nature : {{ $doc->document_type }}</span>
-                            @endif
-                            @if($doc->author)
-                                <span>Auteur : {{ $doc->author }}</span>
-                            @endif
-                            @if($doc->recipient)
-                                <span>Destinataire : {{ $doc->recipient }}</span>
-                            @endif
+                    @if($doc->document_date)
+                        <div class="text-xs text-slate-500 mb-2 sm:hidden">
+                            Date : {{ $doc->document_date->format('d/m/Y') }}
                         </div>
                     @endif
                     @if($doc->description)
-                        <p class="text-xs text-slate-500 mb-1">{{ $doc->description }}</p>
+                        <p class="text-xs text-slate-500 mb-2">{{ $doc->description }}</p>
                     @endif
                     @if($doc->establishes || $doc->limitations)
-                        <div class="text-xs text-slate-600 mb-1 space-y-1">
+                        <div class="text-xs text-slate-600 mb-2 space-y-1">
                             @if($doc->establishes)
-                                <p><span class="font-medium">Établit :</span> {{ $doc->establishes }}</p>
+                                <p><span class="font-medium">Établit : </span>{{ $doc->establishes }}</p>
                             @endif
                             @if($doc->limitations)
-                                <p><span class="font-medium">N'établit pas :</span> {{ $doc->limitations }}</p>
+                                <p><span class="font-medium">N'établit pas : </span>{{ $doc->limitations }}</p>
                             @endif
                         </div>
                     @endif
-                    <div class="flex items-center gap-3 text-xs">
-                        <span class="text-slate-400">Ajouté le {{ $doc->created_at->format('d/m/Y') }}</span>
-                        <span class="text-slate-300">|</span>
-                        @if($doc->hasStoredFile())
-                            <a href="{{ route('subjects.documents.view', [$subject->slug, $doc->id]) }}" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:underline font-medium">👁 Consulter / Ouvrir</a>
-                            <span class="text-slate-300">|</span>
-                            <a href="{{ route('subjects.documents.download', [$subject->slug, $doc->id]) }}" class="text-slate-600 hover:underline font-medium" download title="Télécharger">⬇ Télécharger</a>
+                </div>
+
+                <div class="flex flex-row items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
+                    @if($doc->hasStoredFile())
+                        @if($doc->isEmail())
+                            <a href="{{ route('subjects.documents.email', [$subject->slug, $doc->id]) }}" class="inline-flex items-center justify-center text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-3 py-1.5 bg-emerald-50 w-full sm:w-auto">
+                                Lire le message
+                            </a>
+                        @else
+                            <a href="{{ route('subjects.documents.view', [$subject->slug, $doc->id]) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-3 py-1.5 bg-emerald-50 w-full sm:w-auto">
+                                Consulter / Ouvrir
+                            </a>
+                            @if(! in_array($doc->extension(), ['html','md','htm','markdown']) && ! str_contains($docTypeLower, 'dossier documentaire'))
+                                <a href="{{ route('subjects.documents.download', [$subject->slug, $doc->id]) }}" class="inline-flex items-center justify-center text-sm text-slate-600 hover:text-slate-900 border border-slate-300 rounded-md px-3 py-1.5 bg-white w-full sm:w-auto" download title="Télécharger">
+                                    Télécharger
+                                </a>
+                            @endif
                         @endif
-                        
-                        @can('update', $subject)
-                            <form method="POST" action="{{ route('subjects.documents.update', [$subject->slug, $doc->id]) }}" class="inline mt-2">
-                                @csrf
-                                @method('PATCH')
-                                <div class="flex flex-wrap items-center gap-2 text-xs">
-                                    <select name="visibility" class="border border-slate-300 rounded px-2 py-1 text-sm">
-                                        @foreach(\App\Models\VisibilityLevel::cases() as $level)
-                                            <option value="{{ $level->value }}" {{ $doc->visibility?->value === $level->value ? 'selected' : '' }}>
-                                                {{ $level->label() }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <button type="submit" class="text-emerald-700 hover:underline">Mettre à jour la visibilité</button>
-                                </div>
-                            </form>
-                            <form method="POST" action="{{ route('subjects.documents.destroy', [$subject->slug, $doc->id]) }}" class="inline" onsubmit="return confirm('Supprimer ce document ?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:underline text-xs">Supprimer</button>
-                            </form>
-                            <a href="{{ route('subjects.documents.edit', [$subject->slug, $doc->id]) }}" class="text-blue-700 hover:underline text-xs">Modifier la fiche</a>
-                        @endcan
-                    </div>
+                    @endif
+                    
+                    @can('update', $subject)
+                        <a href="{{ route('subjects.documents.edit', [$subject->slug, $doc->id]) }}" class="text-blue-700 hover:underline text-xs w-full sm:w-auto text-center sm:text-left">Modifier la fiche</a>
+                        <form method="POST" action="{{ route('subjects.documents.destroy', [$subject->slug, $doc->id]) }}" class="inline w-full sm:w-auto" onsubmit="return confirm('Supprimer ce document ?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-600 hover:underline text-xs w-full sm:w-auto">Supprimer</button>
+                        </form>
+                    @endcan
                 </div>
             </div>
             @endforeach

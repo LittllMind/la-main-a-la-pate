@@ -69,6 +69,23 @@
                     <ul class="space-y-3">
                         @foreach($groupDocs as $doc)
                             @php
+                                $docTypeLower = strtolower((string) $doc->document_type);
+                                $docTypeBadge = match (true) {
+                                    str_contains($docTypeLower, 'dossier documentaire') => ['label' => 'DOSSIER DOCUMENTAIRE', 'color' => 'blue'],
+                                    str_contains($docTypeLower, 'source primaire') => ['label' => 'SOURCE PRIMAIRE', 'color' => 'emerald'],
+                                    str_contains($docTypeLower, 'synthèse') => ['label' => 'SYNTHÈSE LMALP', 'color' => 'purple'],
+                                    str_contains($docTypeLower, 'contexte') => ['label' => 'DOCUMENT DE CONTEXTE', 'color' => 'slate'],
+                                    default => null,
+                                };
+                                if (! $docTypeBadge) {
+                                    $docTypeBadge = match ($group) {
+                                        'primary' => ['label' => 'SOURCE PRIMAIRE', 'color' => 'emerald'],
+                                        'synthesis' => ['label' => 'SYNTHÈSE LMALP', 'color' => 'purple'],
+                                        'context' => ['label' => 'DOCUMENT DE CONTEXTE', 'color' => 'slate'],
+                                        default => ['label' => 'POSITION / DÉMARCHE', 'color' => 'amber'],
+                                    };
+                                }
+
                                 // Pour le dossier public Séraphothèque, l'ancre documentaire canonique
                                 // reprend le source_reference (identifiant de corpus public).
                                 // Pour tous les autres sujets, on utilise l'ID interne afin de ne pas
@@ -77,34 +94,40 @@
                                     ? 'doc-' . str_replace([':', '\/'], '-', (string) $doc->source_reference)
                                     : 'doc-' . $doc->id;
                             @endphp
-                            <li id="{{ $docAnchor }}" class="flex items-start gap-3 bg-slate-50 rounded-md border border-slate-200 p-3 scroll-mt-4">
-                                <span class="text-2xl select-none" title="Extension: {{ $doc->extension() }}">
+                            <li id="{{ $docAnchor }}" class="flex flex-col sm:flex-row items-start gap-3 bg-slate-50 rounded-md border border-slate-200 p-3 scroll-mt-4">
+                                <span class="text-2xl select-none shrink-0" title="Extension: {{ $doc->extension() }}">
                                     {{ $doc->icon() }}
                                 </span>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-baseline gap-2 flex-wrap">
-                                        <span class="text-sm font-medium text-slate-900 truncate">
-                                            {{ $doc->title ?: $doc->filename }}
+                                <div class="flex-1 min-w-0 w-full">
+                                    <h4 class="text-base font-semibold text-slate-900 leading-snug mb-1 break-words">
+                                        {{ $doc->title ?: $doc->filename }}
+                                    </h4>
+                                    <div class="flex flex-wrap items-center gap-2 mb-2">
+                                        <span class="text-xs px-1.5 py-0.5 rounded bg-{{ $docTypeBadge['color'] }}-100 text-{{ $docTypeBadge['color'] }}-700 border border-{{ $docTypeBadge['color'] }}-200 uppercase tracking-wide font-medium">
+                                            {{ $docTypeBadge['label'] }}
                                         </span>
-                                        <span class="text-xs text-slate-400 whitespace-nowrap">{{ $doc->humanSize() }}</span>
                                         @if($doc->redacted)
                                             <span class="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200" data-redacted-badge>Version expurgée</span>
                                         @endif
+                                        <span class="hidden sm:inline text-xs text-slate-400 whitespace-nowrap">{{ $doc->humanSize() }}</span>
                                     </div>
-                                    @if($doc->document_date || $doc->document_type || $doc->author || $doc->recipient)
-                                        <div class="text-xs text-slate-500 mb-1 flex flex-wrap gap-x-3 gap-y-1">
-                                            @if($doc->document_date)
-                                                <span>Date : {{ $doc->document_date->format('d/m/Y') }}</span>
-                                            @endif
-                                            @if($doc->document_type)
-                                                <span>Nature : {{ $doc->document_type }}</span>
-                                            @endif
-                                            @if($doc->author)
-                                                <span>Auteur : {{ $doc->author }}</span>
-                                            @endif
-                                            @if($doc->recipient)
-                                                <span>Destinataire : {{ $doc->recipient }}</span>
-                                            @endif
+                                    <div class="text-xs text-slate-500 mb-2 hidden sm:flex flex-wrap gap-x-3 gap-y-1">
+                                        @if($doc->document_date)
+                                            <span>Date : {{ $doc->document_date->format('d/m/Y') }}</span>
+                                        @endif
+                                        @if($doc->document_type && ! str_contains($docTypeLower, 'dossier documentaire') && ! str_contains($docTypeLower, 'source primaire') && ! str_contains($docTypeLower, 'synthèse lmalp') && ! str_contains($docTypeLower, 'contexte'))
+                                            <span>Nature : {{ $doc->document_type }}</span>
+                                        @endif
+                                        @if($doc->author)
+                                            <span>Émetteur : {{ $doc->author }}</span>
+                                        @endif
+                                        @if($doc->recipient)
+                                            <span>Destinataire : {{ $doc->recipient }}</span>
+                                        @endif
+                                    </div>
+                                    @if($doc->document_date)
+                                        <div class="text-xs text-slate-500 mb-2 sm:hidden">
+                                            Date : {{ $doc->document_date->format('d/m/Y') }}
                                         </div>
                                     @endif
                                     @if($doc->description)
@@ -120,24 +143,22 @@
                                             @endif
                                         </div>
                                     @endif
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-xs px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 uppercase tracking-wide">{{ $doc->category }}</span>
-                                        <span class="text-xs text-slate-400">Ajouté le {{ $doc->created_at->format('d/m/Y') }}</span>
-                                    </div>
                                 </div>
-                                <div class="flex items-center gap-2">
+                                <div class="flex flex-row items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 shrink-0">
                                     @if($doc->hasStoredFile())
                                         @if($doc->isEmail())
-                                            <a href="{{ route('subjects.documents.email', [$subject->slug, $doc->id]) }}" class="text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-2 py-1 bg-emerald-50" data-testid="btn-doc-email">
+                                            <a href="{{ route('subjects.documents.email', [$subject->slug, $doc->id]) }}" class="inline-flex items-center justify-center text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-3 py-1.5 bg-emerald-50 w-full sm:w-auto" data-testid="btn-doc-email">
                                                 Lire le message
                                             </a>
                                         @else
-                                            <a href="{{ $doc->url() }}" target="_blank" rel="noopener noreferrer" class="text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-2 py-1 bg-emerald-50" data-testid="btn-doc-view">
+                                            <a href="{{ $doc->url() }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center text-sm text-emerald-700 hover:text-emerald-900 font-medium border border-emerald-200 rounded-md px-3 py-1.5 bg-emerald-50 w-full sm:w-auto" data-testid="btn-doc-view">
                                                 Consulter / Ouvrir
                                             </a>
-                                            <a href="{{ $doc->downloadUrl() }}" class="text-sm text-slate-500 hover:text-slate-900 border border-slate-300 rounded-md px-2 py-1 bg-white" download title="Télécharger" data-testid="btn-doc-download">
-                                                Télécharger
-                                            </a>
+                                            @if(! in_array($doc->extension(), ['html','md','htm','markdown']) && ! str_contains($docTypeLower, 'dossier documentaire'))
+                                                <a href="{{ $doc->downloadUrl() }}" class="inline-flex items-center justify-center text-sm text-slate-600 hover:text-slate-900 border border-slate-300 rounded-md px-3 py-1.5 bg-white w-full sm:w-auto" download title="Télécharger" data-testid="btn-doc-download">
+                                                    Télécharger
+                                                </a>
+                                            @endif
                                         @endif
                                     @endif
                                 </div>
