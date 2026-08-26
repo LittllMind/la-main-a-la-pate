@@ -116,6 +116,43 @@ class SubjectSeraphothequeV8ReviewTest extends TestCase
             'source_sha256' => $this->v8CorrespondenceSha,
         ]);
 
+        // Email maire 3 avril : KEEP PUBLIC (HTML public validé disponible).
+        $email3avrilHtml = file_get_contents('/home/aur-lien/Obsidian-Vault/LMLaP/03-SUJETS/seraphotheque/PUBLIC-V1-PATCH-02-STAGING/D-EMAIL-RENouvellement/email-renouvellement-conditions_2026-04-03_PUBLIC.html');
+        $email3avrilPayload = json_encode([
+            'date' => '2026-04-03',
+            'subject' => 'Bail precaire',
+            'from' => 'Arnaud CURVELIER',
+            'to' => 'Aurélien TISSERAND, secrétariat mairie du Rozier, Anna EL AGRI',
+            'body_html' => $email3avrilHtml,
+        ], JSON_UNESCAPED_UNICODE);
+
+        $tmp3 = tempnam(sys_get_temp_dir(), 'email3_');
+        file_put_contents($tmp3, $email3avrilPayload);
+        $storedEmail3 = $this->storage->storeEncrypted($fresh->id, $tmp3, 'email-renouvellement-conditions_2026-04-03_PUBLIC.html');
+        unlink($tmp3);
+
+        SubjectDocument::create([
+            'subject_id' => $fresh->id,
+            'user_id' => $admin->id,
+            'title' => 'Email du maire — « Bail precaire » — 3 avril 2026',
+            'filename' => 'email-renouvellement-conditions_2026-04-03_PUBLIC.html',
+            'stored_filename' => basename($storedEmail3),
+            'path' => $storedEmail3,
+            'disk' => 'documents',
+            'description' => 'Échange relatif au renouvellement et aux conditions du bail, 3 avril 2026.',
+            'category' => 'source',
+            'visibility' => VisibilityLevel::Public->value,
+            'document_date' => '2026-04-03',
+            'document_type' => 'email',
+            'author' => 'Arnaud CURVELIER',
+            'recipient' => 'Aurélien TISSERAND, secrétariat mairie du Rozier, Anna EL AGRI',
+            'mime_type' => 'application/json',
+            'size' => strlen($email3avrilPayload),
+            'source_reference' => 'seraphotheque-pack:Email-2026-04-03-PUBLIC',
+            'source_sha256' => hash('sha256', $email3avrilPayload),
+            'position' => 998,
+        ]);
+
         // DGFIP 27 mai : ADD source primaire HTML.
         $dgfipPayload = json_encode([
             'date' => '2026-05-27',
@@ -375,6 +412,83 @@ class SubjectSeraphothequeV8ReviewTest extends TestCase
         $response->assertDontSee('Discussion');
         $response->assertDontSee('Commenter');
         $response->assertDontSee('id="comments"');
+    }
+
+    /** @test */
+    public function email_maire_3_avril_public_html_renders_cleanly(): void
+    {
+        $subject = $this->ingestV8Subject();
+
+        $emailDoc = SubjectDocument::where('subject_id', $subject->id)
+            ->where('source_reference', 'seraphotheque-pack:Email-2026-04-03-PUBLIC')
+            ->firstOrFail();
+
+        $response = $this->get(route('subjects.documents.email', [$subject->slug, $emailDoc->id]));
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/html; charset=UTF-8');
+        $response->assertSee('Échange relatif au renouvellement / conditions du bail');
+        $response->assertSee('Arnaud CURVELIER');
+        $response->assertSee('3 avril 2026');
+        $response->assertSee('Bail precaire');
+
+        // Sécurité : aucune fuite du payload JSON, des scripts, ou des balises interdites.
+        $response->assertDontSee('"body_html"');
+        $response->assertDontSee('seraphotheque-pack:Email-2026-04-03-PUBLIC');
+        $response->assertDontSee('<script');
+        $response->assertDontSee('javascript:');
+    }
+
+    /** @test */
+    public function public_document_count_and_identity_are_locked(): void
+    {
+        $subject = $this->ingestV8Subject();
+
+        $expectedCount = 11;
+        $expectedSourceReferences = [
+            'seraphotheque-pack:SERAPH-DOC-0535',
+            'seraphotheque-pack:SERAPH-DOC-0239',
+            'seraphotheque-pack:SERAPH-DOC-0904',
+            'seraphotheque-pack:SERAPH-DOC-0293',
+            'seraphotheque-pack:SERAPH-DOC-0997',
+            'seraphotheque-pack:SERAPH-DOC-0486',
+            'seraphotheque-pack:COMP-2025-2026',
+            'seraphotheque-pack:SERAPH-DOC-PROFESSION-FOI',
+            'seraphotheque-pack:SERAPH-DOC-CORRESPONDANCE-MAIRIE-2026',
+            'seraphotheque-pack:Email-2026-04-03-PUBLIC',
+            'gmail:19e686ddc7c6d792',
+        ];
+
+        $publicDocs = SubjectDocument::where('subject_id', $subject->id)
+            ->where('visibility', VisibilityLevel::Public)
+            ->get();
+
+        $this->assertCount($expectedCount, $publicDocs, "Nombre de documents publics doit être {$expectedCount}.");
+
+        $actualRefs = $publicDocs->pluck('source_reference')->sort()->values()->toArray();
+        $this->assertSame(
+            collect($expectedSourceReferences)->sort()->values()->toArray(),
+            $actualRefs,
+            'Identité exacte des documents publics V8.'
+        );
+    }
+
+    /** @test */
+    public function working_merged_docs_are_exactly_two(): void
+    {
+        $subject = $this->ingestV8Subject();
+
+        $workingDocs = SubjectDocument::where('subject_id', $subject->id)
+            ->where('visibility', VisibilityLevel::Working)
+            ->get();
+
+        $this->assertCount(2, $workingDocs, 'Exactement deux documents Working après MERGE V8.');
+
+        $refs = $workingDocs->pluck('source_reference')->sort()->values()->toArray();
+        $this->assertSame(
+            ['seraphotheque-pack:Email-2026-07-01', 'seraphotheque-pack:SERAPH-DOC-1263'],
+            $refs,
+            'Working = Information déplacement portants + Email maire 14 mai.'
+        );
     }
 
     /** @test */

@@ -74,12 +74,14 @@ class SubjectDocumentController extends Controller
         $to = $payload['to'] ?? $document->recipient ?? null;
 
         $bodyText = '';
-        if (! empty($payload['body_text'])) {
-            $bodyText = $payload['body_text'];
+        $bodyIsHtml = false;
+        if (! empty($payload['body_html'])) {
+            $bodyText = $this->sanitiseEmailHtml($payload['body_html']);
+            $bodyIsHtml = true;
+        } elseif (! empty($payload['body_text'])) {
+            $bodyText = e($payload['body_text']);
         } elseif (! empty($payload['body'])) {
-            $bodyText = is_string($payload['body']) ? $payload['body'] : '';
-        } elseif (! empty($payload['body_html'])) {
-            $bodyText = strip_tags($payload['body_html']);
+            $bodyText = is_string($payload['body']) ? e($payload['body']) : '';
         }
 
         return view('subjects.documents.email', [
@@ -90,11 +92,29 @@ class SubjectDocumentController extends Controller
             'emailFrom' => $from,
             'emailTo' => $to,
             'emailBody' => $bodyText,
+            'bodyIsHtml' => $bodyIsHtml,
         ]);
     }
 
     /**
+     * Nettoie un fragment HTML d'email pour la vue publique.
+     * Liste blanche de balises, pas d'exécution de script, pas de styles inline actifs.
      */
+    private function sanitiseEmailHtml(string $html): string
+    {
+        // Supprime les scripts, objets, embeds, iframes, et liens dangereux.
+        $html = preg_replace('#<script[^>]*>.*?</script>#is', '', $html);
+        $html = preg_replace('#<style[^>]*>.*?</style>#is', '', $html);
+        $html = preg_replace('#<(object|embed|iframe|source|track)\b[^>]*>#is', '', $html);
+        $html = preg_replace('#javascript\s*:#is', '', $html);
+
+        // Liste blanche : balises sémantiques du HTML email public.
+        $allowedTags = '<p><br><a><strong><em><ul><ol><li><h1><h2><h3><pre><header><footer><div><span><dl><dt><dd><hr>';
+        $html = strip_tags($html, $allowedTags);
+
+        return $html;
+    }
+
     private function isImageFile(\Illuminate\Http\UploadedFile $file): bool
     {
         return in_array($file->getMimeType(), [

@@ -25,7 +25,7 @@
         </dl>
 
         @if($emailBody)
-            <div class="prose prose-slate max-w-none text-slate-800 whitespace-pre-wrap">{{ $emailBody }}</div>
+            <div class="prose prose-slate max-w-none text-slate-800">{!! $emailBody !!}</div>
         @else
             <p class="text-slate-500 italic">Le corps du message n'est pas disponible dans cette représentation.</p>
         @endif
