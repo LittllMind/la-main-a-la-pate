@@ -674,7 +674,7 @@ class Subject extends Model
                 continue;
             }
 
-            if ($currentContext !== null && preg_match('/\*\*→\s*(Consulter la fiche documentaire|Lire la correspondance complète|Consulter le document|Consulter le courriel du 27 mai|Consulter l’extrait contextualisé)\*\*/', $line)) {
+            if ($currentContext !== null && preg_match('/\*\*→\s*(Consulter la fiche documentaire|Lire la correspondance complète|Consulter le document|Consulter le courriel du 27 mai|Consulter la fiche 26–27 mai|Consulter l’extrait contextualisé)\*\*/', $line)) {
                 $hasDoc = (bool) array_filter($existingRefs, fn ($ref) => str_contains($ref, $currentContext));
                 if ($hasDoc) {
                     $anchor = 'doc-' . str_replace([':', '/'], '-', $currentContext);
