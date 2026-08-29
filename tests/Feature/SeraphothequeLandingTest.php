@@ -30,7 +30,7 @@ class SeraphothequeLandingTest extends TestCase
             'Landing should link to civic subject public show'
         );
         $this->assertStringContainsString(
-            'Consulter le dossier civique documenté',
+            'Comprendre la situation',
             $content
         );
     }

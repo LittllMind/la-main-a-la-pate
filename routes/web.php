@@ -7,6 +7,7 @@ use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImpersonateController;
+use App\Http\Controllers\SeraphothequeController;
 use App\Http\Controllers\LandingSectionController;
 use App\Http\Controllers\PostPublicController;
 use App\Http\Controllers\ProfileController;
@@ -26,7 +27,7 @@ use Illuminate\Support\Facades\Route;
 |---------------------------------------------------------------------------
 */
 Route::get('/', \App\Http\Controllers\HomeController::class)->name('home');
-Route::get('/seraphotheque', [ContactController::class, 'seraphotheque'])->name('seraphotheque');
+Route::get('/seraphotheque', [SeraphothequeController::class, 'index'])->name('seraphotheque');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/a-propos', [ContactController::class, 'about'])->name('about');
