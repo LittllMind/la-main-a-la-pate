@@ -98,6 +98,10 @@ class SubjectDocument extends Model
     {
         $type = strtolower((string) $this->document_type);
 
+        if (str_contains($type, 'source de presse')) {
+            return 'press';
+        }
+
         if (str_contains($type, 'source primaire')) {
             return 'primary';
         }
@@ -170,7 +174,8 @@ class SubjectDocument extends Model
         $ref = (string) $this->source_reference;
         $type = strtolower((string) $this->document_type);
 
-        $isV9Taxonomy = str_contains($type, 'source primaire')
+        $isV9Taxonomy = str_contains($type, 'source de presse')
+            || str_contains($type, 'source primaire')
             || str_contains($type, 'dossier documentaire')
             || str_contains($type, 'comparatif documentaire')
             || str_contains($type, 'document de contexte')
@@ -185,6 +190,7 @@ class SubjectDocument extends Model
                 str_contains($ref, 'SERAPH-DOC-0997') => 5,
                 str_contains($ref, 'SERAPH-DOC-0486') => 6,
                 str_contains($ref, 'Email-2026-05-27-DGFIP') => 7,
+                str_contains($ref, 'SERAPH-DOC-PRESSE-JDM-2026-06-11') => 8,
                 str_contains($ref, 'SERAPH-DOC-CORRESPONDANCE-MAIRIE-2026') => 10,
                 str_contains($ref, 'COMP-2025-2026') => 20,
                 str_contains($ref, 'SERAPH-DOC-PROFESSION-FOI') => 30,

@@ -49,10 +49,11 @@
         'dossier' => 'DOSSIERS DOCUMENTAIRES',
         'comparatif' => 'COMPARATIFS DOCUMENTAIRES',
         'context' => 'DOCUMENTS DE CONTEXTE',
+        'press' => 'SOURCES DE PRESSE',
         'synthesis' => 'SYNTHÈSES DOCUMENTAIRES',
         'other' => 'AUTRES DOCUMENTS',
     ];
-    $groupOrder = ['primary', 'dossier', 'comparatif', 'context', 'synthesis', 'other'];
+    $groupOrder = ['primary', 'dossier', 'comparatif', 'context', 'press', 'synthesis', 'other'];
     $docsByGroup = $visibleDocs->sortBy(fn($doc) => $doc->seraphothequeOrder())->groupBy(fn($doc) => $doc->seraphothequeGroup());
 @endphp
 @if($visibleDocs->count() > 0)
@@ -73,6 +74,7 @@
                                 $docTypeLower = strtolower((string) $doc->document_type);
                                 $docTypeBadge = match (true) {
                                     str_contains($docTypeLower, 'dossier documentaire') => ['label' => 'DOSSIER DOCUMENTAIRE', 'color' => 'blue'],
+                                    str_contains($docTypeLower, 'source de presse') => ['label' => 'SOURCE DE PRESSE', 'color' => 'orange'],
                                     str_contains($docTypeLower, 'source primaire') => ['label' => 'SOURCE PRIMAIRE', 'color' => 'emerald'],
                                     str_contains($docTypeLower, 'synthèse') => ['label' => 'SYNTHÈSE LMALP', 'color' => 'purple'],
                                     str_contains($docTypeLower, 'contexte') => ['label' => 'DOCUMENT DE CONTEXTE', 'color' => 'slate'],

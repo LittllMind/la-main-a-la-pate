@@ -222,7 +222,37 @@ class SubjectSeraphothequeV10FinalTest extends TestCase
             'position' => 997,
         ]);
 
+        $this->addPressArticle($fresh);
+
         return $fresh->fresh();
+    }
+
+    private function addPressArticle(Subject $subject): void
+    {
+        $sourcePath = '/home/aur-lien/tmp/seraphotheque-article-press-source/2026-06-11_JOURNAL-DE-MILLAU_SERAPHOTHEQUE_SOURCE.pdf';
+        $sourceSha = hash_file('sha256', $sourcePath);
+
+        $stored = $this->storage->storeEncrypted($subject->id, $sourcePath, '2026-06-11_JOURNAL-DE-MILLAU_SERAPHOTHEQUE_SOURCE.pdf');
+
+        SubjectDocument::create([
+            'subject_id' => $subject->id,
+            'title' => 'Le village du Rozier avance sur des épines',
+            'filename' => '2026-06-11_JOURNAL-DE-MILLAU_SERAPHOTHEQUE_SOURCE.pdf',
+            'stored_filename' => basename($stored),
+            'path' => $stored,
+            'disk' => 'documents',
+            'description' => 'Journal de Millau — 11 juin 2026. Article de presse externe reproduisant notamment des déclarations de plusieurs acteurs du dossier.',
+            'category' => 'source',
+            'visibility' => VisibilityLevel::Public->value,
+            'document_date' => '2026-06-11',
+            'document_type' => 'SOURCE DE PRESSE',
+            'author' => 'L.B.',
+            'source_reference' => 'seraphotheque-pack:SERAPH-DOC-PRESSE-JDM-2026-06-11',
+            'source_sha256' => $sourceSha,
+            'mime_type' => 'application/pdf',
+            'size' => filesize($sourcePath),
+            'position' => 50,
+        ]);
     }
 
     private function guestShowResponse(Subject $subject): \Illuminate\Testing\TestResponse
@@ -535,7 +565,7 @@ class SubjectSeraphothequeV10FinalTest extends TestCase
     {
         $subject = $this->ingestV10Subject();
 
-        $expectedCount = 10;
+        $expectedCount = 11;
         $expectedSourceReferences = [
             'seraphotheque-pack:SERAPH-DOC-0535',
             'seraphotheque-pack:SERAPH-DOC-0239',
@@ -547,6 +577,7 @@ class SubjectSeraphothequeV10FinalTest extends TestCase
             'seraphotheque-pack:SERAPH-DOC-PROFESSION-FOI',
             'seraphotheque-pack:SERAPH-DOC-CORRESPONDANCE-MAIRIE-2026',
             'seraphotheque-pack:Email-2026-05-27-DGFIP',
+            'seraphotheque-pack:SERAPH-DOC-PRESSE-JDM-2026-06-11',
         ];
 
         $publicDocs = SubjectDocument::where('subject_id', $subject->id)
@@ -605,6 +636,7 @@ class SubjectSeraphothequeV10FinalTest extends TestCase
             'doc-seraphotheque-pack-COMP-2025-2026',
             'doc-seraphotheque-pack-SERAPH-DOC-PROFESSION-FOI',
             'doc-seraphotheque-pack-Email-2026-05-27-DGFIP',
+            'doc-seraphotheque-pack-SERAPH-DOC-PRESSE-JDM-2026-06-11',
         ];
 
         foreach ($expectedIds as $id) {
@@ -755,5 +787,79 @@ class SubjectSeraphothequeV10FinalTest extends TestCase
         $this->assertStringContainsString('sm:w-auto', $card, 'Actions are not fixed to full width on desktop.');
         $this->assertStringContainsString('data-testid="btn-doc-view"', $card, 'View action is visible.');
         $this->assertStringNotContainsString('truncate', $card, 'Title must not be truncated.');
+    }
+
+    /** @test */
+    public function press_article_jdm_2026_06_11_is_public_pdf_accessible_and_badge_exact(): void
+    {
+        $subject = $this->ingestV10Subject();
+
+        $doc = SubjectDocument::where('subject_id', $subject->id)
+            ->where('source_reference', 'seraphotheque-pack:SERAPH-DOC-PRESSE-JDM-2026-06-11')
+            ->firstOrFail();
+
+        $this->assertSame(VisibilityLevel::Public->value, $doc->visibility->value);
+        $this->assertSame('SOURCE DE PRESSE', $doc->document_type);
+        $this->assertSame('Le village du Rozier avance sur des épines', $doc->title);
+        $this->assertSame('2026-06-11', $doc->document_date?->format('Y-m-d'));
+        $this->assertSame('seraphotheque-pack:SERAPH-DOC-PRESSE-JDM-2026-06-11', $doc->source_reference);
+
+        $html = $this->guestShowResponse($subject)->baseResponse->getContent();
+        $this->assertStringContainsString('id="doc-seraphotheque-pack-SERAPH-DOC-PRESSE-JDM-2026-06-11"', $html);
+        $this->assertStringContainsString('SOURCE DE PRESSE', $html);
+        $this->assertStringContainsString('Journal de Millau', $html);
+        $this->assertStringContainsString('11/06/2026', $html);
+
+        $view = $this->get(route('subjects.documents.view', [$subject->slug, $doc->id]));
+        $view->assertOk();
+        $this->assertSame('application/pdf', $view->baseResponse->headers->get('Content-Type'));
+
+        $download = $this->get(route('subjects.documents.download', [$subject->slug, $doc->id]));
+        $download->assertOk();
+        $this->assertSame('application/pdf', $download->baseResponse->headers->get('Content-Type'));
+
+        $this->assertSame(
+            '3ce2af023d0ca62752fb4477a4ba1d514ab072d948f9d7f7d4e03fa57fa0f289',
+            hash('sha256', $this->storage->decrypt($doc->path))
+        );
+
+        $tmpPdf = tempnam(sys_get_temp_dir(), 'press_') . '.pdf';
+        $this->storage->decryptToFile($doc->path, $tmpPdf);
+        if (shell_exec('which pdfinfo')) {
+            $pages = shell_exec('pdfinfo ' . escapeshellarg($tmpPdf) . ' 2>/dev/null | grep Pages | awk \'{print $2}\'');
+            $this->assertSame('2', trim($pages ?? ''), 'Article PDF doit faire 2 pages quand pdfinfo est disponible.');
+        }
+        @unlink($tmpPdf);
+    }
+
+    /** @test */
+    public function v10_1_body_and_document_set_unchanged_except_press_article(): void
+    {
+        $subject = $this->ingestV10Subject();
+
+        $this->assertSame($this->v10BodySha, hash('sha256', (string) $subject->public_body), 'BODY V10.1 inchangé.');
+
+        $currentPublic = SubjectDocument::where('subject_id', $subject->id)
+            ->where('visibility', VisibilityLevel::Public)
+            ->pluck('source_reference')
+            ->sort()
+            ->values()
+            ->toArray();
+
+        $expected = collect([
+            'seraphotheque-pack:SERAPH-DOC-0535',
+            'seraphotheque-pack:SERAPH-DOC-0239',
+            'seraphotheque-pack:SERAPH-DOC-0904',
+            'seraphotheque-pack:SERAPH-DOC-0293',
+            'seraphotheque-pack:SERAPH-DOC-0997',
+            'seraphotheque-pack:SERAPH-DOC-0486',
+            'seraphotheque-pack:COMP-2025-2026',
+            'seraphotheque-pack:SERAPH-DOC-PROFESSION-FOI',
+            'seraphotheque-pack:SERAPH-DOC-CORRESPONDANCE-MAIRIE-2026',
+            'seraphotheque-pack:Email-2026-05-27-DGFIP',
+            'seraphotheque-pack:SERAPH-DOC-PRESSE-JDM-2026-06-11',
+        ])->sort()->values()->toArray();
+
+        $this->assertSame($expected, $currentPublic, 'Only press article was added to V10.1 public document set.');
     }
 }
