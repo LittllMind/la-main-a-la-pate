@@ -22,36 +22,99 @@
         >
     </picture>
 
-    {{-- Overlay sombre + gradient pour lisibilité --}}
-    <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
+    {{-- Overlay sombre très léger : conserve le contraste général sans masquer la photo --}}
+    <div class="absolute inset-0 bg-gradient-to-b from-black/45 via-black/25 to-black/50"></div>
 
-    <div class="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 text-center text-white">
-        <p class="text-sm sm:text-base tracking-[0.2em] uppercase opacity-90 mb-3 sm:mb-4">
+    <div class="hero-panel relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 text-center text-white">
+        <p class="text-sm sm:text-base tracking-[0.2em] uppercase opacity-95 mb-3 sm:mb-4">
             {{ $hero['subtitle'] }}
         </p>
-        <h1 id="hero-title" class="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight uppercase mb-5 sm:mb-6">
+        <h1 id="hero-title" class="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight uppercase mb-5 sm:mb-6 drop-shadow-sm">
             {{ $hero['title'] }}
         </h1>
-        <p class="text-lg sm:text-xl md:text-2xl font-medium leading-relaxed max-w-3xl mx-auto mb-4">
+        <p class="text-lg sm:text-xl md:text-2xl font-medium leading-relaxed max-w-3xl mx-auto mb-4 drop-shadow-sm">
             {{ $hero['intro'] }}
         </p>
-        <p class="text-sm sm:text-base md:text-lg opacity-90 max-w-2xl mx-auto mb-6">
+        <p class="text-sm sm:text-base md:text-lg opacity-95 max-w-2xl mx-auto mb-6 drop-shadow-sm">
             {{ $hero['location'] }}
         </p>
 
-        <address class="not-italic text-sm sm:text-base opacity-90 mb-8">
+        <address class="not-italic text-sm sm:text-base opacity-95 mb-8 drop-shadow-sm">
             {{ $hero['address'] }}<br class="sm:hidden">
             {{ $hero['zip_city'] }} · {{ $hero['hours'] }}
         </address>
 
         <a
             href="{{ $civic['cta_primary']['url'] }}"
-            class="inline-block bg-white text-slate-900 px-6 py-3 rounded-md text-sm sm:text-base font-semibold hover:bg-slate-100 transition"
+            class="inline-block bg-white text-slate-900 px-6 py-3 rounded-md text-sm sm:text-base font-semibold hover:bg-slate-100 transition shadow-lg"
         >
             {{ $civic['cta_primary']['label'] }}
         </a>
     </div>
 </section>
+
+<style>
+    /* Panneau de lisibilité hero : flou léger concentré au centre, atténué vers les bords */
+    .hero-panel {
+        padding: 1.5rem 1rem;
+        border-radius: 1rem;
+    }
+
+    .hero-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        /* Flou central très léger (2 px), concentré derrière le texte */
+        -webkit-backdrop-filter: blur(2px);
+        backdrop-filter: blur(2px);
+        /* Overlay sombre léger, opaque au centre, transparent aux bords */
+        background:
+            radial-gradient(
+                ellipse at center,
+                rgba(0, 0, 0, 0.45) 0%,
+                rgba(0, 0, 0, 0.28) 35%,
+                rgba(0, 0, 0, 0.10) 65%,
+                transparent 100%
+            );
+        /* Mask : effet fort au centre, fond transparent vers la périphérie */
+        -webkit-mask-image: radial-gradient(
+            ellipse at center,
+            rgba(0, 0, 0, 1) 0%,
+            rgba(0, 0, 0, 0.85) 30%,
+            rgba(0, 0, 0, 0.35) 60%,
+            rgba(0, 0, 0, 0) 100%
+        );
+        mask-image: radial-gradient(
+            ellipse at center,
+            rgba(0, 0, 0, 1) 0%,
+            rgba(0, 0, 0, 0.85) 30%,
+            rgba(0, 0, 0, 0.35) 60%,
+            rgba(0, 0, 0, 0) 100%
+        );
+    }
+
+    /* Si backdrop-filter n'est pas supporté, seul l'overlay radial léger reste active */
+    @supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
+        .hero-panel::before {
+            -webkit-mask-image: none;
+            mask-image: none;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(0, 0, 0, 0.35) 0%,
+                rgba(0, 0, 0, 0.15) 50%,
+                transparent 100%
+            );
+        }
+    }
+
+    @media (min-width: 640px) {
+        .hero-panel {
+            padding: 2.5rem 2rem;
+        }
+    }
+</style>
 
 {{-- DÉCOUVREZ --}}
 <section class="w-full bg-white py-16 sm:py-20">
