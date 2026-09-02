@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\RepresentationType;
 use App\Models\Subject;
 use App\Models\SubjectDocument;
+use App\Services\Analytics\AnalyticsRecorder;
 use App\Services\DocumentStorageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
@@ -326,6 +328,8 @@ class SubjectDocumentController extends Controller
             return response('Une erreur est survenue lors du téléchargement.', 500);
         }
 
+        $this->recordAnalytics('document_download', $document);
+
         return response()->streamDownload(function () use (&$plain) {
             echo $plain;
             $this->secureZero($plain);
@@ -378,6 +382,8 @@ class SubjectDocumentController extends Controller
         if ($isMarkdownDossier) {
             $html = \App\Models\Subject::renderMarkdownToHtml($plain);
 
+            $this->recordAnalytics('document_view', $document);
+
             return response()->view('subjects.documents.markdown_human', [
                 'subject' => $subject,
                 'document' => $document,
@@ -388,6 +394,8 @@ class SubjectDocumentController extends Controller
             ]);
         }
 
+        $this->recordAnalytics('document_view', $document);
+
         return response()->stream(function () use (&$plain) {
             echo $plain;
             $this->secureZero($plain);
@@ -396,6 +404,24 @@ class SubjectDocumentController extends Controller
             'Content-Disposition' => 'inline; filename="' . $document->filename . '"',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    /**
+     * Enregistre un événement analytics documentaire si le module est actif.
+     * L'échec ne doit jamais casser la réponse publique.
+     */
+    private function recordAnalytics(string $eventType, SubjectDocument $document): void
+    {
+        if (! (bool) Config::get('analytics.enabled', false)) {
+            return;
+        }
+
+        try {
+            $recorder = resolve(AnalyticsRecorder::class);
+            $recorder->record($eventType, $document->source_reference, request: request());
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /**

@@ -12,7 +12,13 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        //
+        // Purge quotidienne des événements analytics bruts au-delà de la rétention.
+        $schedule->command('analytics:purge')->daily();
+
+        // Rapport audience quotidien J-1 à 08:00 Europe/Paris.
+        $schedule->command('analytics:daily-report')
+            ->dailyAt('08:00')
+            ->timezone('Europe/Paris');
     }
 
 

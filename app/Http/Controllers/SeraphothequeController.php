@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Analytics\AnalyticsRecorder;
+
 class SeraphothequeController extends Controller
 {
     public function index()
     {
-        return view('seraphotheque.index', [
+        $view = view('seraphotheque.index', [
             'hero' => $this->hero(),
             'univers' => $this->univers(),
             'values' => $this->values(),
@@ -17,6 +19,19 @@ class SeraphothequeController extends Controller
             'social' => $this->social(),
             'practical' => $this->practical(),
         ]);
+
+        $this->recordDossierView('/seraphotheque');
+
+        return $view;
+    }
+
+    private function recordDossierView(string $path): void
+    {
+        try {
+            resolve(AnalyticsRecorder::class)->recordDossierView($path, request());
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     private function hero(): array

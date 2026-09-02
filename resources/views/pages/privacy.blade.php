@@ -33,6 +33,15 @@
             Vous pouvez exercer ces droits depuis votre profil ou en contactant l'administrateur du site.
         </p>
 
+        <h2 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Mesure d'audience interne</h2>
+        <p class="text-slate-700 text-sm leading-relaxed">
+            LMALP réalise une mesure de fréquentation interne afin de connaître l'audience des pages et documents publiés.
+            L'adresse IP et le User-Agent sont utilisés transitoirement côté serveur pour générer un identifiant pseudonyme journalier,
+            puis l'adresse IP brute n'est pas conservée dans la base analytics. Aucun dispositif publicitaire, profilage nominatif
+            ou suivi intersite n'est utilisé. Les événements bruts sont conservés 90 jours maximum avant purge ou agrégation.
+            Les logs techniques de l'hébergeur peuvent eux conserver des données brutes selon leur propre politique.
+        </p>
+
         <h2 class="text-lg font-semibold text-slate-900 mt-6 mb-2">Cookies</h2>
         <p class="text-slate-700 text-sm leading-relaxed">
             Ce site utilise des cookies techniques essentiels au fonctionnement (session, authentification).

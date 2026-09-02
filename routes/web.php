@@ -168,6 +168,7 @@ Route::middleware(['auth', 'verified'])->prefix('communaute')->name('community.'
 |---------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified', 'isAdmin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('analytics');
     Route::get('/', [AdminController::class, 'index'])->name('panel');
     Route::get('/routes', [AdminController::class, 'routes'])->name('routes');
     Route::get('/posts', [PostPublicController::class, 'adminIndex'])->name('posts.index');
