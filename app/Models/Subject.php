@@ -196,10 +196,8 @@ class Subject extends Model
      * Retourne le corps à afficher selon le niveau d'accès.
      * Pas de fallback silencieux depuis un niveau supérieur.
      *
-     * Exception Séraphothèque : la version publique du dossier documentaire
-     * est accessible uniquement aux visiteurs non authentifiés (public unlisted
-     * géré hors catalogue). Les utilisateurs authentifiés y accèdent via les
-     * versions Working/Citoyen habituelles.
+     * La représentation publique reste accessible aux utilisateurs authentifiés
+     * lorsqu'elle est publiée ; Séraphothèque ne constitue pas une exception ACL.
      */
     public function bodyFor(?User $user): ?string
     {
@@ -212,9 +210,8 @@ class Subject extends Model
                 return $this->citizen_body;
             }
 
-            // Public général : membres/citoyens peuvent lire la version publique.
-            // Séraphothèque : réservé aux guests.
-            if ($this->public_status === 'published' && filled($this->public_body) && ! $this->isSeraphothequeDossier()) {
+            // Les utilisateurs authentifiés peuvent consulter PUBLIC comme niveau inférieur.
+            if ($this->public_status === 'published' && filled($this->public_body)) {
                 return $this->public_body;
             }
 

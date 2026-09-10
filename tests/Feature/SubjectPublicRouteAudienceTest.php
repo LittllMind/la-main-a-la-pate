@@ -121,9 +121,21 @@ class SubjectPublicRouteAudienceTest extends TestCase
         $response->assertOk("{$label} should see public route");
 
         $html = $response->baseResponse->getContent();
-        $this->assertStringContainsString('V7 Public Body', $html, "{$label} sees public body");
-        $this->assertStringContainsString('24 août 2026', $html, "{$label} sees V7 date marker");
-        $this->assertStringNotContainsString($this->workingMarker, $html, "{$label} must not see working/citizen marker");
+        $expectedBody = $user === null
+            ? $this->publicBody
+            : (($user->isModeratorOrAdmin() || $user->id === $subject->user_id || $subject->isCollaborator($user))
+                ? $this->workingBody
+                : ($subject->citizen_status === 'published' ? $this->citizenBody : $this->publicBody));
+        $this->assertStringContainsString($expectedBody === $this->publicBody ? 'V7 Public Body' : ($expectedBody === $this->citizenBody ? 'V6 Citizen Body' : 'V6 Working Body'), $html, "{$label} sees default body");
+        if ($expectedBody === $this->workingBody) {
+            $this->assertStringNotContainsString('V7 Public Body', $html);
+            $this->assertStringNotContainsString('V6 Citizen Body', $html);
+        } elseif ($expectedBody === $this->citizenBody) {
+            $this->assertStringNotContainsString('V6 Working Body', $html);
+            $this->assertStringNotContainsString('V7 Public Body', $html);
+        } else {
+            $this->assertStringNotContainsString($this->workingMarker, $html);
+        }
 
         $after = $this->snapshotBodies($subject);
         $this->assertSame($before, $after, "{$label} request must not mutate any body");
@@ -226,7 +238,8 @@ class SubjectPublicRouteAudienceTest extends TestCase
         $this->actingAs($admin)
             ->get(route('subjects.show', $subject->slug))
             ->assertOk()
-            ->assertSee('V7 Public Body');
+            ->assertSee('V6 Working Body')
+            ->assertDontSee('V7 Public Body');
 
         // Logout and guest again
         auth()->logout();
@@ -249,9 +262,9 @@ class SubjectPublicRouteAudienceTest extends TestCase
         $response = $this->actingAs($admin)->get(route('subjects.show', $subject->slug));
         $html = $response->baseResponse->getContent();
 
+        $this->assertStringContainsString('Working document', $html);
+        $this->assertStringContainsString('Citizen document', $html);
         $this->assertStringContainsString('Public document', $html);
-        $this->assertStringNotContainsString('Citizen document', $html, 'Citizen document must not leak on public route');
-        $this->assertStringNotContainsString('Working document', $html, 'Working document must not leak on public route');
     }
 
     /** @test */
@@ -311,7 +324,7 @@ class SubjectPublicRouteAudienceTest extends TestCase
         ]);
 
         $this->get(route('subjects.show', $subject->slug))->assertOk()->assertSee('V7 Public Body')->assertDontSee($this->workingMarker);
-        $this->actingAs($owner)->get(route('subjects.show', $subject->slug))->assertOk()->assertSee('V7 Public Body')->assertDontSee($this->workingMarker);
+        $this->actingAs($owner)->get(route('subjects.show', $subject->slug))->assertOk()->assertSee('V6 Working Body')->assertDontSee('V7 Public Body');
     }
 
     /** @test */

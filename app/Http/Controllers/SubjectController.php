@@ -123,34 +123,6 @@ class SubjectController extends Controller
     {
         $user = auth()->user();
 
-        // PUBLIC ROUTE CONTRACT: the canonical /sujets/{slug} route always serves
-        // the published public_body to every visitor entitled to access the route.
-        // Privileged users still reach Working/Citizen bodies through edit/preview routes.
-        if ($subject->public_status === 'published' && filled($subject->public_body)) {
-            $subject->body = $subject->public_body;
-
-            $subject->load([
-                'user',
-                'comments.user',
-                'versions.user',
-                'documents' => fn ($query) => $query->where('visibility', VisibilityLevel::Public->value),
-            ]);
-
-            if ($user !== null) {
-                $latestVersionId = $subject->versions()->orderBy('created_at', 'desc')->value('id');
-                if ($latestVersionId) {
-                    SubjectUserLastSeenVersion::updateOrCreate(
-                        ['user_id' => $user->id, 'subject_id' => $subject->id],
-                        ['version_id' => $latestVersionId, 'seen_at' => now()]
-                    );
-                }
-            }
-
-            return view('subjects.show', [
-                'subject' => $subject,
-            ]);
-        }
-
         if (! $subject->canBeViewedBy($user)) {
             abort(404);
         }

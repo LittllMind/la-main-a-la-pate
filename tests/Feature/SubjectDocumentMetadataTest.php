@@ -133,7 +133,7 @@ class SubjectDocumentMetadataTest extends TestCase
         $this->actingAs($admin)
             ->get(route('subjects.show', $subject->slug))
             ->assertOk()
-            ->assertDontSee('OLD_DOC_1122');
+            ->assertSee('OLD_DOC_1122');
 
         // L'admin voit le document working dans l'index ; un guest ne le voit pas.
         $this->actingAs($admin)
@@ -273,10 +273,10 @@ class SubjectDocumentMetadataTest extends TestCase
             ->assertOk()
             ->assertSee('PUB_MARKER_TITLE_8a2e')
             ->assertSee('PUB_AUTHOR_4f1c')
-            ->assertDontSee('CIT_MARKER_TITLE_2b4n')
-            ->assertDontSee('CIT_AUTHOR_7h3k')
-            ->assertDontSee('CIT_ESTABLISH_5m8p')
-            ->assertDontSee('CIT_LIMIT_2q6w')
+            ->assertSee('CIT_MARKER_TITLE_2b4n')
+            ->assertSee('CIT_AUTHOR_7h3k')
+            ->assertSee('CIT_ESTABLISH_5m8p')
+            ->assertSee('CIT_LIMIT_2q6w')
             ->assertDontSee('WORK_MARKER_TITLE_9c1r')
             ->assertDontSee('WORK_AUTHOR_3v7t')
             ->assertDontSee('WORK_ESTABLISH_4n2s')

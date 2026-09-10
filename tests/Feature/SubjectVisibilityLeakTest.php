@@ -133,13 +133,13 @@ class SubjectVisibilityLeakTest extends TestCase
             ->assertSee(self::CITIZEN_SECRET)
             ->assertDontSee(self::WORKING_SECRET);
 
-        // show : public_body, documents publics seuls
+        // show : citizen_body, documents citoyen et publics
         $this->actingAs($other)->get(route('subjects.show', $this->subject->slug))
             ->assertOk()
-            ->assertSee(self::PUBLIC_VISIBLE)
+            ->assertSee(self::CITIZEN_SECRET)
             ->assertDontSee(self::WORKING_SECRET)
             ->assertSee($this->publicDoc->title)
-            ->assertDontSee($this->citizenDoc->title)
+            ->assertSee($this->citizenDoc->title)
             ->assertDontSee($this->workingDoc->title);
 
         // aperçu citoyen non autorisé pour un simple citoyen.
@@ -157,17 +157,16 @@ class SubjectVisibilityLeakTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_admin_sees_public_body_on_public_route_and_working_body_via_edit(): void
+    public function test_admin_sees_working_body_on_subject_route_and_edit(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin)->get(route('subjects.show', $this->subject->slug))
             ->assertOk()
-            ->assertSee(self::PUBLIC_VISIBLE)
-            ->assertDontSee(self::WORKING_SECRET)
+            ->assertSee(self::WORKING_SECRET)
             ->assertDontSee(self::CITIZEN_SECRET)
             ->assertSee($this->publicDoc->title)
-            ->assertDontSee($this->workingDoc->title);
+            ->assertSee($this->workingDoc->title);
 
         $this->actingAs($admin)
             ->get(route('subjects.edit', $this->subject->slug))

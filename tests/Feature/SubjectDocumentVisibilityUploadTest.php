@@ -156,13 +156,13 @@ class SubjectDocumentVisibilityUploadTest extends TestCase
         SubjectDocument::factory()->for($subject)->working()
             ->create(['title' => 'WORKING_DOC_MARKER_5p1q', 'stored_filename' => 'working.enc', 'path' => 'subjects/1/working.enc']);
 
-        // Route publique : documents publics seuls.
+        // L'instruction voit les trois niveaux sur la fiche.
         $this->actingAs($admin)
             ->get(route('subjects.show', $subject->slug))
             ->assertOk()
             ->assertSee('PUBLIC_DOC_MARKER_7x9a')
-            ->assertDontSee('CITIZEN_DOC_MARKER_3k2m')
-            ->assertDontSee('WORKING_DOC_MARKER_5p1q');
+            ->assertSee('CITIZEN_DOC_MARKER_3k2m')
+            ->assertSee('WORKING_DOC_MARKER_5p1q');
 
         // L'admin voit tous les documents dans l'index.
         $this->actingAs($admin)
@@ -198,7 +198,7 @@ class SubjectDocumentVisibilityUploadTest extends TestCase
             ->get(route('subjects.show', $subject->slug))
             ->assertOk()
             ->assertSee('PUBLIC_DOC_MARKER_7x9a')
-            ->assertDontSee('CITIZEN_DOC_MARKER_3k2m')
+            ->assertSee('CITIZEN_DOC_MARKER_3k2m')
             ->assertDontSee('WORKING_DOC_MARKER_5p1q');
 
         // Aperçu citoyen non autorisé pour un simple citoyen.

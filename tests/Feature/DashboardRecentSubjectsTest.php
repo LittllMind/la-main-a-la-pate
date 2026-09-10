@@ -67,4 +67,32 @@ class DashboardRecentSubjectsTest extends TestCase
         $response->assertStatus(200);
         $this->assertCount(5, $response->viewData('recentSubjects'));
     }
+
+    public function test_dashboard_does_not_list_subject_hidden_from_viewer(): void
+    {
+        $viewer = User::factory()->create(['role' => 'citoyen']);
+        $author = User::factory()->create(['role' => 'admin']);
+
+        Subject::factory()->create([
+            'user_id' => $author->id,
+            'title' => 'Sujet visible dashboard',
+            'citizen_body' => 'Contenu citoyen',
+            'citizen_status' => 'published',
+            'updated_at' => now(),
+        ]);
+        Subject::factory()->create([
+            'user_id' => $author->id,
+            'title' => 'Sujet interdit dashboard',
+            'body' => 'Contenu instruction',
+            'citizen_body' => null,
+            'public_body' => null,
+            'updated_at' => now()->addMinute(),
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Sujet visible dashboard');
+        $response->assertDontSee('Sujet interdit dashboard');
+    }
 }

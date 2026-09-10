@@ -45,24 +45,24 @@ class SubjectMultiAudienceRenderTest extends TestCase
         $response->assertDontSee('Admin Only');
     }
 
-    public function test_citizen_and_admin_on_public_route_see_public_body(): void
+    public function test_citizen_and_admin_on_subject_route_see_their_default_body(): void
     {
         $subject = $this->setupSubject();
         $citizen = User::factory()->create(['role' => 'citoyen', 'email_verified_at' => now(), 'requires_setup' => false]);
         $admin = User::where('role', 'admin')->first();
 
-        // Route canonique publique : public_body pour tout le monde.
+        // La route canonique sert la représentation par défaut de chaque niveau.
         $this->actingAs($citizen)->get(route('subjects.show', $subject->slug))
             ->assertOk()
-            ->assertSee('Public Body')
-            ->assertDontSee('Citizen Body')
+            ->assertSee('Citizen Body')
+            ->assertDontSee('Public Body')
             ->assertDontSee('Admin Only');
 
         $this->actingAs($admin)->get(route('subjects.show', $subject->slug))
             ->assertOk()
-            ->assertSee('Public Body')
+            ->assertSee('Admin Only')
             ->assertDontSee('Citizen Body')
-            ->assertDontSee('Admin Only');
+            ->assertDontSee('Public Body');
     }
 
     public function test_citizen_sees_citizen_body_in_preview(): void

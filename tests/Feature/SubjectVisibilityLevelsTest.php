@@ -81,9 +81,9 @@ class SubjectVisibilityLevelsTest extends TestCase
 
         $r1 = $this->get(route('subjects.show', $subjectCitizen->slug));
         $r1->assertOk();
-        // Route publique canonique : public_body.
-        $r1->assertSee('Body public');
+        $r1->assertSee('Body citoyen');
         $r1->assertDontSee('Body interne');
+        $r1->assertDontSee('Body public');
 
         // Aperçu citoyen non autorisé pour un simple citoyen (réservé aux admins/propriétaires).
 
@@ -93,7 +93,46 @@ class SubjectVisibilityLevelsTest extends TestCase
         $r2->assertDontSee('Body interne 2');
     }
 
-    public function test_admin_sees_public_body_on_public_route_and_working_body_via_edit(): void
+    public function test_instruction_user_gets_working_body_by_default_when_all_representations_exist(): void
+    {
+        $instruction = User::factory()->create(['role' => 'admin']);
+        $subject = Subject::factory()->create([
+            'user_id' => User::factory()->create(['role' => 'admin'])->id,
+            'body' => 'Body instruction',
+            'citizen_body' => 'Body citoyen',
+            'public_body' => 'Body public',
+            'citizen_status' => 'published',
+            'public_status' => 'published',
+        ]);
+
+        $this->actingAs($instruction)
+            ->get(route('subjects.show', $subject->slug))
+            ->assertOk()
+            ->assertSee('Body instruction')
+            ->assertDontSee('Body citoyen')
+            ->assertDontSee('Body public');
+    }
+
+    public function test_citizen_can_access_public_representation_explicitly_but_not_instruction(): void
+    {
+        $owner = User::factory()->create(['role' => 'admin']);
+        $citizen = User::factory()->create(['role' => 'citoyen']);
+        $subject = Subject::factory()->create([
+            'user_id' => $owner->id,
+            'body' => 'Body instruction',
+            'citizen_body' => 'Body citoyen',
+            'public_body' => 'Body public',
+            'citizen_status' => 'published',
+            'public_status' => 'published',
+        ]);
+
+        $this->assertTrue($subject->canBeViewedBy($citizen));
+        $this->assertSame('Body public', $subject->bodyAtLevel(\App\Models\VisibilityLevel::Public));
+        $this->assertFalse($subject->bodyAtLevel(\App\Models\VisibilityLevel::Working) !== null);
+        $this->assertNotSame('Body instruction', $subject->bodyFor($citizen));
+    }
+
+    public function test_admin_sees_instruction_body_by_default_and_working_body_via_edit(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $subject = Subject::factory()->create([
@@ -107,9 +146,9 @@ class SubjectVisibilityLevelsTest extends TestCase
         $this->actingAs($admin)
             ->get(route('subjects.show', $subject->slug))
             ->assertOk()
-            ->assertSee('Body public')
-            ->assertDontSee('Body travail')
-            ->assertDontSee('Body citoyen');
+            ->assertSee('Body travail')
+            ->assertDontSee('Body citoyen')
+            ->assertDontSee('Body public');
 
         $this->actingAs($admin)
             ->get(route('subjects.edit', $subject->slug))

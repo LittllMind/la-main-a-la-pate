@@ -200,21 +200,21 @@ class SubjectPublicDiscoverabilityTest extends TestCase
             ->assertOk()
             ->assertSee('WORKING_SECRET_E5F');
 
-        // Citoyen : public_body sur la route publique.
+        // Citoyen : citizen_body sur la route publique.
         $this->actingAs($citizen)->get(route('subjects.show', $subject->slug))
             ->assertOk()
-            ->assertSee('PUBLIC_SECRET_E5F')
+            ->assertSee('CITIZEN_SECRET_E5F')
             ->assertDontSee('WORKING_SECRET_E5F')
-            ->assertDontSee('CITIZEN_SECRET_E5F');
+            ->assertDontSee('PUBLIC_SECRET_E5F');
 
         // L'aperçu citoyen n'est pas accessible aux citoyens (réservé admins/propriétaires).
 
-        // Admin : public_body sur la route publique.
+        // Admin : body de travail sur la route publique.
         $this->actingAs($admin)->get(route('subjects.show', $subject->slug))
             ->assertOk()
-            ->assertSee('PUBLIC_SECRET_E5F')
-            ->assertDontSee('WORKING_SECRET_E5F')
-            ->assertDontSee('CITIZEN_SECRET_E5F');
+            ->assertSee('WORKING_SECRET_E5F')
+            ->assertDontSee('CITIZEN_SECRET_E5F')
+            ->assertDontSee('PUBLIC_SECRET_E5F');
 
         // Admin : body de travail via l'éditeur.
         $this->actingAs($admin)->get(route('subjects.edit', $subject->slug))

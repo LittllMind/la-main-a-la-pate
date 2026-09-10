@@ -95,29 +95,29 @@ class SubjectDocumentVisibilityTest extends TestCase
         $subject = $this->setupSubjectWithDocs();
         $citizen = User::factory()->create(['role' => 'citoyen', 'email_verified_at' => now(), 'requires_setup' => false]);
 
-        // Route publique : documents publics seuls.
+        // Un citoyen voit les niveaux Citizen et Public.
         $response = $this->actingAs($citizen)->get(route('subjects.show', $subject->slug));
         $response->assertOk();
 
         $response->assertSee('Document Public');
-        $response->assertDontSee('Document Citizen');
+        $response->assertSee('Document Citizen');
         $response->assertDontSee('Document Working');
 
         // Aperçu citoyen non autorisé (réservé aux administrateurs/propriétaires).
     }
 
-    public function test_admin_sees_public_documents_on_public_route_and_all_documents_in_edit(): void
+    public function test_admin_sees_all_documents_on_subject_route_and_in_edit(): void
     {
         $subject = $this->setupSubjectWithDocs();
         $admin = User::where('role', 'admin')->first();
 
-        // Route publique : documents publics seuls.
+        // L'instruction voit les trois niveaux.
         $response = $this->actingAs($admin)->get(route('subjects.show', $subject->slug));
         $response->assertOk();
 
         $response->assertSee('Document Public');
-        $response->assertDontSee('Document Citizen');
-        $response->assertDontSee('Document Working');
+        $response->assertSee('Document Citizen');
+        $response->assertSee('Document Working');
 
         // L'admin voit tous les documents dans l'index.
         $this->actingAs($admin)
