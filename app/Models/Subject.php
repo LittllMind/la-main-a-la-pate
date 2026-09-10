@@ -75,11 +75,13 @@ class Subject extends Model
      * Filtre les sujets en fonction du niveau d'accès de l'utilisateur.
      * Guest : sujets dont la version publique est publiée.
      * Citoyen : sujets dont la version citoyenne est publiée OU version publique publiée.
-     * Admin/moderator/auteur/collaborateur : tous les sujets non archivés.
+     * Admin/moderator/auteur/collaborateur : sujets accessibles selon leurs droits.
      *
-     * Note : ce scope ne filtre PAS public_is_listed.
-     *        L'affichage dans les surfaces de découverte doit être appliqué
-     *        explicitement via scopeListedInCatalogue quand c'est pertinent.
+     * Note : ce scope ne filtre ni le statut métier ni public_is_listed.
+     *        Les surfaces actives ajoutent explicitement status != archived.
+     *        Les surfaces publiques éventuelles ajoutent scopeListedInCatalogue.
+     *        Les surfaces authentifiées de découverte ne doivent pas ajouter
+     *        scopeListedInCatalogue.
      */
     public function scopeVisibleTo($query, ?User $user)
     {
@@ -113,10 +115,11 @@ class Subject extends Model
     }
 
     /**
-     * Limite les sujets à ceux qui doivent apparaître dans les surfaces
-     * générales de découverte (catalogue, recherche, arbres, sitemap).
-     * Un sujet public mais public_is_listed=false reste visible par URL
-     * directe et via ses CTA, mais n'apparaît pas ici.
+     * Limite les sujets aux surfaces de découverte publique éventuelles.
+     *
+     * public_is_listed n'est pas une ACL : il ne doit jamais masquer un
+     * sujet actif et autorisé dans le patrimoine authentifié. Les contrôleurs
+     * internes ne doivent donc pas appeler ce scope.
      */
     public function scopeListedInCatalogue($query)
     {

@@ -7,6 +7,7 @@ use App\Models\SubCategory;
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 /**
@@ -88,7 +89,7 @@ class SubjectPublicDiscoverabilityTest extends TestCase
     }
 
     /** @test */
-    public function unlisted_public_subject_is_hidden_from_catalogue_and_search_but_direct_route_works(): void
+    public function unlisted_public_subject_remains_visible_in_authenticated_catalogue_but_hidden_from_guest_search(): void
     {
         $citizen = User::factory()->create(['role' => 'citoyen']);
 
@@ -99,12 +100,13 @@ class SubjectPublicDiscoverabilityTest extends TestCase
             'public_is_listed' => false,
         ]);
 
-        // Catalogue authentifié : absent.
+        // Catalogue authentifié : l'ACL suffit, même sans inscription publique.
         $this->actingAs($citizen)->get(route('subjects.index'))
             ->assertOk()
-            ->assertDontSee($subject->title);
+            ->assertSee($subject->title);
 
-        // Recherche Guest : absent.
+        // Recherche Guest : la restriction publique reste inchangée.
+        Auth::logout();
         $searchResponse = $this->get(route('search', ['q' => 'UNLISTED_PUBLIC_UNIQUE_7B9']));
         $searchResponse->assertOk()->assertSee('Aucun resultat');
         $this->assertStringNotContainsString(
@@ -120,7 +122,7 @@ class SubjectPublicDiscoverabilityTest extends TestCase
     }
 
     /** @test */
-    public function unlisted_public_subject_is_also_absent_from_category_counts_and_tree(): void
+    public function unlisted_public_subject_is_present_in_authenticated_category_counts_and_trees(): void
     {
         $subject = $this->makeSubject([
             'title' => 'UNLISTED_TREE_UNIQUE_C3D',
@@ -131,20 +133,20 @@ class SubjectPublicDiscoverabilityTest extends TestCase
 
         $citizen = User::factory()->create(['role' => 'citoyen']);
 
-        // Catalogue auth : authentifié mais pas admin ; l'ACL de l'auteur/citoyen ne change pas.
+        // Catalogue auth : l'ACL de l'auteur/citoyen ne change pas.
         $this->actingAs($citizen)->get(route('subjects.index'))
             ->assertOk()
-            ->assertDontSee($subject->title);
+            ->assertSee($subject->title);
 
         // Arbre sujets auth
         $this->actingAs($citizen)->getJson(route('subjects.tree.data'))
             ->assertOk()
-            ->assertJsonMissing(['title' => $subject->title]);
+            ->assertJsonFragment(['title' => $subject->title]);
 
         // Arbre documents auth
         $this->actingAs($citizen)->getJson(route('documents.tree.documents.data'))
             ->assertOk()
-            ->assertJsonMissing(['title' => $subject->title]);
+            ->assertJsonFragment(['title' => $subject->title]);
 
         // Accès direct Citoyen : OK (audience Public est accessible aux citoyens authentifiés)
         $this->actingAs($citizen)->get(route('subjects.show', $subject->slug))

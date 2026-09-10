@@ -23,7 +23,8 @@ class SearchController extends Controller
         $user = auth()->user();
 
         $subjectQuery = Subject::visibleTo($user)
-            ->listedInCatalogue()
+            ->where('status', '!=', 'archived')
+            ->when($user === null, fn ($query) => $query->listedInCatalogue())
             ->select(['id', 'title', 'slug', 'status', 'created_at', 'user_id'])
             ->with('user:id,name')
             ->limit(20);
@@ -42,7 +43,9 @@ class SearchController extends Controller
         $documentQuery = SubjectDocument::whereFullText(['filename', 'description'], $q)
             ->with(['subject:id,title,slug'])
             ->whereHas('subject', function ($sq) use ($user) {
-                $sq->visibleTo($user);
+                $sq->visibleTo($user)
+                    ->where('status', '!=', 'archived')
+                    ->when($user === null, fn ($query) => $query->listedInCatalogue());
             })
             ->visibleTo($user)
             ->limit(20);

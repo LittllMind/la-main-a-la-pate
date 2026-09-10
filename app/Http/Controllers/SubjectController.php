@@ -29,7 +29,6 @@ class SubjectController extends Controller
 
         $query = Subject::with(['user', 'subCategory', 'category'])
             ->visibleTo($user)
-            ->listedInCatalogue()
             ->where('status', '!=', 'archived')
             ->orderBy('created_at', 'desc');
 
@@ -47,7 +46,7 @@ class SubjectController extends Controller
         $subjects = $query->paginate(24)->withQueryString();
 
         $categories = \App\Models\Category::withCount(['subjects' => function ($q) use ($user) {
-            $q->where('status', '!=', 'archived')->visibleTo($user)->listedInCatalogue();
+            $q->where('status', '!=', 'archived')->visibleTo($user);
         }])->orderBy('id')->get();
 
         return view('subjects.index', [
