@@ -120,10 +120,13 @@ class SubjectGuinguetteIntegrationTest extends TestCase
             ->get(route('subjects.show', 'guinguette-urbanisme'));
 
         $response->assertOk();
-        // Working body contient "source_unique: `EXPORT-LMALP.md` (CIVITAS)"
-        $response->assertSee('source_unique');
-        // Working body contient "INSTRUCTION"
-        $response->assertSee('INSTRUCTION');
+        // La couche de présentation supprime les provenances techniques.
+        $response->assertDontSee('source_unique');
+        $response->assertDontSee('thread `1a07ac892386db3a`');
+        $response->assertDontSee('PDF local, canonisé dans CIVITAS');
+        // Les références documentaires utiles restent visibles.
+        $response->assertSee('Jugement TA n°2202355');
+        $response->assertSee('CR-CM 2021-10-12');
     }
 
     public function test_admin_can_preview_citizen(): void

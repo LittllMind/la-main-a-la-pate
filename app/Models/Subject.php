@@ -352,6 +352,10 @@ class Subject extends Model
             $markdown = self::convertHtmlToMarkdown($markdown);
         }
 
+        // Filtre les provenances techniques de collecte avant affichage.
+        // La traçabilité complète reste conservée en base (source_reference, etc.).
+        $markdown = \App\Support\DocumentProvenanceCleaner::cleanForDisplay($markdown);
+
         // Supprimer le lien #documents si aucun document visible pour cette représentation.
         // Le contrôleur a déjà préfiltré $this->body (via bodyFor) et $this->documents (via visibleTo).
         $hasVisibleDocs = $this->documents->count() > 0;
