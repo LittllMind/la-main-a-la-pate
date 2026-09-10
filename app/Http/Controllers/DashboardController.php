@@ -16,6 +16,7 @@ class DashboardController extends Controller
         $recentSubjects = Subject::query()
             ->subjectLastActivity()
             ->visibleTo($user)
+            ->where('status', '!=', 'archived')
             ->orderByDesc('last_activity_at')
             ->orderByDesc('subjects.id')
             ->with(['user', 'category', 'subCategory'])

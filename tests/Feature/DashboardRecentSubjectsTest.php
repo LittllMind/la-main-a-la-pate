@@ -95,4 +95,32 @@ class DashboardRecentSubjectsTest extends TestCase
         $response->assertSee('Sujet visible dashboard');
         $response->assertDontSee('Sujet interdit dashboard');
     }
+
+    public function test_admin_dashboard_excludes_archived_subject_but_direct_access_remains_available(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $author = User::factory()->create(['role' => 'admin']);
+
+        $activeSubject = Subject::factory()->create([
+            'user_id' => $author->id,
+            'title' => 'Sujet actif dashboard',
+            'updated_at' => now()->subMinute(),
+        ]);
+        $archivedSubject = Subject::factory()->create([
+            'user_id' => $author->id,
+            'title' => 'Sujet archive dashboard',
+            'status' => 'archived',
+            'updated_at' => now(),
+        ]);
+
+        $dashboard = $this->actingAs($admin)->get(route('dashboard'));
+
+        $dashboard->assertOk()
+            ->assertSee($activeSubject->title)
+            ->assertDontSee($archivedSubject->title);
+
+        $this->get(route('subjects.show', $archivedSubject->slug))
+            ->assertOk()
+            ->assertSee($archivedSubject->title);
+    }
 }
