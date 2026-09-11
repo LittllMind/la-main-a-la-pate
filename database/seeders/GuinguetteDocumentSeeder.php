@@ -14,6 +14,18 @@ class GuinguetteDocumentSeeder extends Seeder
     public function run(): void
     {
         $subject = Subject::where('slug', 'guinguette-urbanisme')->firstOrFail();
+        $subject->loadMissing('subCategory');
+
+        if (
+            $subject->category_id === null
+            || $subject->sub_category_id === null
+            || $subject->subCategory?->category_id !== $subject->category_id
+        ) {
+            throw new \RuntimeException(
+                "Taxonomie invalide pour guinguette-urbanisme : category_id={$subject->category_id}, sub_category_id={$subject->sub_category_id}."
+            );
+        }
+
         $storage = app(DocumentStorageService::class);
 
         // Représentation primaire : jugement PDF
