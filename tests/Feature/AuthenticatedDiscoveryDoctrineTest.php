@@ -171,4 +171,35 @@ class AuthenticatedDiscoveryDoctrineTest extends TestCase
             ->assertJsonFragment(['title' => $listed->title])
             ->assertJsonMissing(['title' => $unlisted->title]);
     }
+
+    public function test_visible_to_never_filters_by_public_is_listed_and_excludes_archived(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $draftUnlisted = $this->makeSubject('Videoprotection Admin Draft Unlisted', [
+            'status'         => 'draft',
+            'citizen_status' => 'draft',
+            'public_status'  => 'draft',
+            'public_is_listed' => false,
+        ]);
+
+        $archived = $this->makeSubject('Auth Archived Unlisted', [
+            'status' => 'archived',
+        ]);
+
+        $found = Subject::visibleTo($admin)
+            ->where('status', '!=', 'archived')
+            ->where('slug', $draftUnlisted->slug)
+            ->first();
+
+        $this->assertNotNull($found, 'Admin doit voir sujet draft unlisted');
+        $this->assertFalse($found->public_is_listed);
+
+        $archivedFound = Subject::visibleTo($admin)
+            ->where('status', '!=', 'archived')
+            ->where('slug', $archived->slug)
+            ->first();
+
+        $this->assertNull($archivedFound, 'Sujet archive doit etre exclu');
+    }
 }
