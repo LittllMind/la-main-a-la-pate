@@ -22,6 +22,7 @@ class CategorySubcategorySeeder extends Seeder
                     ['name' => 'Élections & délibérations',       'color' => '#dbeafe'],
                     ['name' => 'Budget communal',                 'color' => '#eff6ff'],
                     ['name' => 'Droit de pétition & participation', 'color' => '#e0f2fe'],
+                    ['name' => 'Sécurité & tranquillité publique', 'color' => '#bae6fd'],
                 ],
             ],
             [
