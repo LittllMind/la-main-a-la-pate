@@ -344,9 +344,18 @@ class Subject extends Model
         return $this->isPublicationApproved();
     }
 
-    public function renderBody(): string
+    public function renderBody(bool $stripTitle = false): string
     {
         $markdown = (string) $this->body;
+
+        // Supprimer le H1 Markdown identique au titre du Subject
+        // pour éviter la double lecture visuelle (H1 Blade + H1 Markdown).
+        if ($stripTitle) {
+            $title = $this->title;
+            // Ligne commençant par # + espace(s) + titre exact (insensible casse)
+            $pattern = '/^#\s+' . preg_quote($title, '/') . '\s*\r?\n/i';
+            $markdown = preg_replace($pattern, '', $markdown, 1);
+        }
 
         if (str_contains($markdown, '<') && str_contains($markdown, '>')) {
             $markdown = self::convertHtmlToMarkdown($markdown);

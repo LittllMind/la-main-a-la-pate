@@ -21,6 +21,7 @@
         body { font-family: 'Inter', system-ui, sans-serif; }
         [x-cloak] { display: none !important; }
     </style>
+    @yield('styles')
     @stack('head')
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">

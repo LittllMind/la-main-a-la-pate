@@ -49,7 +49,12 @@
         </div>
     </div>
 
-    @include('subjects._content')
+    @php
+        $isCitizenLevel = $level === \App\Models\VisibilityLevel::Citizen;
+        $wClass = $isCitizenLevel ? 'citizen-document' : 'subject-document';
+        $stripTitle = $isCitizenLevel;
+    @endphp
+    @include('subjects._content', ['wrapperClass' => $wClass, 'stripTitleH1' => $stripTitle])
 
     @if($level === \App\Models\VisibilityLevel::Public)
         <a href="{{ route('subjects.preview', [$subject->slug, 'citizen']) }}" target="_blank" class="inline-block mb-8 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition">👁 Voir comme Citoyen</a>
@@ -57,4 +62,41 @@
         <a href="{{ route('subjects.preview', [$subject->slug, 'public']) }}" target="_blank" class="inline-block mb-8 bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">👁 Voir comme Public</a>
     @endif
 </div>
+@endsection
+
+@section('styles')
+<style>
+/* ============================================================
+   CITIZEN DOCUMENT — rendu fiche citoyenne (non specific videoprotection)
+   ============================================================ */
+.citizen-document { font-size: 1.125rem; line-height: 1.65; color: #334155; }
+.citizen-document p   { margin-bottom: 1.25rem; }
+.citizen-document h2  { font-size: 1.5rem; font-weight: 700; margin-top: 2.25rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #cbd5e1; }
+.citizen-document h3  { font-size: 1.25rem; font-weight: 600; margin-top: 1.75rem; margin-bottom: 0.75rem; color: #475569; }
+.citizen-document h4  { font-size: 1.05rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #475569; }
+.citizen-document ul,
+.citizen-document ol  { margin: 1rem 0 1.25rem 0; padding-left: 1.75rem; }
+.citizen-document li  { margin-bottom: 0.3rem; line-height: 1.6; }
+.citizen-document a  { color: #0f766e; text-decoration: underline; text-underline-offset: 3px; }
+
+/* TABLE */
+.citizen-document table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.9375rem; }
+.citizen-document th,
+.citizen-document td  { border: 1px solid #cbd5e1; padding: 0.6rem 0.85rem; text-align: left; }
+.citizen-document th  { background-color: #f1f5f9; font-weight: 700; color: #334155; }
+.citizen-document tr:nth-child(even) { background-color: #f8fafc; }
+
+/* BLOCKQUOTE / L'ESSENTIEL — callout distinct */
+.citizen-document blockquote { 
+    border-left: 4px solid #0f766e; 
+    padding: 1rem 1.25rem; 
+    margin: 1.5rem 0; 
+    background-color: #f0fdf4; 
+    border-radius: 0.375rem; 
+    color: #1e293b; 
+    font-style: normal; 
+}
+.citizen-document blockquote p:first-child { margin-top: 0; }
+.citizen-document blockquote p:last-child  { margin-bottom: 0; }
+</style>
 @endsection
