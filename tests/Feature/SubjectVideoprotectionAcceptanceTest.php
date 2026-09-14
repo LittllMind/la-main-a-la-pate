@@ -58,7 +58,7 @@ class SubjectVideoprotectionAcceptanceTest extends TestCase
         $this->actingAs($admin)
             ->get('/sujets/videoprotection')
             ->assertOk()
-            ->assertSee('Videoprotection au Rozier');
+            ->assertSee('Vidéoprotection au Rozier');
     }
 
     public function test_admin_sujets_list_contains_videoprotection(): void
@@ -67,7 +67,7 @@ class SubjectVideoprotectionAcceptanceTest extends TestCase
         $this->actingAs($admin)
             ->get('/sujets')
             ->assertOk()
-            ->assertSee('Videoprotection au Rozier');
+            ->assertSee('Vidéoprotection au Rozier');
     }
 
     public function test_admin_sujets_arbre_contains_category(): void

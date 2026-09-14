@@ -1,0 +1,2 @@
+local_code_mutation=no
+prod_db_backup_required=yes

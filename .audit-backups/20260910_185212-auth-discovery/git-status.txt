@@ -1,0 +1,3 @@
+## v2-plateforme
+?? .audit-backups/
+?? 2026-09-10_HANDOFF-DEV_LMALP-ACCESS-DOCTRINE-V1.md
