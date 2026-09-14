@@ -53,8 +53,9 @@
         $isCitizenLevel = $level === \App\Models\VisibilityLevel::Citizen;
         $wClass = $isCitizenLevel ? 'citizen-document' : 'subject-document';
         $stripTitle = $isCitizenLevel;
+        $bodyMarkdown = $subject->bodyAtLevel($level) ?? ($isCitizenLevel ? ($subject->citizen_body ?? '') : $subject->body);
     @endphp
-    @include('subjects._content', ['wrapperClass' => $wClass, 'stripTitleH1' => $stripTitle])
+    @include('subjects._content', ['wrapperClass' => $wClass, 'stripTitleH1' => $stripTitle, 'bodyMarkdown' => $bodyMarkdown])
 
     @if($level === \App\Models\VisibilityLevel::Public)
         <a href="{{ route('subjects.preview', [$subject->slug, 'citizen']) }}" target="_blank" class="inline-block mb-8 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition">👁 Voir comme Citoyen</a>

@@ -383,6 +383,28 @@ class Subject extends Model
     }
 
     /**
+     * Rendu Markdown autonome pour un niveau d'audience donne.
+     * Accepte le texte Markdown et le titre necessaires a stripTitle.
+     */
+    public static function renderMarkdown(string $markdown, bool $stripTitle = false, ?string $title = null): string
+    {
+        $markdown = (string) $markdown;
+
+        if ($stripTitle && $title !== null && $title !== '') {
+            $pattern = '/^#\\s+' . preg_quote($title, '/') . '\\s*\\r?\\n/i';
+            $markdown = preg_replace($pattern, '', $markdown, 1);
+        }
+
+        if (str_contains($markdown, '<') && str_contains($markdown, '>')) {
+            $markdown = self::convertHtmlToMarkdown($markdown);
+        }
+
+        $markdown = \App\Support\DocumentProvenanceCleaner::cleanForDisplay($markdown);
+
+        return self::renderMarkdownToHtml($markdown);
+    }
+
+    /**
      * Convertit un texte Markdown autonome en HTML public en reutilisant
      * exactement la chaine de rendu CommonMark du body (Pandoc anchors,
      * IDs stables, table wrappers). Pas de mutation du sujet.

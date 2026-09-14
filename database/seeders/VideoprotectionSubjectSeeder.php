@@ -75,7 +75,7 @@ class VideoprotectionSubjectSeeder extends Seeder
                 'theme'            => 'Conseil municipal & Gouvernance',
                 'category_id'      => $category->id,
                 'sub_category_id'  => $subCategory->id,
-                'title'            => 'Videoprotection au Rozier',
+                'title'            => 'Vidéoprotection au Rozier',
                 'body'             => $body,
                 'citizen_body'     => $citizenBody,
                 'public_body'      => null,

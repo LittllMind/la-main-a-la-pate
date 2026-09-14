@@ -1,9 +1,16 @@
 @php
     $wrapperClass = $wrapperClass ?? 'subject-document';
     $stripTitleH1 = $stripTitleH1 ?? false;
+    $bodyMarkdown = $bodyMarkdown ?? null;
 @endphp
 <article class="bg-white rounded-lg border border-slate-200 p-6 mb-8 {{ $wrapperClass }}">
-    <div class="prose prose-slate max-w-none subject-markdown">{!! $subject->renderBody(stripTitle: $stripTitleH1 ?? false) !!}</div>
+    <div class="prose prose-slate max-w-none subject-markdown">
+        @if($bodyMarkdown !== null)
+            {!! App\Models\Subject::renderMarkdown($bodyMarkdown, stripTitle: $stripTitleH1 ?? false, title: $subject->title) !!}
+        @else
+            {!! $subject->renderBody(stripTitle: $stripTitleH1 ?? false) !!}
+        @endif
+    </div>
 </article>
 
 @if($subject->images->count() > 0)
