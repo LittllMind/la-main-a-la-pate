@@ -30,7 +30,14 @@ class SearchController extends Controller
             ->limit(20);
 
         if ($user !== null && $user->isModeratorOrAdmin()) {
-            $subjectQuery->whereFullText(['title', 'body'], $q);
+            $term = (string) $q;
+            $escapedTerm = addcslashes($term, '%_\\');
+
+            $subjectQuery->where(function ($query) use ($q, $escapedTerm) {
+                $query->whereFullText(['title', 'body'], $q)
+                    ->orWhere('title', 'like', '%' . $escapedTerm . '%')
+                    ->orWhere('body', 'like', '%' . $escapedTerm . '%');
+            });
         } else {
             // L'index FULLTEXT ne couvre que (title, body).
             // Pour les guests et les citoyens, on recherche d'abord par titre

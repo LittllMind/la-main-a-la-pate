@@ -67,25 +67,31 @@ class SubjectDocument extends Model
 
     public function scopeVisibleTo($query, ?User $user)
     {
-        return $query->where(function ($q) use ($user) {
-            if ($user === null) {
-                $q->where('visibility', VisibilityLevel::Public->value);
-                return;
-            }
+        return $query
+            ->whereHas('subject', fn ($subjectQuery) => $subjectQuery->visibleTo($user))
+            ->where(function ($q) use ($user) {
+                if ($user === null) {
+                    $q->where('visibility', VisibilityLevel::Public->value);
+                    return;
+                }
 
-            if ($user->isModeratorOrAdmin()) {
-                return;
-            }
+                if ($user->isModeratorOrAdmin()) {
+                    return;
+                }
 
-            $q->whereIn('visibility', [
-                VisibilityLevel::Citizen->value,
-                VisibilityLevel::Public->value,
-            ]);
-        });
+                $q->whereIn('visibility', [
+                    VisibilityLevel::Citizen->value,
+                    VisibilityLevel::Public->value,
+                ]);
+            });
     }
 
     public function visibleTo(?User $user): bool
     {
+        if (! $this->subject->canBeViewedBy($user)) {
+            return false;
+        }
+
         return $this->visibility?->visibleTo($user) ?? false;
     }
 

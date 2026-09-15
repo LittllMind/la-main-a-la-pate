@@ -14,7 +14,10 @@ class Subject extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'theme', 'title', 'slug', 'body', 'citizen_body', 'public_body', 'citizen_status', 'public_status', 'citizen_published_at', 'public_published_at', 'public_is_listed', 'status', 'locked_at', 'category_id', 'sub_category_id', 'visibility', 'published_at'];
+    protected $fillable = ['user_id', 'theme', 'title', 'slug', 'body', 'citizen_body', 'public_body', 'citizen_status', 'public_status', 'citizen_published_at', 'public_published_at', 'public_is_listed', 'status', 'locked_at', 'category_id', 'sub_category_id', 'visibility', 'access_level', 'published_at'];
+
+    public const ACCESS_LEVEL_STANDARD = 'standard';
+    public const ACCESS_LEVEL_SUPER_ADMIN_ONLY = 'super_admin_only';
 
     protected $casts = [
         'locked_at' => 'datetime',
@@ -49,6 +52,11 @@ class Subject extends Model
         return $this->hasMany(SubjectComment::class)->orderBy('created_at', 'asc');
     }
     
+    public function isSuperAdminOnly(): bool
+    {
+        return $this->access_level === self::ACCESS_LEVEL_SUPER_ADMIN_ONLY;
+    }
+
     public function scopeSubjectLastActivity($query)
     {
         $versionSub = SubjectVersion::query()
@@ -85,6 +93,15 @@ class Subject extends Model
      */
     public function scopeVisibleTo($query, ?User $user)
     {
+        if ($user !== null && $user->isSuperAdmin()) {
+            return $query;
+        }
+
+        $query->where(function ($accessQuery) {
+            $accessQuery->where('access_level', self::ACCESS_LEVEL_STANDARD)
+                ->orWhereNull('access_level');
+        });
+
         if ($user === null) {
             return $query->where('public_status', 'published')
                 ->whereNotNull('public_body');
@@ -204,6 +221,10 @@ class Subject extends Model
      */
     public function bodyFor(?User $user): ?string
     {
+        if ($this->isSuperAdminOnly() && ($user === null || ! $user->isSuperAdmin())) {
+            return null;
+        }
+
         if ($user !== null && ($user->isModeratorOrAdmin() || $user->id === $this->user_id || $this->isCollaborator($user))) {
             return $this->body;
         }
@@ -230,6 +251,10 @@ class Subject extends Model
 
     public function canBeViewedBy(?User $user): bool
     {
+        if ($this->isSuperAdminOnly()) {
+            return $user?->isSuperAdmin() ?? false;
+        }
+
         if ($body = $this->bodyFor($user)) {
             return true;
         }

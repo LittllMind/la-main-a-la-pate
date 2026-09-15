@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\Subject;
+use App\Models\SubjectDocument;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ActivityLogController extends Controller
@@ -11,6 +14,8 @@ class ActivityLogController extends Controller
     public function index(Request $request)
     {
         $query = ActivityLog::with('user')->orderBy('created_at', 'desc');
+
+        $this->restrictSubjectLogs($query, $request->user());
 
         if ($request->filled('event_type')) {
             $query->where('event_type', $request->input('event_type'));
@@ -45,5 +50,32 @@ class ActivityLogController extends Controller
         $entityTypes = ActivityLog::distinct()->orderBy('entity_type')->pluck('entity_type');
 
         return view('admin.activity', compact('logs', 'stats', 'eventTypes', 'entityTypes'));
+    }
+
+    private function restrictSubjectLogs($query, User $user): void
+    {
+        if ($user->isSuperAdmin()) {
+            return;
+        }
+
+        $visibleSubjectIds = Subject::query()
+            ->visibleTo($user)
+            ->select('subjects.id');
+        $visibleDocumentIds = SubjectDocument::query()
+            ->visibleTo($user)
+            ->select('subject_documents.id');
+
+        $query->where(function ($logQuery) use ($visibleSubjectIds, $visibleDocumentIds) {
+            $logQuery->whereNull('entity_type')
+                ->orWhereNotIn('entity_type', ['subject', 'subject_document'])
+                ->orWhere(function ($subjectQuery) use ($visibleSubjectIds) {
+                    $subjectQuery->where('entity_type', 'subject')
+                        ->whereIn('entity_id', $visibleSubjectIds);
+                })
+                ->orWhere(function ($documentQuery) use ($visibleDocumentIds) {
+                    $documentQuery->where('entity_type', 'subject_document')
+                        ->whereIn('entity_id', $visibleDocumentIds);
+                });
+        });
     }
 }

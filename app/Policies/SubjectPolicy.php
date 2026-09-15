@@ -19,21 +19,33 @@ class SubjectPolicy
 
     public function create(User $user): bool
     {
-        return in_array($user->role, ['admin', 'moderator', 'citoyen', 'member']);
+        return in_array($user->role, ['admin', 'moderator', 'citoyen', 'member', 'super_admin'], true);
     }
 
     public function update(User $user, Subject $subject): bool
     {
+        if ($subject->isSuperAdminOnly()) {
+            return $user->isSuperAdmin();
+        }
+
         return $this->canManage($user, $subject) || $subject->isCollaborator($user);
     }
 
     public function delete(User $user, Subject $subject): bool
     {
-        return $user->role === 'admin' || $user->id === $subject->user_id;
+        if ($subject->isSuperAdminOnly()) {
+            return $user->isSuperAdmin();
+        }
+
+        return $user->isAdmin() || $user->id === $subject->user_id;
     }
 
     public function publish(User $user, Subject $subject): bool
     {
+        if ($subject->isSuperAdminOnly()) {
+            return $user->isSuperAdmin();
+        }
+
         return $this->canManage($user, $subject) || $subject->isCollaborator($user);
     }
 

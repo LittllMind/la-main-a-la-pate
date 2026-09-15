@@ -57,9 +57,14 @@ class User extends Authenticatable
         });
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return in_array($this->role, ['admin', 'super_admin'], true);
     }
 
     public function isModerator(): bool
@@ -74,7 +79,7 @@ class User extends Authenticatable
 
     public function isCitizen(): bool
     {
-        return in_array($this->role, ['citoyen', 'member', 'admin', 'moderator']);
+        return in_array($this->role, ['citoyen', 'member', 'admin', 'moderator', 'super_admin'], true);
     }
 
     public function subjects()
