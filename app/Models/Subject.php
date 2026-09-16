@@ -18,6 +18,7 @@ class Subject extends Model
 
     public const ACCESS_LEVEL_STANDARD = 'standard';
     public const ACCESS_LEVEL_SUPER_ADMIN_ONLY = 'super_admin_only';
+    public const ACCESS_LEVEL_COLLABORATORS_ONLY = 'collaborators_only';
 
     protected $casts = [
         'locked_at' => 'datetime',
@@ -57,6 +58,11 @@ class Subject extends Model
         return $this->access_level === self::ACCESS_LEVEL_SUPER_ADMIN_ONLY;
     }
 
+    public function isCollaboratorsOnly(): bool
+    {
+        return $this->access_level === self::ACCESS_LEVEL_COLLABORATORS_ONLY;
+    }
+
     public function scopeSubjectLastActivity($query)
     {
         $versionSub = SubjectVersion::query()
@@ -93,14 +99,32 @@ class Subject extends Model
      */
     public function scopeVisibleTo($query, ?User $user)
     {
+        // super_admin voit tout
         if ($user !== null && $user->isSuperAdmin()) {
             return $query;
         }
 
-        $query->where(function ($accessQuery) {
+        // Sujets à accès restreint : uniquement auteur + collaborateurs
+        $query->where(function ($accessQuery) use ($user) {
             $accessQuery->where('access_level', self::ACCESS_LEVEL_STANDARD)
-                ->orWhereNull('access_level');
+                ->orWhereNull('access_level')
+                ->orWhere(function ($restricted) use ($user) {
+                    // Collaborators-only : l'auditeur doit être auteur ou collaborateur.
+                    // Guest et tout utilisateur non identifié sont exclus.
+                    $restricted->where('access_level', self::ACCESS_LEVEL_COLLABORATORS_ONLY);
+
+                    if ($user !== null) {
+                        $restricted->where(function ($q) use ($user) {
+                            $q->where('user_id', $user->id)
+                                ->orWhereHas('collaborators', fn ($c) => $c->where('users.id', $user->id));
+                        });
+                    } else {
+                        $restricted->whereRaw('1 = 0');
+                    }
+                });
         });
+
+        // super_admin_only est exclu ci-dessus (pas standard/null/collaborators_only)
 
         if ($user === null) {
             return $query->where('public_status', 'published')
@@ -120,7 +144,6 @@ class Subject extends Model
                         ->whereNotNull('citizen_body');
                 })
                 ->orWhere(function ($q2) use ($user) {
-                    // Citoyen n'a pas accès au statut public ; autres rôles authentifiés (hors admin/auteur/collab) non plus.
                     if ($user->role !== 'citoyen') {
                         $q2->whereRaw('1 = 0');
                         return;
@@ -225,6 +248,10 @@ class Subject extends Model
             return null;
         }
 
+        if ($this->isCollaboratorsOnly() && ($user === null || ($user->id !== $this->user_id && ! $this->isCollaborator($user) && ! $user->isSuperAdmin()))) {
+            return null;
+        }
+
         if ($user !== null && ($user->isModeratorOrAdmin() || $user->id === $this->user_id || $this->isCollaborator($user))) {
             return $this->body;
         }
@@ -253,6 +280,16 @@ class Subject extends Model
     {
         if ($this->isSuperAdminOnly()) {
             return $user?->isSuperAdmin() ?? false;
+        }
+
+        if ($this->isCollaboratorsOnly()) {
+            if ($user === null) {
+                return false;
+            }
+
+            return $user->isSuperAdmin()
+                || $user->id === $this->user_id
+                || $this->isCollaborator($user);
         }
 
         if ($body = $this->bodyFor($user)) {

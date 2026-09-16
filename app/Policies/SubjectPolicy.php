@@ -28,6 +28,12 @@ class SubjectPolicy
             return $user->isSuperAdmin();
         }
 
+        if ($subject->isCollaboratorsOnly()) {
+            return $user->isSuperAdmin()
+                || $user->id === $subject->user_id
+                || $subject->isCollaborator($user);
+        }
+
         return $this->canManage($user, $subject) || $subject->isCollaborator($user);
     }
 
@@ -37,6 +43,11 @@ class SubjectPolicy
             return $user->isSuperAdmin();
         }
 
+        if ($subject->isCollaboratorsOnly()) {
+            return $user->isSuperAdmin()
+                || $user->id === $subject->user_id;
+        }
+
         return $user->isAdmin() || $user->id === $subject->user_id;
     }
 
@@ -44,6 +55,12 @@ class SubjectPolicy
     {
         if ($subject->isSuperAdminOnly()) {
             return $user->isSuperAdmin();
+        }
+
+        if ($subject->isCollaboratorsOnly()) {
+            return $user->isSuperAdmin()
+                || $user->id === $subject->user_id
+                || $subject->isCollaborator($user);
         }
 
         return $this->canManage($user, $subject) || $subject->isCollaborator($user);
