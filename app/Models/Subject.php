@@ -224,6 +224,40 @@ class Subject extends Model
     }
 
     /**
+     * Détecte si un texte Markdown (ou HTML de body) commence par un titre de
+     * niveau 1. Utilisé par la couche de présentation pour supprimer le H1
+     * template quand le Markdown canonique fournit déjà son propre H1.
+     */
+    public static function markdownStartsWithH1(?string $markdown): bool
+    {
+        if (! filled($markdown)) {
+            return false;
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', $markdown);
+        foreach ($lines as $line) {
+            $trim = ltrim($line);
+            if ($trim === '' || str_starts_with($trim, '<!--')) {
+                continue;
+            }
+
+            // Heading atx # (exactement un seul # suivi d'un espace ou de fin)
+            if (preg_match('/^#(?!#)\s/', $trim)) {
+                return true;
+            }
+
+            // HTML <h1...> en première position significative
+            if (preg_match('/^\s*<h1\b/i', $trim)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
      * Filtre les documents du sujet pour un niveau d'audience donné.
      */
     public function documentsAtLevel(VisibilityLevel $level): \Illuminate\Database\Eloquent\Collection

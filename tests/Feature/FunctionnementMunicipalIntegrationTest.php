@@ -114,11 +114,59 @@ class FunctionnementMunicipalIntegrationTest extends TestCase
             '--user-id' => $admin->id,
         ])->assertSuccessful();
 
-        $this->actingAs($admin)
-            ->get('/sujets/fonctionnement-municipal/apercu/citizen')
-            ->assertOk()
-            ->assertSee('Fonctionnement municipal au Rozier')
-            ->assertSee('La question en bref');
+        $response = $this->actingAs($admin)
+            ->get('/sujets/fonctionnement-municipal/apercu/citizen');
+
+        $response->assertOk();
+        $response->assertSee('Fonctionnement municipal au Rozier');
+        $response->assertSee('La question en bref');
+        $this->assertSingleH1($response, 'Fonctionnement municipal au Rozier');
+    }
+
+    /** @test */
+    public function rendered_pages_keep_canonical_h1_unique(): void
+    {
+        ['admin' => $admin] = $this->seedEnvironment();
+
+        $this->artisan('app:integrate-functionnement-municipal', [
+            '--pack-path' => $this->packPath,
+            '--user-id' => $admin->id,
+        ])->assertSuccessful();
+
+        $subject = Subject::where('slug', self::SLUG)->firstOrFail();
+
+        $expectedInstructionSha = hash_file('sha256', $this->packPath . '/' . self::INSTRUCTION_FILE);
+        $expectedCitizenSha = hash_file('sha256', $this->packPath . '/' . self::CITIZEN_FILE);
+
+        $show = $this->actingAs($admin)
+            ->get('/sujets/' . self::SLUG);
+        $citizen = $this->actingAs($admin)
+            ->get('/sujets/' . self::SLUG . '/apercu/citizen');
+
+        $this->assertSingleH1($show);
+        $this->assertSingleH1($citizen);
+
+        $this->assertSame(
+            $expectedInstructionSha,
+            hash('sha256', $subject->body),
+            'body DB a été altéré'
+        );
+        $this->assertSame(
+            $expectedCitizenSha,
+            hash('sha256', $subject->citizen_body),
+            'citizen_body DB a été altéré'
+        );
+    }
+
+    private function assertSingleH1(\Illuminate\Testing\TestResponse $response, ?string $expectedText = null): void
+    {
+        $html = $response->getContent();
+        $h1Count = preg_match_all('/<h1\b/', $html);
+        $this->assertSame(1, $h1Count, 'La page doit contenir exactement un H1 visuel');
+
+        if ($expectedText !== null) {
+            $response->assertSee($expectedText);
+        }
     }
 
     /** @test */

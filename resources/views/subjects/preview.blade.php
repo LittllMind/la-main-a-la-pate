@@ -34,6 +34,13 @@
         </div>
     </div>
 
+    @php
+        $isCitizenLevel = $level === \App\Models\VisibilityLevel::Citizen;
+        $wClass = $isCitizenLevel ? 'citizen-document' : 'subject-document';
+        $bodyMarkdown = $subject->bodyAtLevel($level) ?? ($isCitizenLevel ? ($subject->citizen_body ?? '') : $subject->body);
+        $hideTemplateH1 = \App\Models\Subject::markdownStartsWithH1($bodyMarkdown);
+    @endphp
+
     <div class="mb-6">
         <a href="{{ route('subjects.show', $subject->slug) }}" class="text-sm text-slate-500 hover:text-slate-900 mb-2 inline-block">← Retour à la fiche</a>
         <div class="flex items-center gap-2 text-xs mb-2">
@@ -42,20 +49,16 @@
                 <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Brouillon</span>
             @endif
         </div>
-        <h1 class="text-3xl font-bold text-slate-900">{{ $subject->title }}</h1>
+        @if(! $hideTemplateH1)
+            <h1 class="text-3xl font-bold text-slate-900">{{ $subject->title }}</h1>
+        @endif
         <div class="mt-2 flex items-center gap-2 text-sm text-slate-500">
             <span class="inline-block w-3 h-3 rounded-full" style="background-color: {{ $subject->user->color ?: '#64748b' }}"></span>
             Rédigé par {{ $subject->user->name }} — {{ $subject->updated_at->format('d/m/Y') }}
         </div>
     </div>
 
-    @php
-        $isCitizenLevel = $level === \App\Models\VisibilityLevel::Citizen;
-        $wClass = $isCitizenLevel ? 'citizen-document' : 'subject-document';
-        $stripTitle = $isCitizenLevel;
-        $bodyMarkdown = $subject->bodyAtLevel($level) ?? ($isCitizenLevel ? ($subject->citizen_body ?? '') : $subject->body);
-    @endphp
-    @include('subjects._content', ['wrapperClass' => $wClass, 'stripTitleH1' => $stripTitle, 'bodyMarkdown' => $bodyMarkdown])
+    @include('subjects._content', ['wrapperClass' => $wClass, 'stripTitleH1' => false, 'bodyMarkdown' => $bodyMarkdown])
 
     @if($level === \App\Models\VisibilityLevel::Public)
         <a href="{{ route('subjects.preview', [$subject->slug, 'citizen']) }}" target="_blank" class="inline-block mb-8 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition">👁 Voir comme Citoyen</a>
