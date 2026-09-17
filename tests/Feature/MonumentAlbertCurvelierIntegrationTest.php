@@ -54,7 +54,7 @@ class MonumentAlbertCurvelierIntegrationTest extends TestCase
 
         $this->patrice = User::factory()->create([
             'role' => 'citoyen',
-            'name' => 'Patrice',
+            'name' => 'Patrice Denjean',
             'username' => 'patrice',
             'email_verified_at' => now(),
             'requires_setup' => false,

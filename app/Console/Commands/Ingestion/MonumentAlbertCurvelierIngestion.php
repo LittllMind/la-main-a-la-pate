@@ -7,9 +7,8 @@ use App\Models\SubCategory;
 use App\Models\Subject;
 use App\Models\SubjectVersion;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Intégration idempotente du Subject Monument aux morts — Albert Curvelier.
@@ -92,55 +91,62 @@ class MonumentAlbertCurvelierIngestion extends Command
             return self::SUCCESS;
         }
 
-        $subject = Subject::updateOrCreate(
-            ['slug' => self::SLUG],
-            [
-                'user_id' => $author->id,
-                'category_id' => $category->id,
-                'sub_category_id' => $subCategory->id,
-                'theme' => $category->name,
-                'title' => self::TITLE,
-                'body' => $instructionBody,
-                'citizen_body' => $citizenBody,
-                'public_body' => null,
-                'status' => 'draft',
-                'citizen_status' => 'draft',
-                'public_status' => 'draft',
-                'public_is_listed' => false,
-                'access_level' => Subject::ACCESS_LEVEL_COLLABORATORS_ONLY,
-                'published_at' => null,
-                'citizen_published_at' => null,
-                'public_published_at' => null,
-            ]
-        );
+        try {
+            DB::transaction(function () use ($author, $category, $subCategory, $instructionBody, $citizenBody) {
+                $subject = Subject::updateOrCreate(
+                    ['slug' => self::SLUG],
+                    [
+                        'user_id' => $author->id,
+                        'category_id' => $category->id,
+                        'sub_category_id' => $subCategory->id,
+                        'theme' => $category->name,
+                        'title' => self::TITLE,
+                        'body' => $instructionBody,
+                        'citizen_body' => $citizenBody,
+                        'public_body' => null,
+                        'status' => 'draft',
+                        'citizen_status' => 'draft',
+                        'public_status' => 'draft',
+                        'public_is_listed' => false,
+                        'access_level' => Subject::ACCESS_LEVEL_COLLABORATORS_ONLY,
+                        'published_at' => null,
+                        'citizen_published_at' => null,
+                        'public_published_at' => null,
+                    ]
+                );
 
-        $subject->load('collaborators');
+                if (! $this->attachCollaborators($subject)) {
+                    throw new \RuntimeException('Rattachement des collaborateurs attendus impossible.');
+                }
 
-        $this->attachCollaborators($subject, $author);
+                $subject->load('collaborators');
 
-        $versionChanged = true;
-        if ($existing) {
-            $lastVersion = $subject->versions()->first();
-            $versionChanged = ! $lastVersion
-                || $lastVersion->body !== $instructionBody
-                || $lastVersion->citizen_body !== $citizenBody;
+                $lastVersion = $subject->versions()->first();
+                $versionChanged = ! $lastVersion
+                    || $lastVersion->body !== $instructionBody
+                    || $lastVersion->citizen_body !== $citizenBody;
+
+                if ($versionChanged) {
+                    SubjectVersion::create([
+                        'subject_id' => $subject->id,
+                        'user_id' => $author->id,
+                        'body' => $instructionBody,
+                        'citizen_body' => $citizenBody,
+                        'public_body' => null,
+                        'change_summary' => 'Initial private draft integration — human review.',
+                    ]);
+
+                    $this->info('SubjectVersion créée.');
+                }
+
+                $this->info("Subject ID {$subject->id} — slug {$subject->slug}");
+                $this->info('Collaborateurs : ' . $subject->collaborators->pluck('name')->implode(', '));
+            });
+        } catch (\Throwable $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
         }
-
-        if ($versionChanged) {
-            SubjectVersion::create([
-                'subject_id' => $subject->id,
-                'user_id' => $author->id,
-                'body' => $instructionBody,
-                'citizen_body' => $citizenBody,
-                'public_body' => null,
-                'change_summary' => 'Initial private draft integration — human review.',
-            ]);
-
-            $this->info('SubjectVersion créée.');
-        }
-
-        $this->info("Subject ID {$subject->id} — slug {$subject->slug}");
-        $this->info('Collaborateurs : ' . $subject->collaborators->pluck('name')->implode(', '));
 
         return self::SUCCESS;
     }
@@ -162,54 +168,35 @@ class MonumentAlbertCurvelierIngestion extends Command
         return trim($raw);
     }
 
-    private function attachCollaborators(Subject $subject, User $author): void
+    private function attachCollaborators(Subject $subject): bool
     {
-        $wantedNames = [
-            'Aurélien',
-            'Aurelien',
-            'Aurélien Tisserand',
-            'Patrice',
-        ];
+        // Résolution EXACTE des deux collaborateurs attendus.
+        // Aucun fallback, aucune création de compte local, pas de LIKE flou.
+        $aurelienCount = User::where('name', 'Aurélien')->count();
+        $patriceCount = User::where('name', 'Patrice Denjean')->count();
 
-        $users = User::query()
-            ->where(function ($q) use ($wantedNames) {
-                foreach ($wantedNames as $name) {
-                    $q->orWhere('name', 'LIKE', '%' . $name . '%')
-                        ->orWhere('username', 'LIKE', '%' . $name . '%')
-                        ->orWhere('pseudonyme', 'LIKE', '%' . $name . '%');
-                }
-            })
-            ->get();
+        if ($aurelienCount !== 1) {
+            $this->error("Résolution ambiguë du collaborateur Aurélien (trouvé {$aurelienCount}).");
 
-        $patrice = $users->first(fn (User $u) => str_contains(strtolower($u->name), 'patrice'));
-
-        if (! $patrice) {
-            $this->warn('Compte Patrice introuvable en base locale. Création d\'un compte local de substitution.');
-            $patrice = $this->createLocalPatrice();
+            return false;
         }
 
-        $collaboratorIds = collect([$author->id, $patrice->id])
+        if ($patriceCount !== 1) {
+            $this->error("Résolution ambiguë du collaborateur Patrice Denjean (trouvé {$patriceCount}).");
+
+            return false;
+        }
+
+        $aurelien = User::where('name', 'Aurélien')->first();
+        $patrice = User::where('name', 'Patrice Denjean')->first();
+
+        $collaboratorIds = collect([$aurelien->id, $patrice->id])
             ->unique()
             ->values()
             ->all();
 
         $subject->collaborators()->sync($collaboratorIds);
-    }
 
-    private function createLocalPatrice(): User
-    {
-        $email = 'patrice-' . time() . '@example.test';
-        $username = 'patrice_' . time();
-
-        return User::create([
-            'name' => 'Patrice',
-            'pseudonyme' => 'patrice',
-            'email' => $email,
-            'username' => $username,
-            'password' => 'password',
-            'email_verified_at' => now(),
-            'role' => 'citoyen',
-            'requires_setup' => false,
-        ]);
+        return true;
     }
 }
