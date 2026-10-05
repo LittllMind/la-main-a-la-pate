@@ -62,17 +62,17 @@
             {{-- Onglets version travail / citoyen / public --}}
             <div class="flex items-center border-b border-slate-200 mb-3" role="tablist">
                 <button type="button" id="body-tab" data-tab="body" data-editor-tab="body" aria-controls="body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-700 border-b-2 border-emerald-600" aria-selected="true" role="tab">
-                    Travail
+                    Instruction
                     <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 border border-slate-200">interne</span>
                 </button>
                 @if(auth()->user()->isAdmin())
                 <button type="button" id="citizen_body-tab" data-tab="citizen_body" data-editor-tab="citizen_body" aria-controls="citizen_body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700" role="tab" aria-selected="false">
-                    Citoyen
+                    Public connecté
                     @php $citizenColor = \App\Models\Subject::statusColor($subject->citizen_status); @endphp
                     <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-{{ $citizenColor }}-100 text-{{ $citizenColor }}-700 border border-{{ $citizenColor }}-200">{{ \App\Models\Subject::statusLabel($subject->citizen_status) }}</span>
                 </button>
                 <button type="button" id="public_body-tab" data-tab="public_body" data-editor-tab="public_body" aria-controls="public_body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700" role="tab" aria-selected="false">
-                    Public
+                    Public déconnecté
                     @php $publicColor = \App\Models\Subject::statusColor($subject->public_status); @endphp
                     <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-{{ $publicColor }}-100 text-{{ $publicColor }}-700 border border-{{ $publicColor }}-200">{{ \App\Models\Subject::statusLabel($subject->public_status) }}</span>
                 </button>
@@ -80,7 +80,7 @@
             </div>
 
             <div class="flex items-center justify-between mb-1">
-                <label class="block text-sm font-medium text-slate-700" id="version-label" for="body">Document de travail (admin)</label>
+                <label class="block text-sm font-medium text-slate-700" id="version-label" for="body">Instruction</label>
                 <span class="text-xs text-slate-500">Rédaction au format Markdown — simple et clair</span>
             </div>
 
@@ -321,9 +321,9 @@
         const panels = document.querySelectorAll('.tab-panel');
         const label = document.getElementById('version-label');
         const labels = {
-            'body': 'Document de travail (admin)',
-            'citizen_body': 'Document collectif \u2014 version citoyen',
-            'public_body': 'Synthèse publique \u2014 version publique'
+            'body': 'Instruction',
+            'citizen_body': 'Public connecté',
+            'public_body': 'Public déconnecté'
         };
 
         tabs.forEach(tab => {

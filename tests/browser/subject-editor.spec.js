@@ -75,3 +75,23 @@ test('aperçu conserve les constructions Markdown de lecture', async ({ page }) 
     await expect(preview.locator('table tbody tr td')).toHaveCount(3);
     await expect(preview.locator('table tbody tr td').nth(1)).toHaveText('');
 });
+
+test('aperçu ignore les titres Markdown temporairement vides', async ({ page }) => {
+    await mountEditor(page, { body: '## \n### \nTexte conservé' });
+    const preview = page.locator('[data-markdown-preview]');
+
+    await expect(preview.locator('h2, h3')).toHaveCount(0);
+    await expect(preview).toContainText('Texte conservé');
+});
+
+test('aperçu conserve les listes lors des transitions de types et des imbrications', async ({ page }) => {
+    await mountEditor(page, { body: '- Puce 1\n  1. Numéro imbriqué\n  2. Deuxième numéro\n- Puce 2\n\n1. Numéro 1\n   - Puce imbriquée\n2. Numéro 2' });
+    const preview = page.locator('[data-markdown-preview]');
+
+    await expect(preview.locator('ul > li')).toHaveCount(2);
+    await expect(preview.locator('ul ol > li')).toHaveCount(2);
+    await expect(preview.locator('ol > li')).toHaveCount(2);
+    await expect(preview.locator('ol ul > li')).toHaveCount(1);
+    await expect(preview).toContainText('Puce 2');
+    await expect(preview).toContainText('Numéro 2');
+});

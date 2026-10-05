@@ -156,9 +156,12 @@ function buildMarkdownRenderer() {
             let i = 0;
             while (i < lines.length) {
                 if (! lines[i].trim()) { i++; continue; }
-                if (/^ {0,3}#{1,6}\s+/.test(lines[i])) {
-                    const match = lines[i].match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*$/);
-                    blocks.push(`<h${match[1].length}>${inlineMarkdown(match[2])}</h${match[1].length}>`); i++; continue;
+                const heading = lines[i].match(/^ {0,3}(#{1,6})(?:\s+(.*?)\s*#*)?$/);
+                if (heading) {
+                    if (heading[2]?.trim()) {
+                        blocks.push(`<h${heading[1].length}>${inlineMarkdown(heading[2].trim())}</h${heading[1].length}>`);
+                    }
+                    i++; continue;
                 }
                 if (/^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(lines[i])) { blocks.push('<hr>'); i++; continue; }
                 if (/^\s*>/.test(lines[i])) {
@@ -185,7 +188,7 @@ function buildMarkdownRenderer() {
 }
 
 function isBlockStart(line) {
-    return /^ {0,3}#{1,6}\s+/.test(line) || /^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)
+    return /^ {0,3}#{1,6}(?:\s+.*)?$/.test(line) || /^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)
         || /^\s*>/.test(line) || /^\s*(?:[-*+] |\d+[.)] )/.test(line) || /^\s*\|/.test(line);
 }
 
@@ -213,7 +216,14 @@ function consumeList(lines, start) {
         }
         return { html: html + `</${tag}>`, next: index };
     };
-    return { ...renderLevel(0, root[0].indent), next: i };
+    let index = 0;
+    let html = '';
+    while (index < root.length) {
+        const segment = renderLevel(index, root[index].indent);
+        html += segment.html;
+        index = segment.next;
+    }
+    return { html, next: i };
 }
 
 function inlineMarkdown(value) {

@@ -92,6 +92,10 @@ class SubjectEditorTest extends TestCase
         $this->assertStringContainsString('Public connecté', $html);
         $this->assertStringContainsString('Public déconnecté', $html);
         $this->assertStringContainsString('data-audience-label="Instruction"', $html);
+        $this->assertStringContainsString('>Instruction', preg_replace('/\s+/', '', $html));
+        $this->assertStringContainsString('>Publicconnecté', preg_replace('/\s+/', '', $html));
+        $this->assertStringContainsString('>Publicdéconnecté', preg_replace('/\s+/', '', $html));
+        $this->assertStringContainsString('>Instruction</label>', preg_replace('/\s+/', '', $html));
     }
 
     public function test_create_editor_has_a_real_editor_panel_for_preview_mode(): void
@@ -114,5 +118,12 @@ class SubjectEditorTest extends TestCase
         $this->assertStringContainsString('for="body"', $html);
         $this->assertStringContainsString('for="citizen_body"', $html);
         $this->assertStringContainsString('for="public_body"', $html);
+    }
+
+    public function test_playwright_discovers_legacy_and_new_browser_tests(): void
+    {
+        $config = file_get_contents(base_path('playwright.config.js'));
+
+        $this->assertStringContainsString("testMatch: ['tests/e2e/**/*.spec.js', 'tests/browser/**/*.spec.js']", $config);
     }
 }
