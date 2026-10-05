@@ -45,23 +45,24 @@
 
         <div class="mb-5" data-markdown-editor data-help-reference>
             <div class="flex items-center justify-between mb-1">
-                <label class="block text-sm font-medium text-slate-700">Contenu du document</label>
+                <label for="body" class="block text-sm font-medium text-slate-700">Contenu du document</label>
                 <span class="text-xs text-slate-500">Rédaction au format Markdown — simple et clair</span>
             </div>
 
-            <div class="border border-slate-300 rounded-md p-2 mb-2 flex flex-wrap gap-2 bg-slate-50" aria-label="Mises en formes courantes">
-                <button type="button" data-insert="## " data-tip="Titre principal : ## Mon titre" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Titre <span class="text-slate-400">#</span></button>
-                <button type="button" data-insert="### " data-tip="Sous-titre : ### Mon sous-titre" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Sous-titre <span class="text-slate-400">#</span></button>
+            <div class="border border-slate-300 rounded-md p-2 mb-2 flex flex-wrap gap-2 bg-slate-50" aria-label="Barre d’outils Markdown" role="toolbar">
+                <button type="button" data-insert="## " data-tip="Titre de section : ## Mon titre" aria-label="Titre de section" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100 focus:ring-2 focus:ring-emerald-500">Titre de section <span class="text-slate-400">##</span></button>
+                <button type="button" data-insert="### " data-tip="Sous-section : ### Mon sous-titre" aria-label="Sous-section" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100 focus:ring-2 focus:ring-emerald-500">Sous-section <span class="text-slate-400">###</span></button>
                 <button type="button" data-insert="**texte**" data-tip="Texte en gras : **mon mot**" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Gras <span class="text-slate-400">**</span></button>
                 <button type="button" data-insert="*texte*" data-tip="Texte en italique : *mon mot*" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Italique <span class="text-slate-400">*</span></button>
-                <button type="button" data-insert="\n- élément\n" data-tip="Liste à puces : - élément" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste <span class="text-slate-400">-</span></button>
-                <button type="button" data-insert="\n> " data-tip="Citation : > une phrase" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation <span class="text-slate-400">></span></button>
+                <button type="button" data-insert="\n- élément\n" data-tip="Liste à puces : - élément" aria-label="Liste à puces" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste à puces <span class="text-slate-400">-</span></button>
+                <button type="button" data-insert="\n1. élément\n" data-tip="Liste numérotée : 1. élément" aria-label="Liste numérotée" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste numérotée <span class="text-slate-400">1.</span></button>
+                <button type="button" data-insert="\n> " data-tip="Citation : > une phrase" aria-label="Citation" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation <span class="text-slate-400">&gt;</span></button>
                 <button type="button" data-insert="\n| Colonne 1 | Colonne 2 |\n| --- | --- |\n| a | b |\n" data-tip="Tableau : utilise des | et des -" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Tableau <span class="text-slate-400">|</span></button>
                 <button type="button" data-insert="[texte](https://)" data-tip="Lien : [texte](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien <span class="text-slate-400">[...](...)</span></button>
-                <button type="button" data-insert="\n![légende](https://)\n" data-tip="Image : ![légende](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image URL <span class="text-slate-400">![...](...)</span></button>
+                <button type="button" data-insert="\n![légende](https://)\n" data-tip="Image : ![légende](https://...)" aria-label="Image" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image <span class="text-slate-400">![...](...)</span></button>
             </div>
 
-            <textarea id="body" name="body" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="Exemple de rédaction simple :
+            <textarea id="body" name="body" data-editor-field data-audience-label="Travail" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Exemple de rédaction simple :
 
 # Mon sujet
 
@@ -77,11 +78,13 @@ Un paragraphe introduit le document.
 Ajoutez des images dans la galerie du sujet, puis cliquez 'Copier markdown' pour les insérer ici.">{{ old('body') }}</textarea>
 
             <div class="mt-4">
-                <div class="text-xs font-medium text-slate-500 flex items-center gap-2 mb-2">
-                    <span>Aperçu du rendu</span>
-                    <button type="button" id="toggle-preview" class="text-emerald-700">Masquer</button>
+                <div class="text-xs font-medium text-slate-500 flex flex-wrap items-center gap-2 mb-2" role="tablist" aria-label="Mode d’édition">
+                    <span>Aperçu du rendu — <strong data-preview-audience>Travail</strong></span>
+                    <button type="button" data-preview-mode="write" aria-selected="false" class="text-emerald-700">Écrire</button>
+                    <button type="button" data-preview-mode="write-preview" aria-selected="true" class="text-emerald-700">Écrire + aperçu</button>
+                    <button type="button" data-preview-mode="preview" aria-selected="false" class="text-emerald-700">Aperçu</button>
                 </div>
-                <div id="preview" class="prose prose-slate max-w-none border border-slate-200 rounded-md p-4 min-h-[120px]"></div>
+                <div id="preview" data-markdown-preview data-preview-panel aria-label="Aperçu du rendu Markdown" class="prose prose-slate max-w-none border border-slate-200 rounded-md p-4 min-h-[120px]"></div>
             </div>
 
             @error('body')

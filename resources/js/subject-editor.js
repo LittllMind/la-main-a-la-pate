@@ -7,75 +7,41 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupInlineImageUploads() {
     document.querySelectorAll('[data-inline-upload]').forEach(input => {
         const subjectId = input.dataset.subjectId;
-        if (! subjectId) return;
+        const editor = input.closest('[data-markdown-editor]');
+        if (! subjectId || ! editor) return;
 
-        const textarea = input.closest('[data-markdown-editor]').querySelector('textarea[id="body"]');
-        if (! textarea) return;
-
-        input.addEventListener('change', async (event) => {
+        input.addEventListener('change', async event => {
             const file = event.target.files[0];
             if (! file) return;
-
-            const form = new FormData();
-            form.append('file', file);
-            const alt = file.name.replace(/\.[^/.]+$/, '');
-            form.append('alt', alt);
-
-            const btn = input.closest('label');
-            const originalText = btn ? btn.innerHTML : '';
-            if (btn) btn.innerHTML = 'Envoi...';
-
-            try {
-                const response = await fetch(`/sujets/${subjectId}/upload-image`, {
-                    method: 'POST',
-                    body: form,
-                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
-                });
-
-                if (! response.ok) throw new Error('Erreur serveur');
-                const data = await response.json();
-                insertTextAtCursor(textarea, `\n![${data.alt || alt}](${data.url})\n`);
-                const editor = textarea.closest('[data-markdown-editor]');
-                if (editor) editor.querySelector('#preview')?.dispatchEvent(new Event('forceRefresh'));
-            } catch (err) {
-                alert('L\'image n\'a pas pu être ajoutée.');
-            } finally {
-                if (btn) btn.innerHTML = originalText;
-                input.value = '';
-            }
+            await uploadInlineImage(file, getActiveTextarea(editor), subjectId);
+            input.value = '';
         });
     });
 
-    document.querySelectorAll('textarea[id="body"]').forEach(textarea => {
-        const container = textarea.closest('[data-markdown-editor]');
-        if (! container) return;
-        const subjectId = container.querySelector('[data-inline-upload]')?.dataset.subjectId;
+    document.querySelectorAll('[data-markdown-editor]').forEach(editor => {
+        const subjectId = editor.querySelector('[data-inline-upload]')?.dataset.subjectId;
         if (! subjectId) return;
 
-        textarea.addEventListener('paste', async (event) => {
-            const items = Array.from(event.clipboardData.items).filter(item => item.type.startsWith('image/'));
-            if (items.length === 0) return;
-            event.preventDefault();
+        editor.querySelectorAll('textarea[data-editor-field]').forEach(textarea => {
+            textarea.addEventListener('paste', async event => {
+                const items = Array.from(event.clipboardData.items).filter(item => item.type.startsWith('image/'));
+                if (items.length === 0) return;
+                event.preventDefault();
+                for (const item of items) await uploadInlineImage(item.getAsFile(), textarea, subjectId);
+            });
 
-            for (const item of items) {
-                const file = item.getAsFile();
-                await uploadInlineImage(file, textarea, subjectId);
-            }
-        });
-
-        textarea.addEventListener('drop', async (event) => {
-            const files = Array.from(event.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-            if (files.length === 0) return;
-            event.preventDefault();
-
-            for (const file of files) {
-                await uploadInlineImage(file, textarea, subjectId);
-            }
+            textarea.addEventListener('drop', async event => {
+                const files = Array.from(event.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+                if (files.length === 0) return;
+                event.preventDefault();
+                for (const file of files) await uploadInlineImage(file, textarea, subjectId);
+            });
         });
     });
 }
 
 async function uploadInlineImage(file, textarea, subjectId) {
+    if (! file || ! textarea) return;
     const form = new FormData();
     form.append('file', file);
     const alt = file.name.replace(/\.[^/.]+$/, '');
@@ -87,126 +53,156 @@ async function uploadInlineImage(file, textarea, subjectId) {
             body: form,
             headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
         });
-
         if (! response.ok) throw new Error('Erreur serveur');
         const data = await response.json();
         insertTextAtCursor(textarea, `\n![${data.alt || alt}](${data.url})\n`);
-        textarea.dispatchEvent(new Event('input'));
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
     } catch (err) {
-        alert('L\'image n\'a pas pu être ajoutée.');
+        alert("L'image n'a pas pu être ajoutée.");
     }
 }
 
 function setupThemeToggle() {
-    const selects = document.querySelectorAll('[data-theme-toggle]');
-    selects.forEach(select => {
+    document.querySelectorAll('[data-theme-toggle]').forEach(select => {
         const wrapper = document.getElementById('theme-other-wrapper');
         if (! wrapper) return;
-
-        select.addEventListener('change', () => {
-            wrapper.classList.toggle('hidden', select.value !== '__new__');
-        });
+        select.addEventListener('change', () => wrapper.classList.toggle('hidden', select.value !== '__new__'));
     });
 }
 
 function setupMarkdownEditors() {
     document.querySelectorAll('[data-markdown-editor]').forEach(container => {
-        const textarea = container.querySelector('textarea[id="body"]');
-        const preview = container.querySelector('#preview');
-        const toggleBtn = container.querySelector('#toggle-preview');
-        if (! textarea || ! preview) return;
-
+        const textareas = [...container.querySelectorAll('textarea[data-editor-field]')];
+        const preview = container.querySelector('[data-markdown-preview]');
+        const previewAudience = container.querySelector('[data-preview-audience]');
         const renderer = buildMarkdownRenderer();
+        if (textareas.length === 0 || ! preview) return;
+
+        let activeTextarea = textareas.find(textarea => ! textarea.closest('.hidden')) || textareas[0];
         const refresh = () => {
-            preview.innerHTML = renderer.render(textarea.value);
-            preview.style.display = toggleBtn && toggleBtn.textContent === 'Masquer' ? 'block' : 'none';
+            const value = activeTextarea.value.trim();
+            preview.innerHTML = value ? renderer.render(value) : '<p class="text-slate-500 italic">Aucun contenu pour cette version</p>';
+            if (previewAudience) previewAudience.textContent = activeTextarea.dataset.audienceLabel || 'Travail';
+        };
+        const setActive = textarea => {
+            activeTextarea = textarea;
+            container.dataset.activeEditor = textarea.id;
+            refresh();
+            applyPreviewMode(container.dataset.previewMode || 'write-preview');
         };
 
-        textarea.addEventListener('input', refresh);
-        if (textarea.value) refresh();
+        const applyPreviewMode = mode => {
+            container.dataset.previewMode = mode;
+            const showPreview = mode !== 'write';
+            preview.closest('[data-preview-panel]')?.classList.toggle('hidden', ! showPreview);
+            container.querySelectorAll('[data-editor-panel]').forEach(panel => {
+                const shouldHide = mode === 'preview'
+                    || (mode === 'write-preview' && panel.dataset.editorPanel !== activeTextarea.id);
+                panel.classList.toggle('hidden', shouldHide);
+            });
+            container.querySelectorAll('[data-preview-mode]').forEach(item => {
+                item.setAttribute('aria-selected', item.dataset.previewMode === mode ? 'true' : 'false');
+            });
+        };
 
-        container.querySelectorAll('[data-insert]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                insertTextAtCursor(textarea, btn.dataset.insert);
+        textareas.forEach(textarea => {
+            textarea.addEventListener('focus', () => setActive(textarea));
+            textarea.addEventListener('input', () => {
+                setActive(textarea);
                 refresh();
             });
-
-            if (btn.dataset.tip) {
-                btn.title = btn.dataset.tip;
-            }
         });
 
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => {
-                const hidden = preview.style.display === 'none';
-                preview.style.display = hidden ? 'block' : 'none';
-                toggleBtn.textContent = hidden ? 'Masquer' : 'Afficher';
+        container.querySelectorAll('[data-insert]').forEach(button => {
+            button.title = button.dataset.tip || button.title;
+            button.addEventListener('click', () => {
+                insertTextAtCursor(activeTextarea, button.dataset.insert);
+                activeTextarea.dispatchEvent(new Event('input', { bubbles: true }));
             });
-        }
+        });
+
+        container.querySelectorAll('[data-editor-tab]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = container.querySelector(`#${tab.dataset.editorTab}`);
+                if (! target) return;
+                container.querySelectorAll('[data-editor-tab]').forEach(item => {
+                    item.setAttribute('aria-selected', item === tab ? 'true' : 'false');
+                    item.classList.toggle('border-emerald-600', item === tab);
+                    item.classList.toggle('text-slate-700', item === tab);
+                    item.classList.toggle('border-transparent', item !== tab);
+                    item.classList.toggle('text-slate-500', item !== tab);
+                });
+                container.querySelectorAll('[data-editor-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.editorPanel !== target.id));
+                setActive(target);
+                target.focus();
+            });
+        });
+
+        container.querySelectorAll('[data-preview-mode]').forEach(button => {
+            button.addEventListener('click', () => {
+                applyPreviewMode(button.dataset.previewMode);
+            });
+        });
+
+        refresh();
+        applyPreviewMode('write-preview');
     });
 }
 
 function buildMarkdownRenderer() {
-    const rules = [
-        { regex: /^#{6}\s+(.*)$/gm, replace: '<h6>$1</h6>' },
-        { regex: /^#{5}\s+(.*)$/gm, replace: '<h5>$1</h5>' },
-        { regex: /^#{4}\s+(.*)$/gm, replace: '<h4>$1</h4>' },
-        { regex: /^#{3}\s+(.*)$/gm, replace: '<h3>$1</h3>' },
-        { regex: /^#{2}\s+(.*)$/gm, replace: '<h2>$1</h2>' },
-        { regex: /^#{1}\s+(.*)$/gm, replace: '<h1>$1</h1>' },
-        { regex: /\*\*(.+?)\*\*/g, replace: '<strong>$1</strong>' },
-        { regex: /\*(.+?)\*/g, replace: '\u003cem\u003e$1\u003c/em\u003e' },
-        { regex: /^\u003e\s+(.*)$/gm, replace: '<blockquote class="subject-quote"\u003e$1</blockquote\u003e' },
-        { regex: /`([^`]+)`/g, replace: '<code class="bg-slate-100 rounded px-1 text-sm"\u003e$1</code\u003e' },
-        { regex: /\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, replace: '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline">$1</a\u003e' },
-        { regex: /!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)/g, replace: '<figure class="subject-figure"\u003e<img src="$2" alt="$1" class="subject-image"\u003e<figcaption\u003e$1</figcaption\u003e</figure\u003e' },
-    ];
-
     return {
         render(text) {
-            let html = escapeHtml(text)
-                .split(/\n{2,}/)
-                .map(block => {
-                    if (block.startsWith('|')) {
-                        return renderMarkdownTable(block);
-                    }
-                    rules.forEach(rule => {
-                        if (rule.regex.test(block)) {
-                            block = block.replace(rule.regex, rule.replace);
-                        }
-                    });
-                    return block.trim() ? `<p>${block.replace(/\n/g, '<br>')}</p>` : '';
-                })
-                .join('\n');
-
-            return html.replace(/\n/g, '');
+            const escaped = escapeHtml(text);
+            return escaped.split(/\n{2,}/).map(block => {
+                if (/^\s*\|/.test(block)) return renderMarkdownTable(block);
+                const lines = block.split('\n');
+                if (lines.every(line => /^\s*[-*+]\s+/.test(line))) {
+                    return `<ul>${lines.map(line => `<li>${inlineMarkdown(line.replace(/^\s*[-*+]\s+/, ''))}</li>`).join('')}</ul>`;
+                }
+                if (lines.every(line => /^\s*\d+[.)]\s+/.test(line))) {
+                    return `<ol>${lines.map(line => `<li>${inlineMarkdown(line.replace(/^\s*\d+[.)]\s+/, ''))}</li>`).join('')}</ol>`;
+                }
+                if (lines.every(line => /^\s*>\s?/.test(line))) {
+                    return `<blockquote class="subject-quote">${lines.map(line => inlineMarkdown(line.replace(/^\s*>\s?/, ''))).join('<br>')}</blockquote>`;
+                }
+                if (lines.length === 1 && /^(#{1,6})\s+/.test(lines[0])) {
+                    const match = lines[0].match(/^(#{1,6})\s+(.*)$/);
+                    return `<h${match[1].length}>${inlineMarkdown(match[2])}</h${match[1].length}>`;
+                }
+                return `<p>${lines.map(inlineMarkdown).join('<br>')}</p>`;
+            }).join('');
         },
     };
+}
+
+function inlineMarkdown(value) {
+    return value
+        .replace(/!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)/g, '<img src="$2" alt="$1" class="subject-image">')
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline">$1</a>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code class="bg-slate-100 rounded px-1 text-sm">$1</code>');
 }
 
 function renderMarkdownTable(block) {
     const rows = block.trim().split(/\n+/).filter(Boolean);
     if (rows.length < 2) return `<p>${block}</p>`;
+    const body = rows.filter((row, index) => !(index === 1 && /^\s*\|[-\s:|]+\|\s*$/.test(row)));
+    return `<table class="subject-table"><thead><tr>${tableCells(body[0], 'th')}</tr></thead><tbody>${body.slice(1).map(row => `<tr>${tableCells(row, 'td')}</tr>`).join('')}</tbody></table>`;
+}
 
-    let html = '<table class="subject-table"\u003e<tbody\u003e';
-    rows.forEach((row, index) => {
-        if (index === 1 && /^\s*\|[-\s:|]+\|\s*$/.test(row)) return;
-        const cells = row.split('|').filter(c => c !== '');
-        const tag = index === 0 ? 'th' : 'td';
-        html += '<tr\u003e' + cells.map(c => `<${tag}\u003e${c.trim()}</${tag}\u003e`).join('') + '</tr\u003e';
-    });
-    html += '</tbody\u003e</table\u003e';
+function tableCells(row, tag) {
+    return row.split('|').filter(cell => cell.trim() !== '').map(cell => `<${tag}>${cell.trim()}</${tag}>`).join('');
+}
 
-    return html;
+function getActiveTextarea(editor) {
+    return editor.querySelector(`textarea#${editor.dataset.activeEditor}`) || editor.querySelector('textarea[data-editor-field]');
 }
 
 function insertTextAtCursor(textarea, text) {
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const before = textarea.value.substring(0, start);
-    const after = textarea.value.substring(end);
-
-    textarea.value = before + text + after;
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end = textarea.selectionEnd ?? start;
+    textarea.value = textarea.value.substring(0, start) + text + textarea.value.substring(end);
     textarea.selectionStart = textarea.selectionEnd = start + text.length;
     textarea.focus();
 }
