@@ -84,9 +84,22 @@
                 <span class="text-xs text-slate-500">Rédaction au format Markdown — simple et clair</span>
             </div>
 
+            <div class="border border-slate-300 rounded-md p-2 mb-2 mt-3 flex flex-wrap gap-2 bg-slate-50" aria-label="Barre d’outils Markdown" role="toolbar">
+                <button type="button" data-insert="## " data-tip="Titre de section : ## Mon titre" aria-label="Titre de section" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Titre de section <span class="text-slate-400">##</span></button>
+                <button type="button" data-insert="### " data-tip="Sous-section : ### Mon sous-titre" aria-label="Sous-section" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Sous-section <span class="text-slate-400">###</span></button>
+                <button type="button" data-insert="**texte**" data-command="bold" data-tip="Texte en gras : **mon mot**" aria-label="Gras" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Gras <span class="text-slate-400">**</span></button>
+                <button type="button" data-insert="*texte*" data-command="italic" data-tip="Texte en italique : *mon mot*" aria-label="Italique" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Italique <span class="text-slate-400">*</span></button>
+                <button type="button" data-insert="\n- élément\n" data-command="bullet" data-tip="Liste à puces : - élément" aria-label="Liste à puces" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Liste à puces <span class="text-slate-400">-</span></button>
+                <button type="button" data-insert="\n1. élément\n" data-tip="Liste numérotée : 1. élément" aria-label="Liste numérotée" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Liste numérotée <span class="text-slate-400">1.</span></button>
+                <button type="button" data-insert="\n> " data-tip="Citation : > une phrase" aria-label="Citation" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Citation <span class="text-slate-400">&gt;</span></button>
+                <button type="button" data-insert="\n| Colonne 1 | Colonne 2 |\n| --- | --- |\n| a | b |\n" data-tip="Tableau : utilise des | et des -" aria-label="Tableau" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Tableau <span class="text-slate-400">|</span></button>
+                <button type="button" data-insert="[texte](https://)" data-tip="Lien : [texte](https://...)" aria-label="Lien" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Lien <span class="text-slate-400">[...](...)</span></button>
+                <button type="button" data-insert="\n![légende](https://)\n" data-tip="Image : ![légende](https://...)" aria-label="Image" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Image <span class="text-slate-400">![...](...)</span></button>
+            </div>
+
             {{-- Tab panels --}}
             <div id="body-panel" data-tab-panel="body" data-editor-panel="body" class="tab-panel active" role="tabpanel" aria-labelledby="body-tab">
-                <textarea id="body" name="body" data-editor-field data-audience-label="Travail" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Rédigez ici au format Markdown. Utilisez les boutons ci-dessus pour découvrir la syntaxe.">{{ old('body', $subject->body) }}</textarea>
+                <textarea id="body" name="body" data-editor-field data-audience-label="Instruction" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Rédigez ici au format Markdown. Utilisez les boutons ci-dessus pour découvrir la syntaxe.">{{ old('body', $subject->body) }}</textarea>
             </div>
 
             @if(auth()->user()->isAdmin())
@@ -95,9 +108,10 @@
                     @if($subject->citizen_published_at)
                         <span>Publié le {{ \Carbon\Carbon::parse($subject->citizen_published_at)->format('d/m/Y à H:i') }}</span>
                     @endif
-                    <span class="italic">Visible par les membres identifiés.</span>
+                    <span class="italic">Audience : public connecté. État de diffusion affiché séparément.</span>
                 </div>
-                <textarea id="citizen_body" name="citizen_body" data-editor-field data-audience-label="Citoyen" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Version citoyenne : éléments factuels, questions en suspens, sources mobilisables." data-version="citizen" data-has-content="{{ filled($subject->citizen_body) ? '1' : '0' }}">{{ old('citizen_body', $subject->citizen_body) }}</textarea>
+                <label for="citizen_body" class="sr-only">Public connecté</label>
+                <textarea id="citizen_body" name="citizen_body" data-editor-field data-audience-label="Public connecté" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Version citoyenne : éléments factuels, questions en suspens, sources mobilisables." data-version="citizen" data-has-content="{{ filled($subject->citizen_body) ? '1' : '0' }}">{{ old('citizen_body', $subject->citizen_body) }}</textarea>
 
                 <div class="flex items-center gap-2 mt-2" data-actions-citizen>
                     @if($subject->citizen_status !== 'published' && filled($subject->citizen_body))
@@ -113,9 +127,10 @@
                     @if($subject->public_published_at)
                         <span>Publié le {{ \Carbon\Carbon::parse($subject->public_published_at)->format('d/m/Y à H:i') }}</span>
                     @endif
-                    <span class="italic">Visible publiquement.</span>
+                    <span class="italic">Audience : public déconnecté. État de diffusion affiché séparément.</span>
                 </div>
-                <textarea id="public_body" name="public_body" data-editor-field data-audience-label="Public" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Version publique : synthèse officielle, faits établis uniquement." data-version="public" data-has-content="{{ filled($subject->public_body) ? '1' : '0' }}">{{ old('public_body', $subject->public_body) }}</textarea>
+                <label for="public_body" class="sr-only">Public déconnecté</label>
+                <textarea id="public_body" name="public_body" data-editor-field data-audience-label="Public déconnecté" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Version publique : synthèse officielle, faits établis uniquement." data-version="public" data-has-content="{{ filled($subject->public_body) ? '1' : '0' }}">{{ old('public_body', $subject->public_body) }}</textarea>
 
                 <div class="flex items-center gap-2 mt-2" data-actions-public>
                     @if($subject->public_status !== 'published' && filled($subject->public_body))
@@ -128,30 +143,12 @@
             </div>
             @endif
 
-            <div class="border border-slate-300 rounded-md p-2 mb-2 mt-3 flex flex-wrap gap-2 bg-slate-50" aria-label="Barre d’outils Markdown" role="toolbar">
-                <button type="button" data-insert="## " data-tip="Titre de section : ## Mon titre" aria-label="Titre de section" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100 focus:ring-2 focus:ring-emerald-500">Titre de section <span class="text-slate-400">##</span></button>
-                <button type="button" data-insert="### " data-tip="Sous-section : ### Mon sous-titre" aria-label="Sous-section" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100 focus:ring-2 focus:ring-emerald-500">Sous-section <span class="text-slate-400">###</span></button>
-                <button type="button" data-insert="**texte**" data-tip="Texte en gras : **mon mot**" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Gras <span class="text-slate-400">**</span></button>
-                <button type="button" data-insert="*texte*" data-tip="Texte en italique : *mon mot*" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Italique <span class="text-slate-400">*</span></button>
-                <button type="button" data-insert="\n- élément\n" data-tip="Liste à puces : - élément" aria-label="Liste à puces" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste à puces <span class="text-slate-400">-</span></button>
-                <button type="button" data-insert="\n1. élément\n" data-tip="Liste numérotée : 1. élément" aria-label="Liste numérotée" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste numérotée <span class="text-slate-400">1.</span></button>
-                <button type="button" data-insert="\n> " data-tip="Citation : > une phrase" aria-label="Citation" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation <span class="text-slate-400">&gt;</span></button>
-                <button type="button" data-insert="\n| Colonne 1 | Colonne 2 |\n| --- | --- |\n| a | b |\n" data-tip="Tableau : utilise des | et des -" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Tableau <span class="text-slate-400">|</span></button>
-                <button type="button" data-insert="[texte](https://)" data-tip="Lien : [texte](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien <span class="text-slate-400">[...](...)</span></button>
-                <button type="button" data-insert="\n![légende](https://)\n" data-tip="Image : ![légende](https://...)" aria-label="Image" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image <span class="text-slate-400">![...](...)</span></button>
-                <a href="{{ route('subjects.images.index', $subject->slug) }}" target="_blank" class="toolbar-btn px-2 py-1 text-xs rounded bg-emerald-50 border border-emerald-300 hover:bg-emerald-100">Galerie du sujet</a>
-                <label class="toolbar-btn px-2 py-1 text-xs rounded bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 cursor-pointer">
-                    <input type="file" accept="image/*" class="hidden" data-inline-upload data-subject-id="{{ $subject->slug }}">
-                    Ajouter une image
-                </label>
-            </div>
-
             <div class="mt-4">
                 <div class="text-xs font-medium text-slate-500 flex flex-wrap items-center gap-2 mb-2" role="tablist" aria-label="Mode d’édition">
-                    <span>Aperçu du rendu — <strong data-preview-audience>Travail</strong></span>
-                    <button type="button" data-preview-mode="write" aria-selected="false" class="text-emerald-700">Écrire</button>
-                    <button type="button" data-preview-mode="write-preview" aria-selected="true" class="text-emerald-700">Écrire + aperçu</button>
-                    <button type="button" data-preview-mode="preview" aria-selected="false" class="text-emerald-700">Aperçu</button>
+                    <span>Aperçu du rendu — <strong data-preview-audience>Instruction</strong></span>
+                    <button type="button" role="tab" data-preview-mode="write" aria-selected="false" class="text-emerald-700">Écrire</button>
+                    <button type="button" role="tab" data-preview-mode="write-preview" aria-selected="true" class="text-emerald-700">Écrire + aperçu</button>
+                    <button type="button" role="tab" data-preview-mode="preview" aria-selected="false" class="text-emerald-700">Aperçu</button>
                 </div>
                 <div id="preview" data-markdown-preview data-preview-panel aria-label="Aperçu du rendu Markdown" class="prose prose-slate max-w-none border border-slate-200 rounded-md p-4 min-h-[120px]"></div>
             </div>

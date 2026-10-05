@@ -76,4 +76,43 @@ class SubjectEditorTest extends TestCase
         $this->assertNotFalse($publicationFormStart);
         $this->assertLessThan($publicationFormStart, $editorFormEnd);
     }
+
+    public function test_editor_markup_places_toolbar_before_audience_panels_and_exposes_audiences(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $subject = Subject::factory()->create(['user_id' => $admin->id]);
+
+        $html = $this->actingAs($admin)->get(route('subjects.edit', $subject->slug))->assertOk()->getContent();
+        $toolbar = strpos($html, 'aria-label="Barre d’outils Markdown"');
+        $panel = strpos($html, 'data-editor-panel="body"');
+
+        $this->assertNotFalse($toolbar);
+        $this->assertNotFalse($panel);
+        $this->assertLessThan($panel, $toolbar);
+        $this->assertStringContainsString('Public connecté', $html);
+        $this->assertStringContainsString('Public déconnecté', $html);
+        $this->assertStringContainsString('data-audience-label="Instruction"', $html);
+    }
+
+    public function test_create_editor_has_a_real_editor_panel_for_preview_mode(): void
+    {
+        $user = User::factory()->create();
+        $html = $this->actingAs($user)->get('/sujets/creer')->assertOk()->getContent();
+
+        $this->assertStringContainsString('id="body-panel"', $html);
+        $this->assertStringContainsString('data-editor-panel="body"', $html);
+        $this->assertStringContainsString('data-audience-label="Instruction"', $html);
+    }
+
+    public function test_mode_buttons_have_tab_semantics_and_editor_fields_have_labels(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $subject = Subject::factory()->create(['user_id' => $admin->id]);
+        $html = $this->actingAs($admin)->get(route('subjects.edit', $subject->slug))->assertOk()->getContent();
+
+        $this->assertSame(3, substr_count($html, 'data-preview-mode='));
+        $this->assertStringContainsString('for="body"', $html);
+        $this->assertStringContainsString('for="citizen_body"', $html);
+        $this->assertStringContainsString('for="public_body"', $html);
+    }
 }

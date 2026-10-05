@@ -9,7 +9,6 @@ function setupInlineImageUploads() {
         const subjectId = input.dataset.subjectId;
         const editor = input.closest('[data-markdown-editor]');
         if (! subjectId || ! editor) return;
-
         input.addEventListener('change', async event => {
             const file = event.target.files[0];
             if (! file) return;
@@ -17,22 +16,19 @@ function setupInlineImageUploads() {
             input.value = '';
         });
     });
-
     document.querySelectorAll('[data-markdown-editor]').forEach(editor => {
         const subjectId = editor.querySelector('[data-inline-upload]')?.dataset.subjectId;
         if (! subjectId) return;
-
         editor.querySelectorAll('textarea[data-editor-field]').forEach(textarea => {
             textarea.addEventListener('paste', async event => {
                 const items = Array.from(event.clipboardData.items).filter(item => item.type.startsWith('image/'));
-                if (items.length === 0) return;
+                if (! items.length) return;
                 event.preventDefault();
                 for (const item of items) await uploadInlineImage(item.getAsFile(), textarea, subjectId);
             });
-
             textarea.addEventListener('drop', async event => {
                 const files = Array.from(event.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-                if (files.length === 0) return;
+                if (! files.length) return;
                 event.preventDefault();
                 for (const file of files) await uploadInlineImage(file, textarea, subjectId);
             });
@@ -44,9 +40,7 @@ async function uploadInlineImage(file, textarea, subjectId) {
     if (! file || ! textarea) return;
     const form = new FormData();
     form.append('file', file);
-    const alt = file.name.replace(/\.[^/.]+$/, '');
-    form.append('alt', alt);
-
+    form.append('alt', file.name.replace(/\.[^/.]+$/, ''));
     try {
         const response = await fetch(`/sujets/${subjectId}/upload-image`, {
             method: 'POST',
@@ -55,7 +49,7 @@ async function uploadInlineImage(file, textarea, subjectId) {
         });
         if (! response.ok) throw new Error('Erreur serveur');
         const data = await response.json();
-        insertTextAtCursor(textarea, `\n![${data.alt || alt}](${data.url})\n`);
+        insertTextAtCursor(textarea, `\n![${data.alt || file.name}](${data.url})\n`);
         textarea.dispatchEvent(new Event('input', { bubbles: true }));
     } catch (err) {
         alert("L'image n'a pas pu être ajoutée.");
@@ -75,14 +69,15 @@ function setupMarkdownEditors() {
         const textareas = [...container.querySelectorAll('textarea[data-editor-field]')];
         const preview = container.querySelector('[data-markdown-preview]');
         const previewAudience = container.querySelector('[data-preview-audience]');
-        const renderer = buildMarkdownRenderer();
-        if (textareas.length === 0 || ! preview) return;
+        if (! textareas.length || ! preview) return;
 
-        let activeTextarea = textareas.find(textarea => ! textarea.closest('.hidden')) || textareas[0];
+        let activeTextarea = textareas.find(textarea => ! textarea.closest('[data-editor-panel].hidden, .tab-panel.hidden')) || textareas[0];
         const refresh = () => {
-            const value = activeTextarea.value.trim();
-            preview.innerHTML = value ? renderer.render(value) : '<p class="text-slate-500 italic">Aucun contenu pour cette version</p>';
-            if (previewAudience) previewAudience.textContent = activeTextarea.dataset.audienceLabel || 'Travail';
+            const value = activeTextarea.value;
+            preview.innerHTML = value.trim()
+                ? buildMarkdownRenderer().render(value)
+                : '<p class="text-slate-500 italic">Aucun contenu pour cette version</p>';
+            if (previewAudience) previewAudience.textContent = activeTextarea.dataset.audienceLabel || 'Instruction';
         };
         const setActive = textarea => {
             activeTextarea = textarea;
@@ -90,15 +85,13 @@ function setupMarkdownEditors() {
             refresh();
             applyPreviewMode(container.dataset.previewMode || 'write-preview');
         };
-
         const applyPreviewMode = mode => {
             container.dataset.previewMode = mode;
             const showPreview = mode !== 'write';
             preview.closest('[data-preview-panel]')?.classList.toggle('hidden', ! showPreview);
             container.querySelectorAll('[data-editor-panel]').forEach(panel => {
-                const shouldHide = mode === 'preview'
-                    || (mode === 'write-preview' && panel.dataset.editorPanel !== activeTextarea.id);
-                panel.classList.toggle('hidden', shouldHide);
+                const isActive = panel.dataset.editorPanel === activeTextarea.id;
+                panel.classList.toggle('hidden', mode === 'preview' || ! isActive);
             });
             container.querySelectorAll('[data-preview-mode]').forEach(item => {
                 item.setAttribute('aria-selected', item.dataset.previewMode === mode ? 'true' : 'false');
@@ -107,76 +100,124 @@ function setupMarkdownEditors() {
 
         textareas.forEach(textarea => {
             textarea.addEventListener('focus', () => setActive(textarea));
-            textarea.addEventListener('input', () => {
-                setActive(textarea);
-                refresh();
-            });
+            textarea.addEventListener('input', () => { setActive(textarea); refresh(); });
         });
-
         container.querySelectorAll('[data-insert]').forEach(button => {
             button.title = button.dataset.tip || button.title;
             button.addEventListener('click', () => {
-                insertTextAtCursor(activeTextarea, button.dataset.insert);
+                const command = button.dataset.command;
+                insertToolbarText(activeTextarea, decodeInsertTemplate(button.dataset.insert || ''), command);
                 activeTextarea.dispatchEvent(new Event('input', { bubbles: true }));
             });
         });
-
         container.querySelectorAll('[data-editor-tab]').forEach(tab => {
+            tab.setAttribute('role', 'tab');
             tab.addEventListener('click', () => {
-                const target = container.querySelector(`#${tab.dataset.editorTab}`);
+                const target = container.querySelector(`#${CSS.escape(tab.dataset.editorTab)}`);
                 if (! target) return;
-                container.querySelectorAll('[data-editor-tab]').forEach(item => {
-                    item.setAttribute('aria-selected', item === tab ? 'true' : 'false');
-                    item.classList.toggle('border-emerald-600', item === tab);
-                    item.classList.toggle('text-slate-700', item === tab);
-                    item.classList.toggle('border-transparent', item !== tab);
-                    item.classList.toggle('text-slate-500', item !== tab);
-                });
+                container.querySelectorAll('[data-editor-tab]').forEach(item => item.setAttribute('aria-selected', item === tab ? 'true' : 'false'));
                 container.querySelectorAll('[data-editor-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.editorPanel !== target.id));
                 setActive(target);
                 target.focus();
             });
         });
-
         container.querySelectorAll('[data-preview-mode]').forEach(button => {
-            button.addEventListener('click', () => {
-                applyPreviewMode(button.dataset.previewMode);
-            });
+            button.setAttribute('role', 'tab');
+            button.addEventListener('click', () => applyPreviewMode(button.dataset.previewMode));
         });
-
         refresh();
-        applyPreviewMode('write-preview');
+        applyPreviewMode(container.dataset.previewMode || 'write-preview');
     });
+}
+
+function decodeInsertTemplate(text) {
+    return text.replaceAll('\\n', '\n').replaceAll('\\r', '\r');
+}
+
+function insertToolbarText(textarea, text, command) {
+    if (command === 'bold' || command === 'italic') {
+        const marker = command === 'bold' ? '**' : '*';
+        const start = textarea.selectionStart ?? textarea.value.length;
+        const end = textarea.selectionEnd ?? start;
+        const selected = textarea.value.slice(start, end);
+        const content = selected || (command === 'bold' ? 'texte' : 'texte');
+        insertTextAtCursor(textarea, `${marker}${content}${marker}`, selected ? start + marker.length : start + marker.length);
+        if (! selected) textarea.selectionStart = textarea.selectionEnd = start + marker.length;
+        return;
+    }
+    insertTextAtCursor(textarea, text);
 }
 
 function buildMarkdownRenderer() {
     return {
         render(text) {
-            const escaped = escapeHtml(text);
-            return escaped.split(/\n{2,}/).map(block => {
-                if (/^\s*\|/.test(block)) return renderMarkdownTable(block);
-                const lines = block.split('\n');
-                if (lines.every(line => /^\s*[-*+]\s+/.test(line))) {
-                    return `<ul>${lines.map(line => `<li>${inlineMarkdown(line.replace(/^\s*[-*+]\s+/, ''))}</li>`).join('')}</ul>`;
+            const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
+            const blocks = [];
+            let i = 0;
+            while (i < lines.length) {
+                if (! lines[i].trim()) { i++; continue; }
+                if (/^ {0,3}#{1,6}\s+/.test(lines[i])) {
+                    const match = lines[i].match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*$/);
+                    blocks.push(`<h${match[1].length}>${inlineMarkdown(match[2])}</h${match[1].length}>`); i++; continue;
                 }
-                if (lines.every(line => /^\s*\d+[.)]\s+/.test(line))) {
-                    return `<ol>${lines.map(line => `<li>${inlineMarkdown(line.replace(/^\s*\d+[.)]\s+/, ''))}</li>`).join('')}</ol>`;
+                if (/^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(lines[i])) { blocks.push('<hr>'); i++; continue; }
+                if (/^\s*>/.test(lines[i])) {
+                    const quote = [];
+                    while (i < lines.length && /^\s*>/.test(lines[i])) { quote.push(lines[i].replace(/^\s*>\s?/, '')); i++; }
+                    blocks.push(`<blockquote class="subject-quote">${buildMarkdownRenderer().render(quote.join('\n'))}</blockquote>`); continue;
                 }
-                if (lines.every(line => /^\s*>\s?/.test(line))) {
-                    return `<blockquote class="subject-quote">${lines.map(line => inlineMarkdown(line.replace(/^\s*>\s?/, ''))).join('<br>')}</blockquote>`;
+                if (isTableStart(lines, i)) {
+                    const table = [lines[i], lines[i + 1]]; i += 2;
+                    while (i < lines.length && /^\s*\|/.test(lines[i])) table.push(lines[i++]);
+                    blocks.push(renderMarkdownTable(table.join('\n'))); continue;
                 }
-                if (lines.length === 1 && /^(#{1,6})\s+/.test(lines[0])) {
-                    const match = lines[0].match(/^(#{1,6})\s+(.*)$/);
-                    return `<h${match[1].length}>${inlineMarkdown(match[2])}</h${match[1].length}>`;
+                if (/^\s*(?:[-*+] |\d+[.)] )/.test(lines[i])) {
+                    const list = consumeList(lines, i);
+                    blocks.push(list.html); i = list.next; continue;
                 }
-                return `<p>${lines.map(inlineMarkdown).join('<br>')}</p>`;
-            }).join('');
+                const paragraph = [lines[i++]];
+                while (i < lines.length && lines[i].trim() && !isBlockStart(lines[i])) paragraph.push(lines[i++]);
+                blocks.push(`<p>${paragraph.map(inlineMarkdown).join('<br>')}</p>`);
+            }
+            return blocks.join('');
         },
     };
 }
 
+function isBlockStart(line) {
+    return /^ {0,3}#{1,6}\s+/.test(line) || /^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)
+        || /^\s*>/.test(line) || /^\s*(?:[-*+] |\d+[.)] )/.test(line) || /^\s*\|/.test(line);
+}
+
+function isTableStart(lines, index) {
+    return /^\s*\|/.test(lines[index]) && index + 1 < lines.length && /^\s*\|?\s*:?-{3,}/.test(lines[index + 1]);
+}
+
+function consumeList(lines, start) {
+    const root = []; let i = start;
+    while (i < lines.length && lines[i].trim()) {
+        const match = lines[i].match(/^(\s*)([-*+] |\d+[.)] )(.*)$/);
+        if (! match) break;
+        root.push({ indent: match[1].length, ordered: /^\d/.test(match[2]), text: match[3] }); i++;
+    }
+    const renderLevel = (index, indent) => {
+        const ordered = root[index]?.ordered;
+        const tag = ordered ? 'ol' : 'ul'; let html = `<${tag}>`;
+        while (index < root.length && root[index].indent === indent && root[index].ordered === ordered) {
+            html += `<li>${inlineMarkdown(root[index].text)}`;
+            if (root[index + 1] && root[index + 1].indent > indent) {
+                const nested = renderLevel(index + 1, root[index + 1].indent);
+                html += nested.html; index = nested.next;
+            } else index++;
+            html += '</li>';
+        }
+        return { html: html + `</${tag}>`, next: index };
+    };
+    return { ...renderLevel(0, root[0].indent), next: i };
+}
+
 function inlineMarkdown(value) {
-    return value
+    return escapeHtml(value)
         .replace(/!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)/g, '<img src="$2" alt="$1" class="subject-image">')
         .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline">$1</a>')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -185,25 +226,27 @@ function inlineMarkdown(value) {
 }
 
 function renderMarkdownTable(block) {
-    const rows = block.trim().split(/\n+/).filter(Boolean);
-    if (rows.length < 2) return `<p>${block}</p>`;
-    const body = rows.filter((row, index) => !(index === 1 && /^\s*\|[-\s:|]+\|\s*$/.test(row)));
-    return `<table class="subject-table"><thead><tr>${tableCells(body[0], 'th')}</tr></thead><tbody>${body.slice(1).map(row => `<tr>${tableCells(row, 'td')}</tr>`).join('')}</tbody></table>`;
-}
-
-function tableCells(row, tag) {
-    return row.split('|').filter(cell => cell.trim() !== '').map(cell => `<${tag}>${cell.trim()}</${tag}>`).join('');
+    const rows = block.split(/\n+/).filter(Boolean);
+    if (rows.length < 2) return `<p>${inlineMarkdown(block)}</p>`;
+    const cells = row => {
+        const trimmed = row.trim().replace(/^\|/, '').replace(/\|$/, '');
+        return trimmed.split('|').map(cell => cell.trim());
+    };
+    const header = cells(rows[0]);
+    const body = rows.slice(2).map(cells);
+    return `<div class="overflow-x-auto"><table class="subject-table"><thead><tr>${header.map(cell => `<th>${inlineMarkdown(cell)}</th>`).join('')}</tr></thead><tbody>${body.map(row => `<tr>${header.map((_, index) => `<td>${inlineMarkdown(row[index] || '')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
 
 function getActiveTextarea(editor) {
-    return editor.querySelector(`textarea#${editor.dataset.activeEditor}`) || editor.querySelector('textarea[data-editor-field]');
+    return editor.querySelector(`textarea#${CSS.escape(editor.dataset.activeEditor || '')}`) || editor.querySelector('textarea[data-editor-field]');
 }
 
-function insertTextAtCursor(textarea, text) {
+function insertTextAtCursor(textarea, text, selectionStart = null) {
     const start = textarea.selectionStart ?? textarea.value.length;
     const end = textarea.selectionEnd ?? start;
     textarea.value = textarea.value.substring(0, start) + text + textarea.value.substring(end);
-    textarea.selectionStart = textarea.selectionEnd = start + text.length;
+    const caret = selectionStart ?? start + text.length;
+    textarea.selectionStart = textarea.selectionEnd = caret;
     textarea.focus();
 }
 
