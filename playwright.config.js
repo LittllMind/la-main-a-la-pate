@@ -5,8 +5,9 @@ import { defineConfig, devices } from '@playwright/test';
  * Configuration Playwright pour vinyles-stock
  * @see https://playwright.dev/docs/test-configuration
  */
-module.exports = defineConfig({
-  testDir: './tests/e2e',
+export default defineConfig({
+  testDir: '.',
+  testMatch: ['tests/e2e/**/*.spec.js', 'tests/browser/**/*.spec.js'],
   
   /* Run tests in files in parallel */
   fullyParallel: true,
