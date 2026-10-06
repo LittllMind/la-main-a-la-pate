@@ -84,14 +84,17 @@ test('aperçu ignore les titres Markdown temporairement vides', async ({ page })
     await expect(preview).toContainText('Texte conservé');
 });
 
-test('aperçu conserve les listes lors des transitions de types et des imbrications', async ({ page }) => {
-    await mountEditor(page, { body: '- Puce 1\n  1. Numéro imbriqué\n  2. Deuxième numéro\n- Puce 2\n\n1. Numéro 1\n   - Puce imbriquée\n2. Numéro 2' });
+test('aperçu conserve la hiérarchie lors d’une transition de type imbriquée', async ({ page }) => {
+    await mountEditor(page, { body: '- Alpha\n  1. Bravo\n  - Charlie\n- Delta' });
     const preview = page.locator('[data-markdown-preview]');
+    const mainList = preview.locator(':scope > ul');
+    const alpha = mainList.locator(':scope > li').first();
 
-    await expect(preview.locator('ul > li')).toHaveCount(2);
-    await expect(preview.locator('ul ol > li')).toHaveCount(2);
-    await expect(preview.locator('ol > li')).toHaveCount(2);
-    await expect(preview.locator('ol ul > li')).toHaveCount(1);
-    await expect(preview).toContainText('Puce 2');
-    await expect(preview).toContainText('Numéro 2');
+    await expect(mainList).toHaveCount(1);
+    await expect(mainList.locator(':scope > li')).toHaveCount(2);
+    await expect(alpha.locator(':scope > ol > li')).toHaveCount(1);
+    await expect(alpha.locator(':scope > ul > li')).toHaveCount(1);
+    await expect(mainList.locator(':scope > li').nth(1)).toContainText('Delta');
+    await expect(preview).toContainText('Bravo');
+    await expect(preview).toContainText('Charlie');
 });

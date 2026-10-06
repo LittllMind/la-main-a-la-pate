@@ -209,8 +209,15 @@ function consumeList(lines, start) {
         while (index < root.length && root[index].indent === indent && root[index].ordered === ordered) {
             html += `<li>${inlineMarkdown(root[index].text)}`;
             if (root[index + 1] && root[index + 1].indent > indent) {
-                const nested = renderLevel(index + 1, root[index + 1].indent);
-                html += nested.html; index = nested.next;
+                let nestedHtml = '';
+                let nestedIndex = index + 1;
+                while (nestedIndex < root.length && root[nestedIndex].indent > indent) {
+                    const nested = renderLevel(nestedIndex, root[nestedIndex].indent);
+                    nestedHtml += nested.html;
+                    nestedIndex = nested.next;
+                }
+                html += nestedHtml;
+                index = nestedIndex;
             } else index++;
             html += '</li>';
         }
