@@ -1274,3 +1274,59 @@ label {
     background: #ff5252;
     color: white;
 }
+
+/* Editeur Markdown Sujets */
+.subject-editor-toolbar {
+    backdrop-filter: blur(8px);
+}
+
+.subject-preview {
+    min-height: 8rem;
+    overflow-wrap: anywhere;
+}
+
+.subject-preview h1,
+.subject-preview h2,
+.subject-preview h3,
+.subject-preview h4,
+.subject-preview h5,
+.subject-preview h6 {
+    margin: 1rem 0 0.5rem;
+    color: #0f172a;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.subject-preview h1 { font-size: 1.5rem; }
+.subject-preview h2 { font-size: 1.25rem; }
+.subject-preview h3 { font-size: 1.125rem; }
+.subject-preview p { margin: 0.65rem 0; }
+.subject-preview ul,
+.subject-preview ol {
+    margin: 0.65rem 0;
+    padding-left: 1.75rem;
+}
+.subject-preview ul { list-style: disc; }
+.subject-preview ol { list-style: decimal; }
+.subject-preview ul ul { list-style: circle; }
+.subject-preview ol ol { list-style: lower-alpha; }
+.subject-preview li { margin: 0.2rem 0; }
+.subject-preview blockquote,
+.subject-quote {
+    margin: 0.75rem 0;
+    padding: 0.5rem 0.9rem;
+    border-left: 4px solid #94a3b8;
+    color: #475569;
+    background: #f8fafc;
+}
+.subject-table-wrap { overflow-x: auto; margin: 1rem 0; }
+.subject-table { width: 100%; border-collapse: collapse; }
+.subject-table th,
+.subject-table td { border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; text-align: left; }
+.subject-table th { background: #f1f5f9; font-weight: 700; }
+.subject-image { max-height: 24rem; object-fit: contain; }
+
+@media (max-width: 640px) {
+    .subject-editor-toolbar { top: 3.5rem; }
+    .subject-preview { max-height: 18rem; }
+}

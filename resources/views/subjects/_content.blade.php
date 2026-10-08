@@ -4,7 +4,7 @@
     $bodyMarkdown = $bodyMarkdown ?? null;
 @endphp
 <article class="bg-white rounded-lg border border-slate-200 p-6 mb-8 {{ $wrapperClass }}">
-    <div class="prose prose-slate max-w-none subject-markdown">
+    <div class="prose prose-slate max-w-none subject-markdown subject-preview">
         @if($bodyMarkdown !== null)
             {!! App\Models\Subject::renderMarkdown($bodyMarkdown, stripTitle: $stripTitleH1 ?? false, title: $subject->title) !!}
         @else

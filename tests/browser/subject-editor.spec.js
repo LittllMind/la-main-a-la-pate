@@ -8,32 +8,34 @@ async function mountEditor(page, values = {}) {
         <style>.hidden { display: none !important; }</style>
         <main data-markdown-editor>
             <div role="tablist" aria-label="Audiences">
-                <button type="button" data-editor-tab="body" aria-selected="true">Instruction</button>
-                <button type="button" data-editor-tab="citizen_body" aria-selected="false">Public connecté</button>
-                <button type="button" data-editor-tab="public_body" aria-selected="false">Public déconnecté</button>
+                <button type="button" data-editor-tab="body" role="tab" aria-controls="body-panel" aria-selected="true">Travail</button>
+                <button type="button" data-editor-tab="citizen_body" role="tab" aria-controls="citizen_body-panel" aria-selected="false">Citoyen</button>
+                <button type="button" data-editor-tab="public_body" role="tab" aria-controls="public_body-panel" aria-selected="false">Public</button>
             </div>
-            <div data-editor-panel="body" class="tab-panel">
-                <label for="body">Instruction</label>
-                <textarea id="body" data-editor-field data-audience-label="Instruction">${values.body ?? ''}</textarea>
+            <div id="body-panel" data-editor-panel="body" class="tab-panel">
+                <label for="body">Travail</label>
+                <textarea id="body" data-editor-field data-audience-label="Travail">${values.body ?? ''}</textarea>
             </div>
-            <div data-editor-panel="citizen_body" class="tab-panel hidden">
-                <label for="citizen_body">Public connecté</label>
-                <textarea id="citizen_body" data-editor-field data-audience-label="Public connecté">${values.citizen_body ?? ''}</textarea>
+            <div id="citizen_body-panel" data-editor-panel="citizen_body" class="tab-panel hidden">
+                <label for="citizen_body">Citoyen</label>
+                <textarea id="citizen_body" data-editor-field data-audience-label="Citoyen">${values.citizen_body ?? ''}</textarea>
             </div>
-            <div data-editor-panel="public_body" class="tab-panel hidden">
-                <label for="public_body">Public déconnecté</label>
-                <textarea id="public_body" data-editor-field data-audience-label="Public déconnecté">${values.public_body ?? ''}</textarea>
+            <div id="public_body-panel" data-editor-panel="public_body" class="tab-panel hidden">
+                <label for="public_body">Public</label>
+                <textarea id="public_body" data-editor-field data-audience-label="Public">${values.public_body ?? ''}</textarea>
             </div>
             <div role="toolbar">
-                <button type="button" data-insert="**texte**" data-command="bold">Gras</button>
-                <button type="button" data-insert="\\n- élément\\n" data-command="bullet">Liste</button>
-                <button type="button" data-insert="\\n> " data-command="quote">Citation</button>
-                <button type="button" data-insert="\\n| A | B |\\n| --- | --- |\\n| a |  |\\n" data-command="table">Tableau</button>
+                <button type="button" data-insert="**texte**">Gras</button>
+                <button type="button" data-insert="\\n- élément\\n">Liste</button>
+                <button type="button" data-insert="\\n> ">Citation</button>
+                <button type="button" data-insert="\\n| A | B |\\n| --- | --- |\\n| a |  |\\n">Tableau</button>
             </div>
-            <div data-preview-mode="write">Écrire</div>
-            <div data-preview-mode="write-preview">Écrire + aperçu</div>
-            <div data-preview-mode="preview">Aperçu</div>
-            <div data-markdown-preview data-preview-panel></div>
+            <div role="group" aria-label="Mode d'aperçu">
+                <button type="button" data-preview-mode="write" aria-selected="true">Écrire</button>
+                <button type="button" data-preview-mode="write-preview" aria-selected="false">Écrire + aperçu</button>
+                <button type="button" data-preview-mode="preview" aria-selected="false">Aperçu</button>
+            </div>
+            <div data-markdown-preview data-preview-panel class="hidden"></div>
         </main>`);
     await page.addScriptTag({ path: scriptPath });
     await page.evaluate(() => window.setupMarkdownEditors());
@@ -57,11 +59,11 @@ test('outils préservent la sélection et convertissent les retours à la ligne'
     await mountEditor(page, { body: 'Bonjour' });
     const body = page.locator('#body');
     await body.selectText();
-    await page.locator('[data-command="bold"]').click();
+    await page.getByRole('button', { name: 'Gras' }).click();
     await expect(body).toHaveValue('**Bonjour**');
     await body.focus();
     await body.press('End');
-    await page.locator('[data-command="bullet"]').click();
+    await page.getByRole('button', { name: 'Liste' }).click();
     await expect(body).toHaveValue('**Bonjour**\n- élément\n');
 });
 

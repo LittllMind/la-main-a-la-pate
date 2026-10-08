@@ -19,7 +19,7 @@
         <span class="text-xs text-slate-500 ml-auto">État du dossier : <strong class="text-slate-700">{{ $subject->status === 'published' ? 'Actif' : 'Brouillon' }}</strong></span>
     </div>
 
-    <form method="POST" action="{{ route('subjects.update', $subject->slug) }}" class="bg-white rounded-lg border border-slate-200 p-6">
+    <form method="POST" action="{{ route('subjects.update', $subject->slug) }}" class="bg-white rounded-lg border border-slate-200 p-6"{{ $errors->any() ? ' data-form-has-errors' : '' }}>
         @csrf
         @method('PUT')
 
@@ -61,18 +61,18 @@
         <div class="mb-5" data-markdown-editor data-help-reference>
             {{-- Onglets version travail / citoyen / public --}}
             <div class="flex items-center border-b border-slate-200 mb-3" role="tablist">
-                <button type="button" id="body-tab" data-tab="body" data-editor-tab="body" aria-controls="body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-700 border-b-2 border-emerald-600" aria-selected="true" role="tab">
-                    Instruction
+                <button type="button" data-tab="body" data-editor-tab="body" aria-controls="body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-700 border-b-2 border-emerald-600" aria-selected="true" role="tab">
+                    Travail
                     <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 border border-slate-200">interne</span>
                 </button>
                 @if(auth()->user()->isAdmin())
-                <button type="button" id="citizen_body-tab" data-tab="citizen_body" data-editor-tab="citizen_body" aria-controls="citizen_body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700" role="tab" aria-selected="false">
-                    Public connecté
+                <button type="button" data-tab="citizen_body" data-editor-tab="citizen_body" aria-controls="citizen_body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700" role="tab">
+                    Citoyen
                     @php $citizenColor = \App\Models\Subject::statusColor($subject->citizen_status); @endphp
                     <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-{{ $citizenColor }}-100 text-{{ $citizenColor }}-700 border border-{{ $citizenColor }}-200">{{ \App\Models\Subject::statusLabel($subject->citizen_status) }}</span>
                 </button>
-                <button type="button" id="public_body-tab" data-tab="public_body" data-editor-tab="public_body" aria-controls="public_body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700" role="tab" aria-selected="false">
-                    Public déconnecté
+                <button type="button" data-tab="public_body" data-editor-tab="public_body" aria-controls="public_body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700" role="tab">
+                    Public
                     @php $publicColor = \App\Models\Subject::statusColor($subject->public_status); @endphp
                     <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-{{ $publicColor }}-100 text-{{ $publicColor }}-700 border border-{{ $publicColor }}-200">{{ \App\Models\Subject::statusLabel($subject->public_status) }}</span>
                 </button>
@@ -80,26 +80,13 @@
             </div>
 
             <div class="flex items-center justify-between mb-1">
-                <label class="block text-sm font-medium text-slate-700" id="version-label" for="body">Instruction</label>
+                <label class="block text-sm font-medium text-slate-700" id="version-label">Document de travail (admin)</label>
                 <span class="text-xs text-slate-500">Rédaction au format Markdown — simple et clair</span>
-            </div>
-
-            <div class="border border-slate-300 rounded-md p-2 mb-2 mt-3 flex flex-wrap gap-2 bg-slate-50" aria-label="Barre d’outils Markdown" role="toolbar">
-                <button type="button" data-insert="## " data-tip="Titre de section : ## Mon titre" aria-label="Titre de section" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Titre de section <span class="text-slate-400">##</span></button>
-                <button type="button" data-insert="### " data-tip="Sous-section : ### Mon sous-titre" aria-label="Sous-section" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Sous-section <span class="text-slate-400">###</span></button>
-                <button type="button" data-insert="**texte**" data-command="bold" data-tip="Texte en gras : **mon mot**" aria-label="Gras" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Gras <span class="text-slate-400">**</span></button>
-                <button type="button" data-insert="*texte*" data-command="italic" data-tip="Texte en italique : *mon mot*" aria-label="Italique" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Italique <span class="text-slate-400">*</span></button>
-                <button type="button" data-insert="\n- élément\n" data-command="bullet" data-tip="Liste à puces : - élément" aria-label="Liste à puces" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Liste à puces <span class="text-slate-400">-</span></button>
-                <button type="button" data-insert="\n1. élément\n" data-tip="Liste numérotée : 1. élément" aria-label="Liste numérotée" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Liste numérotée <span class="text-slate-400">1.</span></button>
-                <button type="button" data-insert="\n> " data-tip="Citation : > une phrase" aria-label="Citation" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Citation <span class="text-slate-400">&gt;</span></button>
-                <button type="button" data-insert="\n| Colonne 1 | Colonne 2 |\n| --- | --- |\n| a | b |\n" data-tip="Tableau : utilise des | et des -" aria-label="Tableau" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Tableau <span class="text-slate-400">|</span></button>
-                <button type="button" data-insert="[texte](https://)" data-tip="Lien : [texte](https://...)" aria-label="Lien" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Lien <span class="text-slate-400">[...](...)</span></button>
-                <button type="button" data-insert="\n![légende](https://)\n" data-tip="Image : ![légende](https://...)" aria-label="Image" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300">Image <span class="text-slate-400">![...](...)</span></button>
             </div>
 
             {{-- Tab panels --}}
             <div id="body-panel" data-tab-panel="body" data-editor-panel="body" class="tab-panel active" role="tabpanel" aria-labelledby="body-tab">
-                <textarea id="body" name="body" data-editor-field data-audience-label="Instruction" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Rédigez ici au format Markdown. Utilisez les boutons ci-dessus pour découvrir la syntaxe.">{{ old('body', $subject->body) }}</textarea>
+                <textarea id="body" name="body" data-editor-field data-audience-label="Travail" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Rédigez ici au format Markdown. Utilisez les boutons ci-dessus pour découvrir la syntaxe.">{{ old('body', $subject->body) }}</textarea>
             </div>
 
             @if(auth()->user()->isAdmin())
@@ -108,17 +95,24 @@
                     @if($subject->citizen_published_at)
                         <span>Publié le {{ \Carbon\Carbon::parse($subject->citizen_published_at)->format('d/m/Y à H:i') }}</span>
                     @endif
-                    <span class="italic">Audience : public connecté. État de diffusion affiché séparément.</span>
+                    <span class="italic">Visible par les membres identifiés.</span>
                 </div>
-                <label for="citizen_body" class="sr-only">Public connecté</label>
-                <textarea id="citizen_body" name="citizen_body" data-editor-field data-audience-label="Public connecté" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Version citoyenne : éléments factuels, questions en suspens, sources mobilisables." data-version="citizen" data-has-content="{{ filled($subject->citizen_body) ? '1' : '0' }}">{{ old('citizen_body', $subject->citizen_body) }}</textarea>
+                <textarea id="citizen_body" name="citizen_body" data-editor-field data-audience-label="Citoyen" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Version citoyenne : éléments factuels, questions en suspens, sources mobilisables." data-version="citizen" data-has-content="{{ filled($subject->citizen_body) ? '1' : '0' }}">{{ old('citizen_body', $subject->citizen_body) }}</textarea>
 
                 <div class="flex items-center gap-2 mt-2" data-actions-citizen>
                     @if($subject->citizen_status !== 'published' && filled($subject->citizen_body))
-                        <button type="submit" form="publish-citizen-form" class="bg-emerald-700 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-emerald-800 transition">Publier aux citoyens</button>
+                        <form method="POST" action="{{ route('subjects.publish.citizen', $subject->slug) }}" class="inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="bg-emerald-700 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-emerald-800 transition">Publier aux citoyens</button>
+                        </form>
                     @endif
                     @if($subject->citizen_status !== 'hidden')
-                        <button type="submit" form="hide-citizen-form" class="bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1.5 rounded text-sm font-medium hover:bg-amber-200 transition">Masquer aux citoyens</button>
+                        <form method="POST" action="{{ route('subjects.hide.citizen', $subject->slug) }}" class="inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1.5 rounded text-sm font-medium hover:bg-amber-200 transition">Masquer aux citoyens</button>
+                        </form>
                     @endif
                 </div>
             </div>
@@ -127,30 +121,55 @@
                     @if($subject->public_published_at)
                         <span>Publié le {{ \Carbon\Carbon::parse($subject->public_published_at)->format('d/m/Y à H:i') }}</span>
                     @endif
-                    <span class="italic">Audience : public déconnecté. État de diffusion affiché séparément.</span>
+                    <span class="italic">Visible publiquement.</span>
                 </div>
-                <label for="public_body" class="sr-only">Public déconnecté</label>
-                <textarea id="public_body" name="public_body" data-editor-field data-audience-label="Public déconnecté" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Version publique : synthèse officielle, faits établis uniquement." data-version="public" data-has-content="{{ filled($subject->public_body) ? '1' : '0' }}">{{ old('public_body', $subject->public_body) }}</textarea>
+                <textarea id="public_body" name="public_body" data-editor-field data-audience-label="Public" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Version publique : synthèse officielle, faits établis uniquement." data-version="public" data-has-content="{{ filled($subject->public_body) ? '1' : '0' }}">{{ old('public_body', $subject->public_body) }}</textarea>
 
                 <div class="flex items-center gap-2 mt-2" data-actions-public>
                     @if($subject->public_status !== 'published' && filled($subject->public_body))
-                        <button type="submit" form="publish-public-form" class="bg-emerald-700 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-emerald-800 transition" onclick="return confirm('Confirmer la publication publique ? Le contenu sera accessible aux visiteurs non connectés.')">Publier au public</button>
+                        <form method="POST" action="{{ route('subjects.publish.public', $subject->slug) }}" class="inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="bg-emerald-700 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-emerald-800 transition" onclick="return confirm('Confirmer la publication publique ? Le contenu sera accessible aux visiteurs non connectés.')">Publier au public</button>
+                        </form>
                     @endif
                     @if($subject->public_status !== 'hidden')
-                        <button type="submit" form="hide-public-form" class="bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1.5 rounded text-sm font-medium hover:bg-amber-200 transition">Masquer au public</button>
+                        <form method="POST" action="{{ route('subjects.hide.public', $subject->slug) }}" class="inline">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1.5 rounded text-sm font-medium hover:bg-amber-200 transition">Masquer au public</button>
+                        </form>
                     @endif
                 </div>
             </div>
             @endif
 
+            <div class="subject-editor-toolbar sticky top-14 z-40 border border-slate-300 rounded-md p-2 mb-2 mt-3 flex flex-wrap gap-2 bg-slate-50" aria-label="Mises en formes courantes" role="toolbar">
+                <button type="button" data-insert="## " data-tip="Titre principal : ## Mon titre" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Titre <span class="text-slate-400">#</span></button>
+                <button type="button" data-insert="### " data-tip="Sous-titre : ### Mon sous-titre" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Sous-titre <span class="text-slate-400">#</span></button>
+                <button type="button" data-insert="**texte**" data-tip="Texte en gras : **mon mot**" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Gras <span class="text-slate-400">**</span></button>
+                <button type="button" data-insert="*texte*" data-tip="Texte en italique : *mon mot*" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Italique <span class="text-slate-400">*</span></button>
+                <button type="button" data-insert="\\n- élément\\n" data-tip="Liste à puces : - élément" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste <span class="text-slate-400">-</span></button>
+                <button type="button" data-insert="\\n> " data-tip="Citation : > une phrase" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation <span class="text-slate-400">></span></button>
+                <button type="button" data-insert="\\n| Colonne 1 | Colonne 2 |\\n| --- | --- |\\n| a | b |\\n" data-tip="Tableau : utilise des | et des -" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Tableau <span class="text-slate-400">|</span></button>
+                <button type="button" data-insert="[texte](https://)" data-tip="Lien : [texte](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien <span class="text-slate-400">[...](...)</span></button>
+                <button type="button" data-insert="\\n![légende](https://)\\n" data-tip="Image : ![légende](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image URL <span class="text-slate-400">![...](...)</span></button>
+                <a href="{{ route('subjects.images.index', $subject->slug) }}" target="_blank" class="toolbar-btn px-2 py-1 text-xs rounded bg-emerald-50 border border-emerald-300 hover:bg-emerald-100">Galerie du sujet</a>
+                <label class="toolbar-btn px-2 py-1 text-xs rounded bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 cursor-pointer">
+                    <input type="file" accept="image/*" class="hidden" data-inline-upload data-subject-id="{{ $subject->slug }}">
+                    Ajouter une image
+                </label>
+            </div>
+
             <div class="mt-4">
-                <div class="text-xs font-medium text-slate-500 flex flex-wrap items-center gap-2 mb-2" role="tablist" aria-label="Mode d’édition">
-                    <span>Aperçu du rendu — <strong data-preview-audience>Instruction</strong></span>
-                    <button type="button" role="tab" data-preview-mode="write" aria-selected="false" class="text-emerald-700">Écrire</button>
-                    <button type="button" role="tab" data-preview-mode="write-preview" aria-selected="true" class="text-emerald-700">Écrire + aperçu</button>
-                    <button type="button" role="tab" data-preview-mode="preview" aria-selected="false" class="text-emerald-700">Aperçu</button>
+                <div class="text-xs font-medium text-slate-500 flex flex-wrap items-center gap-2 mb-2">
+                    <span>Aperçu du rendu</span>
+                    <strong data-preview-audience>Travail</strong>
+                    <button type="button" data-preview-mode="write-preview" aria-selected="true" class="text-emerald-700">Écrire + aperçu</button>
+                    <button type="button" data-preview-mode="write" aria-selected="false" class="text-emerald-700">Écrire</button>
+                    <button type="button" data-preview-mode="preview" aria-selected="false" class="text-emerald-700">Aperçu</button>
                 </div>
-                <div id="preview" data-markdown-preview data-preview-panel aria-label="Aperçu du rendu Markdown" class="prose prose-slate max-w-none border border-slate-200 rounded-md p-4 min-h-[120px]"></div>
+                <div id="preview" data-markdown-preview data-preview-panel aria-label="Aperçu du rendu Markdown" class="subject-preview prose prose-slate max-w-none border border-slate-200 rounded-md p-4 max-h-96 overflow-y-auto"></div>
             </div>
 
             @error('body')
@@ -171,7 +190,7 @@
                     <div><span class="font-mono bg-slate-100 px-1 rounded">**mot**</span> → Gras</div>
                     <div><span class="font-mono bg-slate-100 px-1 rounded">*mot*</span> → Italique</div>
                     <div><span class="font-mono bg-slate-100 px-1 rounded">- élément</span> → Liste à puces</div>
-                    <div><span class="font-mono bg-slate-100 px-1 rounded">&gt; citation</span> → Citation</div>
+                    <div><span class="font-mono bg-slate-100 px-1 rounded">> citation</span> → Citation</div>
                     <div><span class="font-mono bg-slate-100 px-1 rounded">[texte](https://...)</span> → Lien</div>
                     <div><span class="font-mono bg-slate-100 px-1 rounded">![légende](...)</span> → Image</div>
                     <div class="sm:col-span-2 text-slate-500">
@@ -186,30 +205,12 @@
             <input id="change_summary" name="change_summary" type="text" maxlength="255" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">
         </div>
 
-        <div class="flex items-center gap-3">
-            <button type="submit" class="bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">Enregistrer</button>
-            <a href="{{ route('subjects.show', $subject->slug) }}" class="text-slate-500 text-sm hover:text-slate-800 transition">Annuler</a>
+        <div class="sticky bottom-0 -mx-6 -mb-6 px-6 py-3 bg-white/95 backdrop-blur border-t border-slate-200 flex items-center gap-3 z-40">
+            <span data-unsaved-indicator class="hidden text-amber-700 text-sm font-medium" aria-hidden="true">Modifications non enregistrées</span>
+            <button type="submit" data-save-button class="bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">Enregistrer</button>
+            <a href="{{ route('subjects.show', $subject->slug) }}" data-cancel-link data-confirm-leave class="text-slate-500 text-sm hover:text-slate-800 transition">Annuler</a>
         </div>
     </form>
-
-    @if(auth()->user()->isAdmin())
-        <form id="publish-citizen-form" method="POST" action="{{ route('subjects.publish.citizen', $subject->slug) }}" class="hidden">
-            @csrf
-            @method('PATCH')
-        </form>
-        <form id="hide-citizen-form" method="POST" action="{{ route('subjects.hide.citizen', $subject->slug) }}" class="hidden">
-            @csrf
-            @method('PATCH')
-        </form>
-        <form id="publish-public-form" method="POST" action="{{ route('subjects.publish.public', $subject->slug) }}" class="hidden">
-            @csrf
-            @method('PATCH')
-        </form>
-        <form id="hide-public-form" method="POST" action="{{ route('subjects.hide.public', $subject->slug) }}" class="hidden">
-            @csrf
-            @method('PATCH')
-        </form>
-    @endif
 
     {{-- Section Collaboration — hors du form principal pour éviter l'imbrication --}}
     <div class="bg-white rounded-lg border border-slate-200 p-6 mt-6">
@@ -321,9 +322,9 @@
         const panels = document.querySelectorAll('.tab-panel');
         const label = document.getElementById('version-label');
         const labels = {
-            'body': 'Instruction',
-            'citizen_body': 'Public connecté',
-            'public_body': 'Public déconnecté'
+            'body': 'Document de travail (admin)',
+            'citizen_body': 'Document collectif \u2014 version citoyen',
+            'public_body': 'Synthèse publique \u2014 version publique'
         };
 
         tabs.forEach(tab => {
@@ -351,7 +352,6 @@
 
                 if (label && labels[target]) {
                     label.textContent = labels[target];
-                    label.setAttribute('for', target);
                 }
             });
         });

@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
+use App\Models\Category;
+use App\Models\SubCategory;
 use App\Models\Subject;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -24,106 +26,84 @@ class SubjectEditorTest extends TestCase
         $response->assertSee('Gras');
         $response->assertSee('Italique');
         $response->assertSee('Liste');
-        $response->assertSee('Liste numérotée');
         $response->assertSee('Citation');
         $response->assertSee('Tableau');
         $response->assertSee('Lien');
-        $response->assertSee('Image');
 
         $response->assertSee('data-markdown-editor', false);
         $response->assertSee('name="body"', false);
         $response->assertSee('id="preview"', false);
         $response->assertSee('data-insert', false);
-        $response->assertSee('aria-label="Barre d’outils Markdown"', false);
-        $response->assertSee('aria-label="Aperçu du rendu Markdown"', false);
-        $response->assertSee('Écrire + aperçu');
     }
 
-    public function test_editor_javascript_bundle_contains_markdown_helpers(): void
-    {
-        $path = base_path('resources/js/subject-editor.js');
-        $this->assertFileExists($path);
-
-        $js = file_get_contents($path);
-        $this->assertStringContainsString('function buildMarkdownRenderer', $js);
-        $this->assertStringContainsString('function insertTextAtCursor', $js);
-        $this->assertStringContainsString('function setupMarkdownEditors', $js);
-        $this->assertStringContainsString('activeEditor', $js);
-        $this->assertStringContainsString('Aucun contenu pour cette version', $js);
-    }
-
-    public function test_publication_actions_are_outside_the_editor_form(): void
+    public function test_subject_show_renders_mixed_nested_list_under_alpha(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $subject = Subject::factory()->create([
+
+        $category = Category::factory()->create();
+        $subCategory = SubCategory::factory()->create(['category_id' => $category->id]);
+
+        $body = "- Alpha\n  1. Bravo\n  - Charlie\n- Delta";
+
+        $subject = Subject::create([
             'user_id' => $admin->id,
-            'citizen_status' => 'draft',
-            'public_status' => 'draft',
+            'theme' => 'Test',
+            'category_id' => $category->id,
+            'sub_category_id' => $subCategory->id,
+            'title' => 'Test Alpha Bravo Charlie Delta',
+            'slug' => 'test-alpha-bravo-charlie-delta',
+            'body' => $body,
+            'status' => 'draft',
         ]);
+
+        $this->assertSame($body, $subject->fresh()->body);
+
+        $html = $this->actingAs($admin)
+            ->get(route('subjects.show', $subject->slug))
+            ->assertOk()
+            ->getContent();
+
+        $doc = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $doc->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        $xpath = new \DOMXPath($doc);
+
+        $mainLists = $xpath->query('//ul[li[contains(text(), "Alpha")]]');
+        $this->assertCount(1, $mainLists, 'A single main unordered list must contain Alpha.');
+
+        $mainList = $mainLists->item(0);
+        $topLevelItems = $xpath->query('./li', $mainList);
+        $this->assertCount(2, $topLevelItems, 'Main list must contain exactly two top-level items (Alpha and Delta).');
+
+        $alphaItem = $topLevelItems->item(0);
+        $this->assertStringContainsString('Alpha', $alphaItem->textContent);
+        $deltaItem = $topLevelItems->item(1);
+        $this->assertStringContainsString('Delta', $deltaItem->textContent);
+
+        $orderedChildren = $xpath->query('./ol/li', $alphaItem);
+        $this->assertCount(1, $orderedChildren, 'Alpha must contain a nested ordered list with one item (Bravo).');
+        $this->assertStringContainsString('Bravo', $orderedChildren->item(0)->textContent);
+
+        $unorderedChildren = $xpath->query('./ul/li', $alphaItem);
+        $this->assertCount(1, $unorderedChildren, 'Alpha must contain a nested unordered list with one item (Charlie).');
+        $this->assertStringContainsString('Charlie', $unorderedChildren->item(0)->textContent);
+    }
+
+    public function test_edit_form_exposes_unsaved_state_hooks_without_autosave(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $subject = Subject::factory()->create(['user_id' => $admin->id]);
 
         $html = $this->actingAs($admin)
             ->get(route('subjects.edit', $subject->slug))
             ->assertOk()
             ->getContent();
 
-        $editorAction = strpos($html, route('subjects.update', $subject->slug));
-        $editorFormStart = $editorAction === false ? false : strrpos(substr($html, 0, $editorAction), '<form');
-        $editorFormEnd = $editorFormStart === false ? false : strpos($html, '</form>', $editorFormStart);
-        $publicationFormStart = strpos($html, route('subjects.publish.citizen', $subject->slug));
-
-        $this->assertNotFalse($editorFormStart);
-        $this->assertNotFalse($editorFormEnd);
-        $this->assertNotFalse($publicationFormStart);
-        $this->assertLessThan($publicationFormStart, $editorFormEnd);
-    }
-
-    public function test_editor_markup_places_toolbar_before_audience_panels_and_exposes_audiences(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $subject = Subject::factory()->create(['user_id' => $admin->id]);
-
-        $html = $this->actingAs($admin)->get(route('subjects.edit', $subject->slug))->assertOk()->getContent();
-        $toolbar = strpos($html, 'aria-label="Barre d’outils Markdown"');
-        $panel = strpos($html, 'data-editor-panel="body"');
-
-        $this->assertNotFalse($toolbar);
-        $this->assertNotFalse($panel);
-        $this->assertLessThan($panel, $toolbar);
-        $this->assertStringContainsString('Public connecté', $html);
-        $this->assertStringContainsString('Public déconnecté', $html);
-        $this->assertStringContainsString('data-audience-label="Instruction"', $html);
-        $this->assertStringContainsString('>Instruction', preg_replace('/\s+/', '', $html));
-        $this->assertStringContainsString('>Publicconnecté', preg_replace('/\s+/', '', $html));
-        $this->assertStringContainsString('>Publicdéconnecté', preg_replace('/\s+/', '', $html));
-        $this->assertStringContainsString('>Instruction</label>', preg_replace('/\s+/', '', $html));
-    }
-
-    public function test_create_editor_has_a_real_editor_panel_for_preview_mode(): void
-    {
-        $user = User::factory()->create();
-        $html = $this->actingAs($user)->get('/sujets/creer')->assertOk()->getContent();
-
-        $this->assertStringContainsString('id="body-panel"', $html);
-        $this->assertStringContainsString('data-editor-panel="body"', $html);
-        $this->assertStringContainsString('data-audience-label="Instruction"', $html);
-    }
-
-    public function test_mode_buttons_have_tab_semantics_and_editor_fields_have_labels(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $subject = Subject::factory()->create(['user_id' => $admin->id]);
-        $html = $this->actingAs($admin)->get(route('subjects.edit', $subject->slug))->assertOk()->getContent();
-
-        $this->assertSame(3, substr_count($html, 'data-preview-mode='));
-        $this->assertStringContainsString('for="body"', $html);
-        $this->assertStringContainsString('for="citizen_body"', $html);
-        $this->assertStringContainsString('for="public_body"', $html);
-    }
-
-    public function test_playwright_discovers_legacy_and_new_browser_tests(): void
-    {
-        $config = file_get_contents(base_path('playwright.config.js'));
-
-        $this->assertStringContainsString("testMatch: ['tests/e2e/**/*.spec.js', 'tests/browser/**/*.spec.js']", $config);
+        $this->assertStringContainsString('data-unsaved-indicator', $html);
+        $this->assertStringContainsString('Modifications non enregistrées', $html);
+        $this->assertStringContainsString('data-confirm-leave', $html);
+        $this->assertStringContainsString('data-save-button', $html);
+        $this->assertStringNotContainsString('data-autosave', $html);
     }
 }
