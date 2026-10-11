@@ -25,17 +25,19 @@ export function buildMarkdownRenderer(md) {
     function isBlockquote(ln) { return /^(\s*)>(\s?)(.*)$/.test(ln); }
     function isCodeFence(ln) { return /^```/.test(ln); }
 
-function parseInline(text) {
+    function hasSafeUrl(href) { return /^(https?:\/\/|\/)/.test(href); }
+
+    function parseInline(text) {
         return escapeHtml(text)
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.+?)\*/g, '<em>$1</em>')
             .replace(/`(.+?)`/g, '<code>$1</code>')
             .replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, (match, alt, src) => {
-                const safeUrl = /^https?:\/\//.test(src) ? src : '#';
+                const safeUrl = hasSafeUrl(src) ? src : '#';
                 return `<img src="${safeUrl}" alt="${alt}" class="rounded max-w-full" loading="lazy">`;
             })
             .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, (match, label, href) => {
-                const safeUrl = /^https?:\/\//.test(href) ? href : '#';
+                const safeUrl = hasSafeUrl(href) ? href : '#';
                 return `<a href="${safeUrl}" target="_blank" rel="noopener" class="text-emerald-700 underline">${label}</a>`;
             })
             .replace(/\n/g, '<br>');
@@ -58,7 +60,9 @@ function parseInline(text) {
         const match = lines[startIdx].match(/^(#{1,6})\s+(.*)$/);
         if (!match) return { html: '', next: startIdx + 1 };
         const level = match[1].length;
-        return { html: `<h${level}>${parseInline(match[2])}</h${level}>`, next: startIdx + 1 };
+        const text = match[2].trim();
+        if (text === '') return { html: '', next: startIdx + 1 };
+        return { html: `<h${level}>${parseInline(text)}</h${level}>`, next: startIdx + 1 };
     }
 
     function readList(startIdx, requiredBaseIndent = null) {
@@ -172,22 +176,26 @@ function parseInline(text) {
     }
 
     function readTable(startIdx) {
+        const header = [];
         const rows = [];
         let k = startIdx;
         while (k < lines.length) {
             const ln = lines[k].trim();
             if (!/^\|.*\|$/.test(ln)) break;
-            const cells = ln.slice(1, -1).split('|').map((c) => parseInline(c.trim()));
+            const rawCells = ln.slice(1, -1).split('|').map((c) => c.trim());
             if (k === startIdx + 1) {
-                // separator row is dropped
+                // separator row dropped
+            } else if (k === startIdx) {
+                header.push(`<tr>${rawCells.map((c) => `<th class="border border-slate-300 px-2 py-1 bg-slate-100 font-semibold">${parseInline(c)}</th>`).join('')}</tr>`);
             } else {
-                rows.push(`<tr>${cells.map((c) => `<td class="border border-slate-300 px-2 py-1">${c}</td>`).join('')}</tr>`);
+                rows.push(`<tr>${rawCells.map((c) => `<td class="border border-slate-300 px-2 py-1">${parseInline(c)}</td>`).join('')}</tr>`);
             }
             k++;
             if (safety++ > maxIterations) break;
         }
 
-        return { html: rows.length ? `<table class="w-full border-collapse border border-slate-300 my-2">${rows.join('')}</table>` : '', next: k };
+        const allRows = [...header, ...rows];
+        return { html: allRows.length ? `<table class="w-full border-collapse border border-slate-300 my-2">${allRows.join('')}</table>` : '', next: k };
     }
 
     while (i < lines.length) {

@@ -192,42 +192,42 @@ import { buildMarkdownRenderer } from './markdown-renderer';
         const selected = textarea.value.substring(start, end);
         const after = textarea.value.substring(end);
 
+        const normalized = String(textarea.value);
+        const hasContent = normalized.trim().length > 0;
+
         const placeholder = /%s/.test(template) ? '%s' : null;
-        let text;
-        let cursorOffset;
-        if (placeholder) {
-            text = template.replace(placeholder, selected || 'texte');
-            cursorOffset = selected ? selected.length : 'texte'.length;
-        } else if (/texte/i.test(template)) {
-            // Remplacement litéral du mot "texte" par la sélection si elle existe, sinon curseur au milieu.
-            if (selected) {
-                text = template.replace(/texte/i, selected);
-                cursorOffset = selected.length;
-            } else {
-                text = template;
-                const idx = /texte/i.exec(template).index;
-                cursorOffset = 0;
-                const len = 'texte'.length;
-                // On place le curseur au milieu du placeholder
-                textarea.selectionStart = start + idx;
-                textarea.selectionEnd = start + idx + len;
-            }
-        } else {
-            text = template;
-            cursorOffset = 0;
+
+        function selectPlaceholder(text, placeholderWord) {
+            const idx = text.toLowerCase().indexOf(placeholderWord.toLowerCase());
+            const len = placeholderWord.length;
+            textarea.selectionStart = start + idx;
+            textarea.selectionEnd = start + idx + len;
         }
 
-        textarea.value = before + text + after;
+        let text;
 
-        if (placeholder || selected) {
-            const newCursor = start + text.length;
-            textarea.selectionStart = textarea.selectionEnd = newCursor;
-        } else if (/texte/i.test(template)) {
-            const idx = /texte/i.exec(template).index;
-            const wordLen = 'texte'.length;
-            // Sélectionne le placeholder pour remplacement immédiat par la frappe.
-            textarea.selectionStart = start + idx;
-            textarea.selectionEnd = start + idx + wordLen;
+        if (placeholder) {
+            text = template.replace(placeholder, selected || 'texte');
+            textarea.value = before + text + after;
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        } else if (/texte/i.test(template) && selected) {
+            text = template.replace(/texte/i, selected);
+            textarea.value = before + text + after;
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        } else if (/texte/i.test(template) && !selected && hasContent) {
+            // Aucune sélection mais du texte dans la zone : envelopper tout le contenu.
+            const target = normalized;
+            text = template.replace(/texte/i, target);
+            textarea.value = text;
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        } else if (/texte/i.test(template) && !selected && !hasContent) {
+            text = template;
+            textarea.value = before + text + after;
+            selectPlaceholder(textarea.value, 'texte');
+        } else {
+            text = template;
+            textarea.value = before + text + after;
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
         }
 
         textarea.focus();

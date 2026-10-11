@@ -43,13 +43,22 @@ function main() {
     const tableDoc = parseHtml(table);
     assert.strictEqual(strictCount(tableDoc, ':scope > table'), 1, 'un tableau');
     assert.strictEqual(strictCount(tableDoc, 'table tr'), 2, 'ligne d\'en-tête + ligne de corps');
-    assert.strictEqual(strictCount(tableDoc, 'table td'), 4, 'quatre cellules produites');
+    assert.strictEqual(strictCount(tableDoc, 'table th'), 2, 'deux cellules d\'en-tête');
+    assert.strictEqual(strictCount(tableDoc, 'table td'), 2, 'deux cellules de données');
     const emptyCells = Array.from(tableDoc.querySelectorAll('table td')).filter((td) => td.textContent.trim() === '');
     assert.strictEqual(emptyCells.length, 1, 'une cellule vide');
 
     // Séparateur
     const sep = buildMarkdownRenderer('---');
     assert(sep.includes('<hr'));
+
+    // Titres temporairement vides doivent être ignorés, texte conservé
+    const headingsEmpty = buildMarkdownRenderer('## \n### \nTexte conservé');
+    const headingsDoc = parseHtml(headingsEmpty);
+    assert.strictEqual(strictCount(headingsDoc, ':scope > h2'), 0, 'h2 vide ignoré');
+    assert.strictEqual(strictCount(headingsDoc, ':scope > h3'), 0, 'h3 vide ignoré');
+    assert.strictEqual(strictCount(headingsDoc, ':scope > p'), 1, 'paragraphe conservé');
+    assert(headingsDoc.querySelector('p').textContent.includes('Texte conservé'), 'le texte conservé est présent');
 
     // Hiérarchie mixte obligatoire
     const mixed = buildMarkdownRenderer('- Alpha\n  1. Bravo\n  - Charlie\n- Delta');
