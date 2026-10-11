@@ -1,274 +1,392 @@
-document.addEventListener('DOMContentLoaded', () => {
-    setupThemeToggle();
-    setupMarkdownEditors();
-    setupInlineImageUploads();
-});
+/* --------------------------------------------------------------------------
+ * Subject Markdown editor — Lot 1 UX fixes
+ * -------------------------------------------------------------------------- */
+import { buildMarkdownRenderer } from './markdown-renderer';
 
-function setupInlineImageUploads() {
-    document.querySelectorAll('[data-inline-upload]').forEach(input => {
-        const subjectId = input.dataset.subjectId;
-        const editor = input.closest('[data-markdown-editor]');
-        if (! subjectId || ! editor) return;
-        input.addEventListener('change', async event => {
-            const file = event.target.files[0];
-            if (! file) return;
-            await uploadInlineImage(file, getActiveTextarea(editor), subjectId);
+(function () {
+    'use strict';
+
+    const editorRoot = document.querySelector('[data-markdown-editor]');
+    if (!editorRoot) return;
+
+    const wrapper = editorRoot.closest('form#subject-form');
+    const saveButton = wrapper?.querySelector('[data-save-button]');
+    const unsavedIndicator = wrapper?.querySelector('[data-unsaved-indicator]');
+    const formHasError = wrapper?.dataset.formHasErrors !== undefined;
+
+    const tabButtons = editorRoot.querySelectorAll('[data-editor-tab]');
+    const panels = editorRoot.querySelectorAll('[data-editor-panel]');
+    const previewAudience = editorRoot.querySelector('[data-preview-audience]');
+    const previewEl = editorRoot.querySelector('[data-markdown-preview]');
+    const previewModeButtons = editorRoot.querySelectorAll('[data-preview-mode]');
+
+    const fields = {
+        title: { el: wrapper?.querySelector('input[name="title"]') },
+        category_id: { el: wrapper?.querySelector('select[name="category_id"]') },
+        sub_category_id: { el: wrapper?.querySelector('select[name="sub_category_id"]') },
+        body: { textareaEl: editorRoot.querySelector('textarea#body') },
+        citizen_body: { textareaEl: editorRoot.querySelector('#citizen_body') },
+        public_body: { textareaEl: editorRoot.querySelector('#public_body') },
+        change_summary: { el: wrapper?.querySelector('input[name="change_summary"]') },
+    };
+
+    const audienceLabels = {
+        body: 'Instruction',
+        citizen_body: 'Public connecté',
+        public_body: 'Public déconnecté',
+    };
+
+    let currentMode = 'write-preview';
+    try {
+        currentMode = localStorage.getItem('editor-preview-mode') || 'write-preview';
+    } catch {
+        // Origine opaque (about:blank, tests isolés) : fallback sur le mode par défaut.
+    }
+
+    /* ---------------- Helpers ---------------- */
+    function getInitialValue(el) {
+        if (!el) return '';
+        return el.type === 'checkbox' ? (el.checked ? el.value : '') : el.value;
+    }
+
+    function recordInitialValues() {
+        Object.values(fields).forEach((field) => {
+            if (field.el) field.initial = getInitialValue(field.el);
+            if (field.textareaEl) field.initial = getInitialValue(field.textareaEl);
+        });
+    }
+
+    function getActivePanelName() {
+        for (const panel of panels) {
+            if (panel.classList.contains('active') && !panel.classList.contains('hidden')) {
+                return panel.dataset.editorPanel;
+            }
+        }
+        return 'body';
+    }
+
+    function getActiveTextarea() {
+        return fields[getActivePanelName()]?.textareaEl || fields.body.textareaEl;
+    }
+
+    function isFormDirty() {
+        let dirty = formHasError;
+        Object.values(fields).forEach((field) => {
+            if (field.el && getInitialValue(field.el) !== String(field.initial || '')) dirty = true;
+            if (field.textareaEl && getInitialValue(field.textareaEl) !== String(field.initial || '')) dirty = true;
+        });
+        return dirty;
+    }
+
+    function updateDirtyState() {
+        if (!unsavedIndicator) return;
+        const dirty = isFormDirty();
+        unsavedIndicator.classList.toggle('hidden', !dirty);
+        unsavedIndicator.setAttribute('aria-hidden', String(!dirty));
+        if (saveButton) saveButton.classList.toggle('ring-2', dirty);
+    }
+
+    function updatePreviewAudience(name) {
+        if (previewAudience) previewAudience.textContent = audienceLabels[name] || name;
+    }
+
+    function updatePreviewContent() {
+        if (!previewEl) return;
+        const active = getActiveTextarea();
+        if (!active) return;
+        const rendered = buildMarkdownRenderer(active.value);
+        previewEl.innerHTML = rendered;
+    }
+
+    /* ---------------- Markdown renderer ---------------- */
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    /* ---------------- Tab handling ---------------- */
+    tabButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const target = btn.dataset.editorTab;
+
+            tabButtons.forEach((b) => {
+                b.classList.remove('border-emerald-600', 'text-slate-700');
+                b.classList.add('border-transparent', 'text-slate-500');
+                b.removeAttribute('aria-selected');
+            });
+            btn.classList.add('border-emerald-600', 'text-slate-700');
+            btn.classList.remove('border-transparent', 'text-slate-500');
+            btn.setAttribute('aria-selected', 'true');
+
+            panels.forEach((p) => {
+                const active = p.dataset.editorPanel === target;
+                p.classList.toggle('hidden', !active);
+                p.classList.toggle('active', active);
+            });
+
+            updatePreviewAudience(target);
+            updatePreviewContent();
+            updateDirtyState();
+        });
+    });
+
+    /* ---------------- Preview mode ---------------- */
+        function setPreviewMode(mode) {
+        currentMode = mode;
+        try {
+            localStorage.setItem('editor-preview-mode', mode);
+        } catch {
+            // Silencieux sur origine opaque.
+        }
+        if (!previewEl) return;
+        const textareas = editorRoot.querySelectorAll('textarea[data-editor-field]');
+        previewModeButtons.forEach((btn) => {
+            const selected = btn.dataset.previewMode === mode;
+            btn.setAttribute('aria-selected', String(selected));
+            btn.classList.toggle('underline', selected);
+        });
+
+        if (mode === 'write') {
+            previewEl.classList.add('hidden');
+            textareas.forEach((t) => t.classList.remove('hidden'));
+        } else if (mode === 'preview') {
+            previewEl.classList.remove('hidden');
+            textareas.forEach((t) => t.classList.add('hidden'));
+            updatePreviewContent();
+        } else {
+            previewEl.classList.remove('hidden');
+            textareas.forEach((t) => t.classList.remove('hidden'));
+            updatePreviewContent();
+        }
+    }
+
+    previewModeButtons.forEach((btn) => {
+        btn.addEventListener('click', () => setPreviewMode(btn.dataset.previewMode));
+    });
+
+    /* ---------------- Toolbar insertion ---------------- */
+    function decodeInsertValue(value) {
+        return value.replace(/\\n/g, '\n');
+    }
+
+    editorRoot.querySelectorAll('button[data-insert]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const textarea = getActiveTextarea();
+            if (!textarea) return;
+            const raw = btn.dataset.insert;
+            insertTextAtCursor(textarea, decodeInsertValue(raw));
+            updatePreviewContent();
+            updateDirtyState();
+        });
+    });
+
+    function insertTextAtCursor(textarea, template) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const before = textarea.value.substring(0, start);
+        const selected = textarea.value.substring(start, end);
+        const after = textarea.value.substring(end);
+
+        const normalized = String(textarea.value);
+        const hasContent = normalized.trim().length > 0;
+
+        const placeholder = /%s/.test(template) ? '%s' : null;
+
+        function selectPlaceholder(text, placeholderWord) {
+            const idx = text.toLowerCase().indexOf(placeholderWord.toLowerCase());
+            const len = placeholderWord.length;
+            textarea.selectionStart = start + idx;
+            textarea.selectionEnd = start + idx + len;
+        }
+
+        let text;
+
+        if (placeholder) {
+            text = template.replace(placeholder, selected || 'texte');
+            textarea.value = before + text + after;
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        } else if (/texte/i.test(template) && selected) {
+            text = template.replace(/texte/i, selected);
+            textarea.value = before + text + after;
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        } else if (/texte/i.test(template) && !selected && hasContent) {
+            // Aucune sélection mais du texte dans la zone : envelopper tout le contenu.
+            const target = normalized;
+            text = template.replace(/texte/i, target);
+            textarea.value = text;
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        } else if (/texte/i.test(template) && !selected && !hasContent) {
+            text = template;
+            textarea.value = before + text + after;
+            selectPlaceholder(textarea.value, 'texte');
+        } else {
+            text = template;
+            textarea.value = before + text + after;
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        }
+
+        textarea.focus();
+        const event = new Event('input', { bubbles: true });
+        textarea.dispatchEvent(event);
+    }
+
+    /* ---------------- Upload ---------------- */
+    editorRoot.querySelectorAll('[data-inline-upload]').forEach((input) => {
+        input.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const subjectId = input.dataset.subjectId;
+            if (!subjectId) return;
+            const textarea = getActiveTextarea();
+            if (!textarea) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('alt', file.name);
+
+            try {
+                const res = await fetch(`/sujets/${subjectId}/upload-image`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                    body: formData,
+                });
+                const data = await res.json();
+                if (data.url) {
+                    insertTextAtCursor(textarea, `\n![${data.alt || ''}](${data.url})\n`);
+                    updatePreviewContent();
+                    updateDirtyState();
+                } else {
+                    alert('Échec de l\'upload de l\'image.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Échec de l\'upload de l\'image. Vérifiez la taille et le format.');
+            }
             input.value = '';
         });
     });
-    document.querySelectorAll('[data-markdown-editor]').forEach(editor => {
-        const subjectId = editor.querySelector('[data-inline-upload]')?.dataset.subjectId;
-        if (! subjectId) return;
-        editor.querySelectorAll('textarea[data-editor-field]').forEach(textarea => {
-            textarea.addEventListener('paste', async event => {
-                const items = Array.from(event.clipboardData.items).filter(item => item.type.startsWith('image/'));
-                if (! items.length) return;
-                event.preventDefault();
-                for (const item of items) await uploadInlineImage(item.getAsFile(), textarea, subjectId);
-            });
-            textarea.addEventListener('drop', async event => {
-                const files = Array.from(event.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-                if (! files.length) return;
-                event.preventDefault();
-                for (const file of files) await uploadInlineImage(file, textarea, subjectId);
-            });
+
+    /* ---------------- Paste / drag-drop images ---------------- */
+    const dropTargets = new Set();
+    editorRoot.querySelectorAll('textarea[data-editor-field]').forEach((textarea) => {
+        textarea.addEventListener('paste', async (e) => {
+            const items = Array.from(e.clipboardData.items || []);
+            const image = items.find((it) => it.type.startsWith('image/'));
+            if (!image) return;
+            e.preventDefault();
+            const file = image.getAsFile();
+            const subjectId = textarea.closest('[data-markdown-editor]')?.querySelector('[data-inline-upload]')?.dataset.subjectId;
+            if (!subjectId || !file) return;
+            await uploadAndInsert(textarea, file, subjectId);
+        });
+
+        textarea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropTargets.add(textarea);
+        });
+        textarea.addEventListener('dragleave', (e) => {
+            dropTargets.delete(textarea);
+        });
+        textarea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            dropTargets.delete(textarea);
+            const file = e.dataTransfer.files[0];
+            if (!file || !file.type.startsWith('image/')) return;
+            const subjectId = textarea.closest('[data-markdown-editor]')?.querySelector('[data-inline-upload]')?.dataset.subjectId;
+            if (!subjectId) return;
+            await uploadAndInsert(textarea, file, subjectId);
         });
     });
-}
 
-async function uploadInlineImage(file, textarea, subjectId) {
-    if (! file || ! textarea) return;
-    const form = new FormData();
-    form.append('file', file);
-    form.append('alt', file.name.replace(/\.[^/.]+$/, ''));
-    try {
-        const response = await fetch(`/sujets/${subjectId}/upload-image`, {
-            method: 'POST',
-            body: form,
-            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
-        });
-        if (! response.ok) throw new Error('Erreur serveur');
-        const data = await response.json();
-        insertTextAtCursor(textarea, `\n![${data.alt || file.name}](${data.url})\n`);
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-    } catch (err) {
-        alert("L'image n'a pas pu être ajoutée.");
-    }
-}
+    async function uploadAndInsert(textarea, file, subjectId) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('alt', file.name);
 
-function setupThemeToggle() {
-    document.querySelectorAll('[data-theme-toggle]').forEach(select => {
-        const wrapper = document.getElementById('theme-other-wrapper');
-        if (! wrapper) return;
-        select.addEventListener('change', () => wrapper.classList.toggle('hidden', select.value !== '__new__'));
-    });
-}
-
-function setupMarkdownEditors() {
-    document.querySelectorAll('[data-markdown-editor]').forEach(container => {
-        const textareas = [...container.querySelectorAll('textarea[data-editor-field]')];
-        const preview = container.querySelector('[data-markdown-preview]');
-        const previewAudience = container.querySelector('[data-preview-audience]');
-        if (! textareas.length || ! preview) return;
-
-        let activeTextarea = textareas.find(textarea => ! textarea.closest('[data-editor-panel].hidden, .tab-panel.hidden')) || textareas[0];
-        const refresh = () => {
-            const value = activeTextarea.value;
-            preview.innerHTML = value.trim()
-                ? buildMarkdownRenderer().render(value)
-                : '<p class="text-slate-500 italic">Aucun contenu pour cette version</p>';
-            if (previewAudience) previewAudience.textContent = activeTextarea.dataset.audienceLabel || 'Instruction';
-        };
-        const setActive = textarea => {
-            activeTextarea = textarea;
-            container.dataset.activeEditor = textarea.id;
-            refresh();
-            applyPreviewMode(container.dataset.previewMode || 'write-preview');
-        };
-        const applyPreviewMode = mode => {
-            container.dataset.previewMode = mode;
-            const showPreview = mode !== 'write';
-            preview.closest('[data-preview-panel]')?.classList.toggle('hidden', ! showPreview);
-            container.querySelectorAll('[data-editor-panel]').forEach(panel => {
-                const isActive = panel.dataset.editorPanel === activeTextarea.id;
-                panel.classList.toggle('hidden', mode === 'preview' || ! isActive);
+        try {
+            const res = await fetch(`/sujets/${subjectId}/upload-image`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                body: formData,
             });
-            container.querySelectorAll('[data-preview-mode]').forEach(item => {
-                item.setAttribute('aria-selected', item.dataset.previewMode === mode ? 'true' : 'false');
-            });
-        };
-
-        textareas.forEach(textarea => {
-            textarea.addEventListener('focus', () => setActive(textarea));
-            textarea.addEventListener('input', () => { setActive(textarea); refresh(); });
-        });
-        container.querySelectorAll('[data-insert]').forEach(button => {
-            button.title = button.dataset.tip || button.title;
-            button.addEventListener('click', () => {
-                const command = button.dataset.command;
-                insertToolbarText(activeTextarea, decodeInsertTemplate(button.dataset.insert || ''), command);
-                activeTextarea.dispatchEvent(new Event('input', { bubbles: true }));
-            });
-        });
-        container.querySelectorAll('[data-editor-tab]').forEach(tab => {
-            tab.setAttribute('role', 'tab');
-            tab.addEventListener('click', () => {
-                const target = container.querySelector(`#${CSS.escape(tab.dataset.editorTab)}`);
-                if (! target) return;
-                container.querySelectorAll('[data-editor-tab]').forEach(item => item.setAttribute('aria-selected', item === tab ? 'true' : 'false'));
-                container.querySelectorAll('[data-editor-panel]').forEach(panel => panel.classList.toggle('hidden', panel.dataset.editorPanel !== target.id));
-                setActive(target);
-                target.focus();
-            });
-        });
-        container.querySelectorAll('[data-preview-mode]').forEach(button => {
-            button.setAttribute('role', 'tab');
-            button.addEventListener('click', () => applyPreviewMode(button.dataset.previewMode));
-        });
-        refresh();
-        applyPreviewMode(container.dataset.previewMode || 'write-preview');
-    });
-}
-
-function decodeInsertTemplate(text) {
-    return text.replaceAll('\\n', '\n').replaceAll('\\r', '\r');
-}
-
-function insertToolbarText(textarea, text, command) {
-    if (command === 'bold' || command === 'italic') {
-        const marker = command === 'bold' ? '**' : '*';
-        const start = textarea.selectionStart ?? textarea.value.length;
-        const end = textarea.selectionEnd ?? start;
-        const selected = textarea.value.slice(start, end);
-        const content = selected || (command === 'bold' ? 'texte' : 'texte');
-        insertTextAtCursor(textarea, `${marker}${content}${marker}`, selected ? start + marker.length : start + marker.length);
-        if (! selected) textarea.selectionStart = textarea.selectionEnd = start + marker.length;
-        return;
-    }
-    insertTextAtCursor(textarea, text);
-}
-
-function buildMarkdownRenderer() {
-    return {
-        render(text) {
-            const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
-            const blocks = [];
-            let i = 0;
-            while (i < lines.length) {
-                if (! lines[i].trim()) { i++; continue; }
-                const heading = lines[i].match(/^ {0,3}(#{1,6})(?:\s+(.*?)\s*#*)?$/);
-                if (heading) {
-                    if (heading[2]?.trim()) {
-                        blocks.push(`<h${heading[1].length}>${inlineMarkdown(heading[2].trim())}</h${heading[1].length}>`);
-                    }
-                    i++; continue;
-                }
-                if (/^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(lines[i])) { blocks.push('<hr>'); i++; continue; }
-                if (/^\s*>/.test(lines[i])) {
-                    const quote = [];
-                    while (i < lines.length && /^\s*>/.test(lines[i])) { quote.push(lines[i].replace(/^\s*>\s?/, '')); i++; }
-                    blocks.push(`<blockquote class="subject-quote">${buildMarkdownRenderer().render(quote.join('\n'))}</blockquote>`); continue;
-                }
-                if (isTableStart(lines, i)) {
-                    const table = [lines[i], lines[i + 1]]; i += 2;
-                    while (i < lines.length && /^\s*\|/.test(lines[i])) table.push(lines[i++]);
-                    blocks.push(renderMarkdownTable(table.join('\n'))); continue;
-                }
-                if (/^\s*(?:[-*+] |\d+[.)] )/.test(lines[i])) {
-                    const list = consumeList(lines, i);
-                    blocks.push(list.html); i = list.next; continue;
-                }
-                const paragraph = [lines[i++]];
-                while (i < lines.length && lines[i].trim() && !isBlockStart(lines[i])) paragraph.push(lines[i++]);
-                blocks.push(`<p>${paragraph.map(inlineMarkdown).join('<br>')}</p>`);
+            const data = await res.json();
+            if (data.url) {
+                insertTextAtCursor(textarea, `\n![${data.alt || ''}](${data.url})\n`);
+                updatePreviewContent();
+                updateDirtyState();
             }
-            return blocks.join('');
-        },
-    };
-}
-
-function isBlockStart(line) {
-    return /^ {0,3}#{1,6}(?:\s+.*)?$/.test(line) || /^ {0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)
-        || /^\s*>/.test(line) || /^\s*(?:[-*+] |\d+[.)] )/.test(line) || /^\s*\|/.test(line);
-}
-
-function isTableStart(lines, index) {
-    return /^\s*\|/.test(lines[index]) && index + 1 < lines.length && /^\s*\|?\s*:?-{3,}/.test(lines[index + 1]);
-}
-
-function consumeList(lines, start) {
-    const root = []; let i = start;
-    while (i < lines.length && lines[i].trim()) {
-        const match = lines[i].match(/^(\s*)([-*+] |\d+[.)] )(.*)$/);
-        if (! match) break;
-        root.push({ indent: match[1].length, ordered: /^\d/.test(match[2]), text: match[3] }); i++;
-    }
-    const renderLevel = (index, indent) => {
-        const ordered = root[index]?.ordered;
-        const tag = ordered ? 'ol' : 'ul'; let html = `<${tag}>`;
-        while (index < root.length && root[index].indent === indent && root[index].ordered === ordered) {
-            html += `<li>${inlineMarkdown(root[index].text)}`;
-            if (root[index + 1] && root[index + 1].indent > indent) {
-                let nestedHtml = '';
-                let nestedIndex = index + 1;
-                while (nestedIndex < root.length && root[nestedIndex].indent > indent) {
-                    const nested = renderLevel(nestedIndex, root[nestedIndex].indent);
-                    nestedHtml += nested.html;
-                    nestedIndex = nested.next;
-                }
-                html += nestedHtml;
-                index = nestedIndex;
-            } else index++;
-            html += '</li>';
+        } catch (err) {
+            console.error(err);
+            alert('Échec de l\'upload de l\'image.');
         }
-        return { html: html + `</${tag}>`, next: index };
-    };
-    let index = 0;
-    let html = '';
-    while (index < root.length) {
-        const segment = renderLevel(index, root[index].indent);
-        html += segment.html;
-        index = segment.next;
     }
-    return { html, next: i };
-}
 
-function inlineMarkdown(value) {
-    return escapeHtml(value)
-        .replace(/!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)/g, '<img src="$2" alt="$1" class="subject-image">')
-        .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline">$1</a>')
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code class="bg-slate-100 rounded px-1 text-sm">$1</code>');
-}
+    /* ---------------- Dirty state ---------------- */
+    wrapper?.querySelectorAll('input, select, textarea').forEach((el) => {
+        ['input', 'change'].forEach((eventName) => {
+            el.addEventListener(eventName, () => {
+                updateDirtyState();
+                if (el.matches('textarea[data-editor-field]')) updatePreviewContent();
+            });
+        });
+    });
 
-function renderMarkdownTable(block) {
-    const rows = block.split(/\n+/).filter(Boolean);
-    if (rows.length < 2) return `<p>${inlineMarkdown(block)}</p>`;
-    const cells = row => {
-        const trimmed = row.trim().replace(/^\|/, '').replace(/\|$/, '');
-        return trimmed.split('|').map(cell => cell.trim());
-    };
-    const header = cells(rows[0]);
-    const body = rows.slice(2).map(cells);
-    return `<div class="overflow-x-auto"><table class="subject-table"><thead><tr>${header.map(cell => `<th>${inlineMarkdown(cell)}</th>`).join('')}</tr></thead><tbody>${body.map(row => `<tr>${header.map((_, index) => `<td>${inlineMarkdown(row[index] || '')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-}
+    /* ---------------- Before unload ---------------- */
+    let isSubmitting = false;
 
-function getActiveTextarea(editor) {
-    return editor.querySelector(`textarea#${CSS.escape(editor.dataset.activeEditor || '')}`) || editor.querySelector('textarea[data-editor-field]');
-}
+    wrapper?.addEventListener('submit', () => {
+        isSubmitting = true;
+        if (saveButton) saveButton.disabled = true;
+        // L'indicateur reste tel quel ; il sera recalculé au retour si erreur,
+        // ou la page sera rechargée après succès serveur.
+    });
 
-function insertTextAtCursor(textarea, text, selectionStart = null) {
-    const start = textarea.selectionStart ?? textarea.value.length;
-    const end = textarea.selectionEnd ?? start;
-    textarea.value = textarea.value.substring(0, start) + text + textarea.value.substring(end);
-    const caret = selectionStart ?? start + text.length;
-    textarea.selectionStart = textarea.selectionEnd = caret;
-    textarea.focus();
-}
+    wrapper?.addEventListener('formdata', () => {
+        isSubmitting = true;
+        if (saveButton) saveButton.disabled = true;
+    });
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+    window.addEventListener('beforeunload', (e) => {
+        if (!isSubmitting && isFormDirty()) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    editorRoot.querySelectorAll('[data-confirm-leave]').forEach((link) => {
+        link.addEventListener('click', (e) => {
+            if (isFormDirty()) {
+                const message = 'Des modifications non enregistrées seront perdues. Continuer \u00e0 quitter sans enregistrer ?';
+                if (!window.confirm(message)) {
+                    e.preventDefault();
+                }
+            }
+        });
+    });
+
+    window.addEventListener('pageshow', () => {
+        isSubmitting = false;
+        if (saveButton) saveButton.disabled = false;
+        updateDirtyState();
+    });
+
+    if (wrapper?.dataset.formHasErrors !== undefined) {
+        updateDirtyState();
+    }
+
+    /* ---------------- Init ---------------- */
+    recordInitialValues();
+    updatePreviewAudience(getActivePanelName());
+    updatePreviewContent();
+    setPreviewMode(currentMode);
+    updateDirtyState();
+
+    // Recalcule le dirty state au retour navigateur (bouton back)
+    window.addEventListener('pageshow', updateDirtyState);
+    window.__editorLoaded = true;
+})();

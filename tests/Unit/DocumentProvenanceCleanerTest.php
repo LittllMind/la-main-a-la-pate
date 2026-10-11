@@ -67,12 +67,43 @@ class DocumentProvenanceCleanerTest extends TestCase
         $this->assertStringContainsString('CR-CM 2021-10-12', $clean);
     }
 
-    public function test_removes_google_drive_path(): void
+    public function test_preserves_markdown_structural_indentation(): void
     {
-        $input = 'Document stocké sur Google Drive / LMALP/HERMES ÉCHANGES/fichier.pdf.';
+        $input = "- Alpha\n  1. Bravo\n  - Charlie\n- Delta\n\n```php\n    \$x = 1;\n```";
         $clean = DocumentProvenanceCleaner::cleanForDisplay($input);
 
-        $this->assertStringNotContainsString('Google Drive', $clean);
-        $this->assertStringNotContainsString('HERMES ÉCHANGES', $clean);
+        $this->assertStringContainsString("- Alpha\n", $clean);
+        $this->assertStringContainsString("  1. Bravo\n", $clean);
+        $this->assertStringContainsString("  - Charlie\n", $clean);
+        $this->assertStringContainsString("- Delta\n", $clean);
+        $this->assertStringContainsString("    \$x = 1;", $clean);
+    }
+
+    public function test_does_not_mutate_multiple_inner_spaces_in_paragraphs(): void
+    {
+        $input = 'Le CR-CM 2021-10-12 et le dossier TA n°2202355.';
+        $clean = DocumentProvenanceCleaner::cleanForDisplay($input);
+        $this->assertSame($input, $clean);
+    }
+
+    public function test_preserves_two_trailing_spaces_as_markdown_line_break(): void
+    {
+        $input = "Ligne A  \nLigne B";
+        $clean = DocumentProvenanceCleaner::cleanForDisplay($input);
+
+        // Markdown : deux espaces en fin de ligne => saut de ligne.
+        $this->assertStringContainsString("Ligne A  \n", $clean);
+        $this->assertStringContainsString('Ligne B', $clean);
+    }
+
+    public function test_removes_more_than_two_trailing_spaces_but_keeps_line_break_indent(): void
+    {
+        $input = "Liste:\n- Alpha    \n- Beta";
+        $clean = DocumentProvenanceCleaner::cleanForDisplay($input);
+
+        // "    " (4 espaces) en fin de ligne doit être réduit à au plus 2 espaces.
+        $this->assertStringNotContainsString('Alpha    \n', $clean);
+        $this->assertStringContainsString("- Alpha", $clean);
+        $this->assertStringContainsString("- Beta", $clean);
     }
 }

@@ -105,9 +105,13 @@ class DocumentProvenanceCleaner
         $markdown = preg_replace('/\s+\./u', '.', $markdown);
         $markdown = preg_replace('/\.{2,}/u', '.', $markdown);
 
-        // 9. Nettoyer les espaces et lignes vides multiples.
+        // 9. Nettoyer les espaces et lignes vides multiples sans
+        //     détruire l'indentation Markdown (listes, blocs de code, tableaux).
+        //     On préserve exactement deux espaces en fin de ligne :
+        //     en Markdown ce sont des sauts de ligne volontaires.
+        $markdown = preg_replace('/[ \t]{3,}$/mu', '', $markdown);
+        $markdown = preg_replace('/(?<![ \t])[ \t]$/mu', '', $markdown);
         $markdown = preg_replace('/\n{3,}/u', "\n\n", $markdown);
-        $markdown = preg_replace('/[ \t]+/u', ' ', $markdown);
         $markdown = trim($markdown);
 
         return $markdown;

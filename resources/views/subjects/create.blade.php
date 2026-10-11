@@ -1,11 +1,12 @@
 @extends('layouts.public')
 
-@section('title', 'Nouveau sujet — La Main à la Pâte')
+@section('title', 'Proposer un sujet — La Main à la Pâte')
 
-@section('content')<div class="max-w-3xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-slate-900 mb-6">Nouveau sujet</h1>
+@section('content')
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-slate-900 mb-6">Proposer un sujet</h1>
 
-    <form method="POST" action="{{ route('subjects.store') }}" class="bg-white rounded-lg border border-slate-200 p-6" id="subject-form">
+    <form method="POST" action="{{ route('subjects.store') }}" id="subject-form" class="bg-white rounded-lg border border-slate-200 p-6">
         @csrf
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
@@ -14,7 +15,7 @@
                 <select id="category_id" name="category_id" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" data-category-select>
                     <option value="">-- Choisir un thème --</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}" {{ old('category_id', request('category_id')) == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                     @endforeach
                 </select>
                 @error('category_id')
@@ -32,7 +33,6 @@
             </div>
         </div>
 
-        {{-- legacy hidden theme pour compatibilité --}}
         <input type="hidden" name="theme" id="theme_legacy" value="{{ old('theme') }}">
 
         <div class="mb-5">
@@ -44,52 +44,84 @@
         </div>
 
         <div class="mb-5" data-markdown-editor data-help-reference>
-            <div class="flex items-center justify-between mb-1">
-                <label for="body" class="block text-sm font-medium text-slate-700">Contenu du document</label>
-                <span class="text-xs text-slate-500">Rédaction au format Markdown — simple et clair</span>
+            <div class="flex items-center border-b border-slate-200 mb-3" role="tablist">
+                <button type="button" data-tab="body" data-editor-tab="body" aria-controls="body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-700 border-b-2 border-emerald-600" aria-selected="true" role="tab">
+                    Instruction
+                    <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 border border-slate-200">interne</span>
+                </button>
+                @if(auth()->user()->isAdmin())
+                <button type="button" data-tab="citizen_body" data-editor-tab="citizen_body" aria-controls="citizen_body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700" role="tab">
+                    Public connecté
+                    <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 border border-slate-200">optionnel</span>
+                </button>
+                <button type="button" data-tab="public_body" data-editor-tab="public_body" aria-controls="public_body-panel" class="version-tab px-4 py-2 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700" role="tab">
+                    Public déconnecté
+                    <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 border border-slate-200">optionnel</span>
+                </button>
+                @endif
             </div>
 
-            <div class="border border-slate-300 rounded-md p-2 mb-2 flex flex-wrap gap-2 bg-slate-50" aria-label="Barre d’outils Markdown" role="toolbar">
-                <button type="button" data-insert="## " data-tip="Titre de section : ## Mon titre" aria-label="Titre de section" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100 focus:ring-2 focus:ring-emerald-500">Titre de section <span class="text-slate-400">##</span></button>
-                <button type="button" data-insert="### " data-tip="Sous-section : ### Mon sous-titre" aria-label="Sous-section" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100 focus:ring-2 focus:ring-emerald-500">Sous-section <span class="text-slate-400">###</span></button>
-                <button type="button" data-insert="**texte**" data-command="bold" data-tip="Texte en gras : **mon mot**" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Gras <span class="text-slate-400">**</span></button>
-                <button type="button" data-insert="*texte*" data-command="italic" data-tip="Texte en italique : *mon mot*" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Italique <span class="text-slate-400">*</span></button>
-                <button type="button" data-insert="\n- élément\n" data-tip="Liste à puces : - élément" aria-label="Liste à puces" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste à puces <span class="text-slate-400">-</span></button>
-                <button type="button" data-insert="\n1. élément\n" data-tip="Liste numérotée : 1. élément" aria-label="Liste numérotée" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Liste numérotée <span class="text-slate-400">1.</span></button>
-                <button type="button" data-insert="\n> " data-tip="Citation : > une phrase" aria-label="Citation" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Citation <span class="text-slate-400">&gt;</span></button>
-                <button type="button" data-insert="\n| Colonne 1 | Colonne 2 |\n| --- | --- |\n| a | b |\n" data-tip="Tableau : utilise des | et des -" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Tableau <span class="text-slate-400">|</span></button>
-                <button type="button" data-insert="[texte](https://)" data-tip="Lien : [texte](https://...)" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Lien <span class="text-slate-400">[...](...)</span></button>
-                <button type="button" data-insert="\n![légende](https://)\n" data-tip="Image : ![légende](https://...)" aria-label="Image" class="toolbar-btn px-2 py-1 text-xs rounded bg-white border border-slate-300 hover:bg-slate-100">Image <span class="text-slate-400">![...](...)</span></button>
+            <div id="body-panel" data-tab-panel="body" data-editor-panel="body" class="tab-panel active" role="tabpanel" aria-labelledby="body-tab">
+                @include('subjects._editor_partial', [
+                    'textareaId' => 'body',
+                    'textareaName' => 'body',
+                    'audienceLabel' => 'Instruction',
+                    'placeholder' => 'Rédigez ici au format Markdown.',
+                    'content' => old('body', ''),
+                    'subject' => $subject ?? null,
+                    'hideInlineUpload' => true,
+                ])
             </div>
 
-            <div id="body-panel" data-editor-panel="body" class="tab-panel">
-            <textarea id="body" name="body" data-editor-field data-audience-label="Instruction" rows="16" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Exemple de rédaction simple :
-
-# Mon sujet
-
-Un paragraphe introduit le document.
-
-## Une idée importante
-
-- Un premier point
-- Un deuxième point
-
-> Une citation issue d'une réunion ou d'un document
-
-Ajoutez des images dans la galerie du sujet, puis cliquez 'Copier markdown' pour les insérer ici.">{{ old('body') }}</textarea>
+            @if(auth()->user()->isAdmin())
+            <div id="citizen_body-panel" data-tab-panel="citizen_body" data-editor-panel="citizen_body" class="tab-panel hidden" role="tabpanel" aria-labelledby="citizen_body-tab">
+                <div class="flex items-center gap-2 mb-2 text-xs text-slate-500">
+                    <span class="italic">Visible par les membres identifiés.</span>
+                </div>
+                @include('subjects._editor_partial', [
+                    'textareaId' => 'citizen_body',
+                    'textareaName' => 'citizen_body',
+                    'audienceLabel' => 'Public connecté',
+                    'placeholder' => 'Version destinée aux membres identifiés.',
+                    'content' => old('citizen_body', ''),
+                    'subject' => $subject ?? null,
+                    'hideInlineUpload' => true,
+                ])
             </div>
+            <div id="public_body-panel" data-tab-panel="public_body" data-editor-panel="public_body" class="tab-panel hidden" role="tabpanel" aria-labelledby="public_body-tab">
+                <div class="flex items-center gap-2 mb-2 text-xs text-slate-500">
+                    <span class="italic">Visible publiquement.</span>
+                </div>
+                @include('subjects._editor_partial', [
+                    'textareaId' => 'public_body',
+                    'textareaName' => 'public_body',
+                    'audienceLabel' => 'Public déconnecté',
+                    'placeholder' => 'Version publique : synthèse officielle, faits établis uniquement.',
+                    'content' => old('public_body', ''),
+                    'subject' => $subject ?? null,
+                    'hideInlineUpload' => true,
+                ])
+            </div>
+            @endif
 
             <div class="mt-4">
-                <div class="text-xs font-medium text-slate-500 flex flex-wrap items-center gap-2 mb-2" role="tablist" aria-label="Mode d’édition">
-                    <span>Aperçu du rendu — <strong data-preview-audience>Travail</strong></span>
-                    <button type="button" data-preview-mode="write" aria-selected="false" class="text-emerald-700">Écrire</button>
+                <div class="text-xs font-medium text-slate-500 flex flex-wrap items-center gap-2 mb-2">
+                    <span>Aperçu du rendu</span>
+                    <strong data-preview-audience>Instruction</strong>
                     <button type="button" data-preview-mode="write-preview" aria-selected="true" class="text-emerald-700">Écrire + aperçu</button>
+                    <button type="button" data-preview-mode="write" aria-selected="false" class="text-emerald-700">Écrire</button>
                     <button type="button" data-preview-mode="preview" aria-selected="false" class="text-emerald-700">Aperçu</button>
                 </div>
-                <div id="preview" data-markdown-preview data-preview-panel aria-label="Aperçu du rendu Markdown" class="prose prose-slate max-w-none border border-slate-200 rounded-md p-4 min-h-[120px]"></div>
+                <div id="preview" data-markdown-preview data-preview-panel aria-label="Aperçu du rendu Markdown" class="subject-preview prose prose-slate max-w-none border border-slate-200 rounded-md p-4 max-h-96 overflow-y-auto"></div>
             </div>
 
             @error('body')
+                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+            @enderror
+            @error('citizen_body')
+                <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+            @enderror
+            @error('public_body')
                 <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
             @enderror
 
@@ -111,9 +143,15 @@ Ajoutez des images dans la galerie du sujet, puis cliquez 'Copier markdown' pour
             </details>
         </div>
 
-        <div class="flex items-center gap-3">
-            <button type="submit" class="bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">Créer en brouillon</button>
-            <a href="{{ route('subjects.index') }}" class="text-slate-500 text-sm hover:text-slate-800 transition">Annuler</a>
+        <div class="mb-5">
+            <label for="change_summary" class="block text-sm font-medium text-slate-700 mb-1">Résumé des modifications (optionnel)</label>
+            <input id="change_summary" name="change_summary" type="text" maxlength="255" value="{{ old('change_summary') }}" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm">
+        </div>
+
+        <div class="sticky bottom-0 -mx-6 -mb-6 px-6 py-3 bg-white/95 backdrop-blur border-t border-slate-200 flex items-center gap-3 z-40">
+            <span data-unsaved-indicator class="hidden text-amber-700 text-sm font-medium" aria-hidden="true">Modifications non enregistrées</span>
+            <button type="submit" data-save-button class="bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-emerald-800 transition">Enregistrer</button>
+            <a href="{{ url()->previous() }}" data-cancel-link data-confirm-leave class="text-slate-500 text-sm hover:text-slate-800 transition">Annuler</a>
         </div>
     </form>
 </div>
@@ -144,8 +182,8 @@ Ajoutez des images dans la galerie du sujet, puis cliquez 'Copier markdown' pour
         populateSubs(this.value, null);
     });
 
-    @if(old('category_id', request('category_id')))
-        populateSubs({{ old('category_id', request('category_id')) }}, {{ old('sub_category_id', request('sub_category_id', 'null')) }});
+    @if(old('category_id'))
+        populateSubs({{ old('category_id') }}, {{ old('sub_category_id') ?? 'null' }});
     @endif
 })();
 </script>
