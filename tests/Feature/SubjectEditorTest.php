@@ -90,6 +90,67 @@ class SubjectEditorTest extends TestCase
         $this->assertStringContainsString('Charlie', $unorderedChildren->item(0)->textContent);
     }
 
+    public function test_edit_form_has_separate_publish_and_hide_forms(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $category = Category::factory()->create();
+        $subCategory = SubCategory::factory()->create(['category_id' => $category->id]);
+
+        $subject = Subject::create([
+            'user_id' => $admin->id,
+            'theme' => 'Test',
+            'category_id' => $category->id,
+            'sub_category_id' => $subCategory->id,
+            'title' => 'Test formulaires séparés',
+            'slug' => 'test-formulaires-separes',
+            'body' => 'Corps instruction.',
+            'citizen_body' => 'Corps citoyen.',
+            'public_body' => 'Corps public.',
+            'status' => 'draft',
+            'citizen_status' => 'draft',
+            'public_status' => 'draft',
+        ]);
+
+        $html = $this->actingAs($admin)
+            ->get(route('subjects.edit', $subject->slug))
+            ->assertOk()
+            ->getContent();
+
+        $doc = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $doc->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        $xpath = new \DOMXPath($doc);
+
+        // Il doit y avoir exactement un formulaire principal (#subject-form) qui contient les trois textarea.
+        $mainForm = $xpath->query('//form[@id="subject-form"]')->item(0);
+        $this->assertNotNull($mainForm, 'Le formulaire principal doit exister.');
+
+        $mainTextareas = $xpath->query('.//textarea', $mainForm);
+        $this->assertCount(3, $mainTextareas, 'Le formulaire principal doit contenir les trois champs Markdown.');
+
+        // Les actions de publication/masquage ne doivent pas être dans le formulaire principal.
+        $nestedActionForms = $xpath->query('.//form', $mainForm);
+        $this->assertCount(0, $nestedActionForms, 'Aucun formulaire imbriqué dans le formulaire principal.');
+
+        // Les formulaires d'audience doivent exister en dehors et avoir leurs propres boutons submit.
+        $publishPublicForms = $xpath->query('//form[contains(@action, "publier-public")]');
+        $this->assertGreaterThanOrEqual(1, $publishPublicForms->length, 'Formulaire Publier public absent.');
+
+        $hidePublicForms = $xpath->query('//form[contains(@action, "masquer-public")]');
+        $this->assertGreaterThanOrEqual(1, $hidePublicForms->length, 'Formulaire Masquer public absent.');
+
+        $publishCitizenForms = $xpath->query('//form[contains(@action, "publier-citoyen")]');
+        $this->assertGreaterThanOrEqual(1, $publishCitizenForms->length, 'Formulaire Publier citoyen absent.');
+
+        $hideCitizenForms = $xpath->query('//form[contains(@action, "masquer-citoyen")]');
+        $this->assertGreaterThanOrEqual(1, $hideCitizenForms->length, 'Formulaire Masquer citoyen absent.');
+
+        // Les boutons d'action doivent appartenir à leurs formulaires respectifs (attribut form ou être descendants directs).
+        $actionButtons = $xpath->query('//button[@form]');
+        $this->assertGreaterThanOrEqual(1, $actionButtons->length, 'Les boutons d\'action doivent avoir un attribut form.');
+    }
+
     public function test_edit_form_exposes_unsaved_state_hooks_without_autosave(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -105,5 +166,27 @@ class SubjectEditorTest extends TestCase
         $this->assertStringContainsString('data-confirm-leave', $html);
         $this->assertStringContainsString('data-save-button', $html);
         $this->assertStringNotContainsString('data-autosave', $html);
+    }
+
+    public function test_edit_form_uses_valid_audience_labels(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $subject = Subject::factory()->create([
+            'user_id' => $admin->id,
+            'citizen_body' => 'Contenu citoyen',
+            'public_body' => 'Contenu public',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('subjects.edit', $subject->slug))
+            ->assertOk();
+
+        $response->assertSee('Instruction');
+        $response->assertSee('Public connecté');
+        $response->assertSee('Public déconnecté');
+
+        $response->assertDontSee('Travail');
+        $response->assertDontSee('Citoyen');
+        $response->assertDontSee('>Public<'); // libellé "Public" seul, pas "Public déconnecté"
     }
 }

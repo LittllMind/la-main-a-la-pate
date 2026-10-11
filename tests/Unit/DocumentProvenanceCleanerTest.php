@@ -85,4 +85,25 @@ class DocumentProvenanceCleanerTest extends TestCase
         $clean = DocumentProvenanceCleaner::cleanForDisplay($input);
         $this->assertSame($input, $clean);
     }
+
+    public function test_preserves_two_trailing_spaces_as_markdown_line_break(): void
+    {
+        $input = "Ligne A  \nLigne B";
+        $clean = DocumentProvenanceCleaner::cleanForDisplay($input);
+
+        // Markdown : deux espaces en fin de ligne => saut de ligne.
+        $this->assertStringContainsString("Ligne A  \n", $clean);
+        $this->assertStringContainsString('Ligne B', $clean);
+    }
+
+    public function test_removes_more_than_two_trailing_spaces_but_keeps_line_break_indent(): void
+    {
+        $input = "Liste:\n- Alpha    \n- Beta";
+        $clean = DocumentProvenanceCleaner::cleanForDisplay($input);
+
+        // "    " (4 espaces) en fin de ligne doit être réduit à au plus 2 espaces.
+        $this->assertStringNotContainsString('Alpha    \n', $clean);
+        $this->assertStringContainsString("- Alpha", $clean);
+        $this->assertStringContainsString("- Beta", $clean);
+    }
 }
