@@ -25,13 +25,19 @@ export function buildMarkdownRenderer(md) {
     function isBlockquote(ln) { return /^(\s*)>(\s?)(.*)$/.test(ln); }
     function isCodeFence(ln) { return /^```/.test(ln); }
 
-    function parseInline(text) {
+function parseInline(text) {
         return escapeHtml(text)
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.+?)\*/g, '<em>$1</em>')
             .replace(/`(.+?)`/g, '<code>$1</code>')
-            .replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, '<img src="$2" alt="$1" class="rounded max-w-full" loading="lazy">')
-            .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-emerald-700 underline">$1</a>')
+            .replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, (match, alt, src) => {
+                const safeUrl = /^https?:\/\//.test(src) ? src : '#';
+                return `<img src="${safeUrl}" alt="${alt}" class="rounded max-w-full" loading="lazy">`;
+            })
+            .replace(/\[([^\]]+)\]\(([^\)]+)\)/g, (match, label, href) => {
+                const safeUrl = /^https?:\/\//.test(href) ? href : '#';
+                return `<a href="${safeUrl}" target="_blank" rel="noopener" class="text-emerald-700 underline">${label}</a>`;
+            })
             .replace(/\n/g, '<br>');
     }
 
@@ -55,69 +61,87 @@ export function buildMarkdownRenderer(md) {
         return { html: `<h${level}>${parseInline(match[2])}</h${level}>`, next: startIdx + 1 };
     }
 
-    function readList(startIdx) {
-        const items = [];
+    function readList(startIdx, requiredBaseIndent = null) {
+        const baseIndent = requiredBaseIndent ?? lines[startIdx].match(/^(\s*)/)[1].length;
         let k = startIdx;
-        const baseIndent = lines[startIdx].match(/^(\s*)/)[1].length;
-        const stack = [{ indent: baseIndent, html: '', items: [] }];
+        let currentType = null;
+        let currentContent = [];
+        let pendingSublists = [];
+        const currentItems = [];
+        let html = '';
 
-        function top() { return stack[stack.length - 1]; }
-        function flushItem() {
-            const t = top();
-            if (t.html.trim()) {
-                t.items.push('<li>' + parseInline(t.html.trim()) + '</li>');
-                t.html = '';
-            }
+        function flushList() {
+            if (!currentType) return;
+            const cls = currentType === 'ol' ? 'list-decimal pl-5 my-2' : 'list-disc pl-5 my-2';
+            html += `<${currentType} class="${cls}">${currentItems.join('')}</${currentType}>`;
         }
-        function closeTo(indent) {
-            while (stack.length > 1 && top().indent > indent) {
-                flushItem();
-                const inner = top().items.length ? '\n<ul>' + top().items.join('') + '</ul>' : '';
-                const t = stack.pop();
-                top().html += inner;
+
+        function flushItem() {
+            if (currentContent.length === 0 && pendingSublists.length === 0) {
+                currentContent = [''];
             }
+            const inline = currentContent.length ? parseInline(currentContent.join(' ')) : '';
+            let li = `<li>${inline}`;
+            pendingSublists.forEach((sub) => { li += sub; });
+            li += '</li>';
+            currentItems.push(li);
+            currentContent = [];
+            pendingSublists = [];
         }
 
         while (k < lines.length) {
+            if (safety++ > maxIterations) break;
             const line = lines[k];
             if (line.trim() === '') { k++; continue; }
+
             const m = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
             if (!m) {
-                if (isHeading(line) || isSeparator(line) || isBlockquote(line) || isCodeFence(line) || isTableStart(line)) break;
-                if (top().html) top().html += ' ' + line.trim();
+                const leading = line.match(/^(\s*)/)[1].length;
+                if (leading > baseIndent && currentContent.length + pendingSublists.length > 0) {
+                    currentContent.push(line.trim());
+                    k++;
+                    continue;
+                }
+                break;
+            }
+
+            const indent = m[1].length;
+            const type = /^\d+\./.test(m[2]) ? 'ol' : 'ul';
+            const content = m[3];
+
+            if (indent < baseIndent) break;
+
+            if (indent === baseIndent) {
+                if (currentContent.length > 0 || pendingSublists.length > 0) {
+                    flushItem();
+                }
+                if (currentType && currentType !== type) {
+                    flushList();
+                    currentItems.length = 0;
+                }
+                currentType = type;
+                currentContent = [content];
                 k++;
                 continue;
             }
-            const indent = m[1].length;
-            const marker = m[2];
-            const content = m[3];
 
-            if (indent > top().indent + 3) {
-                flushItem();
-                stack.push({ indent, html: content, items: [], ordered: /^\d+\./.test(marker) });
-            } else if (indent < top().indent) {
-                closeTo(indent);
-                flushItem();
-                top().html = content;
+            // indent > baseIndent : sous-liste(s) rattachées à l'élément courant.
+            const sub = readList(k, indent);
+            if (sub.html) {
+                pendingSublists.push(sub.html);
+                k = sub.next;
             } else {
-                flushItem();
-                top().html = content;
+                currentContent.push(content);
+                k++;
             }
-
-            k++;
-            if (safety++ > maxIterations) break;
         }
 
-        while (stack.length > 1) {
+        if (currentContent.length > 0 || pendingSublists.length > 0) {
             flushItem();
-            const inner = top().items.length ? `<ol>${top().items.join('')}</ol>` : '';
-            const t = stack.pop();
-            top().html += inner;
         }
-        flushItem();
-        const ordered = /^\d+\./.test(lines[startIdx].match(/^(\s*)([-*]|\d+\.)\s+/)[2]);
-        const tag = ordered ? 'ol' : 'ul';
-        return { html: `<${tag} class="list-disc pl-5 my-2">${stack[0].items.join('')}</${tag}>`, next: k };
+        flushList();
+
+        return { html: html, next: k };
     }
 
     function readBlockquote(startIdx) {

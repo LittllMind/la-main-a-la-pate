@@ -36,7 +36,12 @@ import { buildMarkdownRenderer } from './markdown-renderer';
         public_body: 'Public déconnecté',
     };
 
-    let currentMode = localStorage.getItem('editor-preview-mode') || 'write-preview';
+    let currentMode = 'write-preview';
+    try {
+        currentMode = localStorage.getItem('editor-preview-mode') || 'write-preview';
+    } catch {
+        // Origine opaque (about:blank, tests isolés) : fallback sur le mode par défaut.
+    }
 
     /* ---------------- Helpers ---------------- */
     function getInitialValue(el) {
@@ -130,9 +135,13 @@ import { buildMarkdownRenderer } from './markdown-renderer';
     });
 
     /* ---------------- Preview mode ---------------- */
-    function setPreviewMode(mode) {
+        function setPreviewMode(mode) {
         currentMode = mode;
-        localStorage.setItem('editor-preview-mode', mode);
+        try {
+            localStorage.setItem('editor-preview-mode', mode);
+        } catch {
+            // Silencieux sur origine opaque.
+        }
         if (!previewEl) return;
         const textareas = editorRoot.querySelectorAll('textarea[data-editor-field]');
         previewModeButtons.forEach((btn) => {
@@ -160,25 +169,67 @@ import { buildMarkdownRenderer } from './markdown-renderer';
     });
 
     /* ---------------- Toolbar insertion ---------------- */
+    function decodeInsertValue(value) {
+        return value.replace(/\\n/g, '\n');
+    }
+
     editorRoot.querySelectorAll('button[data-insert]').forEach((btn) => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             const textarea = getActiveTextarea();
             if (!textarea) return;
-            insertTextAtCursor(textarea, btn.dataset.insert);
+            const raw = btn.dataset.insert;
+            insertTextAtCursor(textarea, decodeInsertValue(raw));
             updatePreviewContent();
             updateDirtyState();
         });
     });
 
-    function insertTextAtCursor(textarea, text) {
+    function insertTextAtCursor(textarea, template) {
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
         const before = textarea.value.substring(0, start);
+        const selected = textarea.value.substring(start, end);
         const after = textarea.value.substring(end);
+
+        const placeholder = /%s/.test(template) ? '%s' : null;
+        let text;
+        let cursorOffset;
+        if (placeholder) {
+            text = template.replace(placeholder, selected || 'texte');
+            cursorOffset = selected ? selected.length : 'texte'.length;
+        } else if (/texte/i.test(template)) {
+            // Remplacement litéral du mot "texte" par la sélection si elle existe, sinon curseur au milieu.
+            if (selected) {
+                text = template.replace(/texte/i, selected);
+                cursorOffset = selected.length;
+            } else {
+                text = template;
+                const idx = /texte/i.exec(template).index;
+                cursorOffset = 0;
+                const len = 'texte'.length;
+                // On place le curseur au milieu du placeholder
+                textarea.selectionStart = start + idx;
+                textarea.selectionEnd = start + idx + len;
+            }
+        } else {
+            text = template;
+            cursorOffset = 0;
+        }
+
         textarea.value = before + text + after;
-        const cursor = start + text.length;
-        textarea.selectionStart = textarea.selectionEnd = cursor;
+
+        if (placeholder || selected) {
+            const newCursor = start + text.length;
+            textarea.selectionStart = textarea.selectionEnd = newCursor;
+        } else if (/texte/i.test(template)) {
+            const idx = /texte/i.exec(template).index;
+            const wordLen = 'texte'.length;
+            // Sélectionne le placeholder pour remplacement immédiat par la frappe.
+            textarea.selectionStart = start + idx;
+            textarea.selectionEnd = start + idx + wordLen;
+        }
+
         textarea.focus();
         const event = new Event('input', { bubbles: true });
         textarea.dispatchEvent(event);
@@ -285,17 +336,41 @@ import { buildMarkdownRenderer } from './markdown-renderer';
         });
     });
 
+    /* ---------------- Before unload ---------------- */
+    let isSubmitting = false;
+
     wrapper?.addEventListener('submit', () => {
+        isSubmitting = true;
         if (saveButton) saveButton.disabled = true;
-        // Ne pas changer l'indicateur ici ; on le mettra à jour au retour si erreur,
-        // ou la page sera rechargée/rémplacée après succès serveur.
+        // L'indicateur reste tel quel ; il sera recalculé au retour si erreur,
+        // ou la page sera rechargée après succès serveur.
     });
 
     wrapper?.addEventListener('formdata', () => {
+        isSubmitting = true;
         if (saveButton) saveButton.disabled = true;
     });
 
+    window.addEventListener('beforeunload', (e) => {
+        if (!isSubmitting && isFormDirty()) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    editorRoot.querySelectorAll('[data-confirm-leave]').forEach((link) => {
+        link.addEventListener('click', (e) => {
+            if (isFormDirty()) {
+                const message = 'Des modifications non enregistrées seront perdues. Continuer \u00e0 quitter sans enregistrer ?';
+                if (!window.confirm(message)) {
+                    e.preventDefault();
+                }
+            }
+        });
+    });
+
     window.addEventListener('pageshow', () => {
+        isSubmitting = false;
         if (saveButton) saveButton.disabled = false;
         updateDirtyState();
     });
@@ -303,22 +378,6 @@ import { buildMarkdownRenderer } from './markdown-renderer';
     if (wrapper?.dataset.formHasErrors !== undefined) {
         updateDirtyState();
     }
-
-    /* ---------------- Before unload ---------------- */
-    window.addEventListener('beforeunload', (e) => {
-        const leaving = document.querySelector('[data-cancel-link]:hover, [data-cancel-link]:focus');
-        if (!leaving && isFormDirty()) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
-    });
-
-    /* ---------------- Preview toggle ---------------- */
-    const previewLabelObserver = new MutationObserver(() => {
-        const activePanel = getActivePanelName();
-        updatePreviewAudience(activePanel);
-    });
-    if (previewAudience) previewLabelObserver.observe(previewAudience, { attributes: false, childList: true, subtree: false });
 
     /* ---------------- Init ---------------- */
     recordInitialValues();
@@ -329,4 +388,5 @@ import { buildMarkdownRenderer } from './markdown-renderer';
 
     // Recalcule le dirty state au retour navigateur (bouton back)
     window.addEventListener('pageshow', updateDirtyState);
+    window.__editorLoaded = true;
 })();
