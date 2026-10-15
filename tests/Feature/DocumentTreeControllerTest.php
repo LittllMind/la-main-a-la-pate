@@ -78,6 +78,25 @@ class DocumentTreeControllerTest extends TestCase
         $this->assertArrayHasKey('doc_count', $data[0]['subCategories'][0]['subjects'][0]);
     }
 
+    public function test_category_payload_includes_color()
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $category = Category::factory()->create(['color' => '#d1b3ff']);
+        $sub = SubCategory::factory()->create(['category_id' => $category->id]);
+        Subject::factory()->create([
+            'category_id'     => $category->id,
+            'sub_category_id' => $sub->id,
+            'status'          => 'published',
+            'visibility'      => 'citoyen',
+        ]);
+
+        $response = $this->actingAs($user)->getJson(route('subjects.tree.data'));
+        $response->assertOk();
+
+        $data = $response->json();
+        $this->assertEquals('#d1b3ff', $data[0]['color']);
+    }
+
     public function test_guest_cannot_access_tree_data()
     {
         $this->getJson(route('documents.tree.documents.data'))

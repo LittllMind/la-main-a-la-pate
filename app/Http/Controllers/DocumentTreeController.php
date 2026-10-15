@@ -16,10 +16,12 @@ class DocumentTreeController extends Controller
     public function documentsIndex()
     {
         return view('documents.tree', [
-            'mode'   => 'documents',
-            'apiUrl' => route('documents.tree.documents.data'),
+            'mode'              => 'documents',
+            'apiUrl'            => route('documents.tree.documents.data'),
+            'initialCategories' => json_encode($this->treeData(includeDocuments: true)),
         ]);
     }
+
 
     public function documentsData(): JsonResponse
     {
@@ -34,11 +36,16 @@ class DocumentTreeController extends Controller
 
     public function subjectsIndex()
     {
+        $categories = $this->treeData(includeDocuments: false);
+        $totalSubjects = collect($categories)->pluck('subCategories')->flatten(1)->pluck('subjects')->flatten(1)->count();
         return view('documents.tree', [
-            'mode'   => 'subjects',
-            'apiUrl' => route('subjects.tree.data'),
+            'mode'              => 'subjects',
+            'apiUrl'            => route('subjects.tree.data'),
+            'initialCategories' => $categories,
+            'totalSubjects'     => $totalSubjects,
         ]);
     }
+
 
     public function subjectsData(): JsonResponse
     {
@@ -103,6 +110,7 @@ class DocumentTreeController extends Controller
                 'name'          => $category->name,
                 'slug'          => $category->slug,
                 'icon'          => $category->icon,
+                'color'         => $category->color,
                 'subCategories' => $subs,
             ];
         })->filter()->values()->toArray();

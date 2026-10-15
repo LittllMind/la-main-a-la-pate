@@ -20,6 +20,21 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
+            const script = document.getElementById('tree-initial-data');
+            if (script) {
+                try {
+                    this.categories = JSON.parse(script.textContent);
+                    this.applyFilter();
+                    this.loading = false;
+                    if (this.categories.length > 0) {
+                        this.openCategories.push(this.categories[0].id);
+                    }
+                    return;
+                } catch (e) {
+                    console.warn('Initial tree data parse failed', e);
+                }
+            }
+
             fetch(this.apiUrl)
                 .then(r => r.json())
                 .then(data => {
@@ -67,6 +82,12 @@ document.addEventListener('alpine:init', () => {
         countDocuments(category) {
             return category.subCategories.reduce((sum, sub) => {
                 return sum + sub.subjects.reduce((s, subject) => s + subject.documents.length, 0);
+            }, 0);
+        },
+
+        totalVisibleSubjects() {
+            return this.filteredCategories.reduce((sum, category) => {
+                return sum + this.countSubjects(category);
             }, 0);
         },
 
